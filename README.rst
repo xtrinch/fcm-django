@@ -99,3 +99,7 @@ Python 3 support
 Acknowledgments
 ----------------
 https://github.com/jleclanche/django-push-notifications
+
+Need help, have any questions, suggestions?
+----------------
+Submit an issue/PR or email me at mojca.rojko@gmail.com
