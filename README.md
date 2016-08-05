@@ -63,8 +63,8 @@ Viewsets come in two different varieties:
 Routes can be added one of two ways:
 
 - Routers_ (include all views)
-.. _Routers: http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#using-routers
 
+http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#using-routers
 
 	from push_notifications.api.rest_framework import FCMDeviceAuthorizedViewSet
 	from rest_framework.routers import DefaultRouter
@@ -77,10 +77,10 @@ Routes can be added one of two ways:
 		url(r'^', include(router.urls)),
 		# ...
 	)
-
+	
 - Using as_view_ (specify which views to include)
-.. _as_view: http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#binding-viewsets-to-urls-explicitly
 
+http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#binding-viewsets-to-urls-explicitly
 
 	from push_notifications.api.rest_framework import FCMDeviceAuthorizedViewSet
 
