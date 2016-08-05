@@ -22,7 +22,7 @@ CLASSIFIERS = [
 ]
 
 setup(
-	name="django-fcm",
+	name="fcm-django",
 	packages=[
 		"push_notifications",
 		"push_notifications/api",
