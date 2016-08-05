@@ -18,7 +18,7 @@ Setup
 -----
 You can install the library directly from pypi using pip:
 
-	$ pip install django-fcm
+	$ pip install fcm-django
 
 
 Edit your settings.py file:
@@ -93,7 +93,7 @@ http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#binding-vie
 
 Python 3 support
 ----------------
-``django-fcm`` is fully compatible with Python 3.4 & 3.5
+``fcm-django`` is fully compatible with Python 3.4 & 3.5
 
 
 Acknowledgments
