@@ -4,7 +4,7 @@ import push_notifications
 from distutils.core import setup
 import setuptools
 
-VERSION = '0.1.1'
+VERSION = '0.1.2'
 
 CLASSIFIERS = [
 	"Development Status :: 5 - Production/Stable",
@@ -25,6 +25,7 @@ setup(
 	name="fcm-django",
 	packages=[
 		"push_notifications",
+		"push_notifications.migrations",
 		"push_notifications/api",
 		"push_notifications/migrations",
 		"push_notifications/management",
