@@ -38,8 +38,8 @@ setup(
 	author_email=push_notifications.__email__,
 	classifiers=CLASSIFIERS,
 	description="Send push notifications to mobile devices through FCM in Django.",
-	download_url="https://github.com/xtrinch/django-fcm/tarball/master",
+	download_url="https://github.com/xtrinch/fcm-django/tarball/master",
 	long_description='',
-	url="https://github.com/xtrinch/django-fcm",
+	url="https://github.com/xtrinch/fcm-django",
 	version=push_notifications.__version__,
 )
