@@ -18,14 +18,10 @@ TODO: Setup
 -----
 TODO: You can install the library directly from pypi using pip:
 
-.. code-block:: shell
-
 	$ pip install django-fcm
 
 
 Edit your settings.py file:
-
-.. code-block:: python
 
 	INSTALLED_APPS = (
 		...
@@ -38,19 +34,14 @@ Edit your settings.py file:
 
 Native Django migrations are in use. ``manage.py migrate`` will install and migrate all models.
 
-.. _settings:
-
 Sending messages
 ----------------
-
-.. code-block:: python
 
 	from push_notifications.models import FCMDevice
 	device.send_message("Title", "Message")
 
 Sending messages in bulk
 ------------------------
-.. code-block:: python
 
 	from push_notifications.models import FCMDevice
 	device.send_messages("Title", "Message")
@@ -74,7 +65,6 @@ Routes can be added one of two ways:
 - Routers_ (include all views)
 .. _Routers: http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#using-routers
 
-::
 
 	from push_notifications.api.rest_framework import FCMDeviceAuthorizedViewSet
 	from rest_framework.routers import DefaultRouter
@@ -91,7 +81,6 @@ Routes can be added one of two ways:
 - Using as_view_ (specify which views to include)
 .. _as_view: http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#binding-viewsets-to-urls-explicitly
 
-::
 
 	from push_notifications.api.rest_framework import FCMDeviceAuthorizedViewSet
 
