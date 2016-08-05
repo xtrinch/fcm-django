@@ -1,4 +1,4 @@
-django-fcm
+fcm-django
 =========================
 
 Django app for Firebase Cloud Messaging.
