@@ -2,11 +2,12 @@
 import os.path
 import push_notifications
 from distutils.core import setup
+import setuptools
 
 VERSION = '0.1.0'
 
 CLASSIFIERS = [
-	"Development Status :: 1 - Development/Stable",
+	"Development Status :: 5 - Production/Stable",
 	"Environment :: Web Environment",
 	"Framework :: Django",
 	"Intended Audience :: Developers",
