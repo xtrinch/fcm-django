@@ -94,3 +94,8 @@ http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#binding-vie
 Python 3 support
 ----------------
 ``django-fcm`` is fully compatible with Python 3.4 & 3.5
+
+
+Acknowledgments
+----------------
+https://github.com/jleclanche/django-push-notifications

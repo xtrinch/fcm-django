@@ -3,6 +3,8 @@ import os.path
 import push_notifications
 from distutils.core import setup
 
+VERSION = '0.1.0'
+
 CLASSIFIERS = [
 	"Development Status :: 1 - Development/Stable",
 	"Environment :: Web Environment",
