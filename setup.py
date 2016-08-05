@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import os.path
-import push_notifications
+import fcm_django
 from distutils.core import setup
 import setuptools
 
-VERSION = '0.1.2'
+VERSION = '0.1.3'
 
 CLASSIFIERS = [
 	"Development Status :: 5 - Production/Stable",
@@ -24,23 +24,22 @@ CLASSIFIERS = [
 setup(
 	name="fcm-django",
 	packages=[
-		"push_notifications",
-		"push_notifications.migrations",
-		"push_notifications/api",
-		"push_notifications/migrations",
-		"push_notifications/management",
-		"push_notifications/management/commands",
+		"fcm_django",
+		"fcm_django/api",
+		"fcm_django/migrations",
+		"fcm_django/management",
+		"fcm_django/management/commands",
 	],
     install_requires=[
         'pyfcm==1.0.1',
         'Django'
     ],
-	author=push_notifications.__author__,
-	author_email=push_notifications.__email__,
+	author=fcm_django.__author__,
+	author_email=fcm_django.__email__,
 	classifiers=CLASSIFIERS,
 	description="Send push notifications to mobile devices through FCM in Django.",
 	download_url="https://github.com/xtrinch/fcm-django/tarball/master",
 	long_description='',
 	url="https://github.com/xtrinch/fcm-django",
-	version=push_notifications.__version__,
+	version=fcm_django.__version__,
 )

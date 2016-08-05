@@ -25,10 +25,10 @@ Edit your settings.py file:
 
 	INSTALLED_APPS = (
 		...
-		"push_notifications"
+		"fcm_django"
 	)
 
-	PUSH_NOTIFICATIONS_SETTINGS = {
+	FCM_DJANGO_SETTINGS = {
 		"FCM_SERVER_KEY": "[your api key]"
 	}
 
@@ -37,13 +37,13 @@ Native Django migrations are in use. ``manage.py migrate`` will install and migr
 Sending messages
 ----------------
 
-	from push_notifications.models import FCMDevice
+	from fcm_django.models import FCMDevice
 	device.send_message("Title", "Message")
 
 Sending messages in bulk
 ------------------------
 
-	from push_notifications.models import FCMDevice
+	from fcm_django.models import FCMDevice
 	device.send_messages("Title", "Message")
 
 Django REST Framework (DRF) support
@@ -66,7 +66,7 @@ Routes can be added one of two ways:
 
 http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#using-routers
 
-	from push_notifications.api.rest_framework import FCMDeviceAuthorizedViewSet
+	from fcm_django.api.rest_framework import FCMDeviceAuthorizedViewSet
 	from rest_framework.routers import DefaultRouter
 
 	router = DefaultRouter()
@@ -82,7 +82,7 @@ http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#using-route
 
 http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#binding-viewsets-to-urls-explicitly
 
-	from push_notifications.api.rest_framework import FCMDeviceAuthorizedViewSet
+	from fcm_django.api.rest_framework import FCMDeviceAuthorizedViewSet
 
 	urlpatterns = patterns('',
 		# Only allow creation of devices by authenticated users

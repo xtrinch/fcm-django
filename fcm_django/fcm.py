@@ -1,6 +1,6 @@
 from django.core.management import CommandError
 from pyfcm import FCMNotification
-from .settings import PUSH_NOTIFICATIONS_SETTINGS as SETTINGS
+from .settings import FCM_DJANGO_SETTINGS as SETTINGS
 
 def fcm_send_message(registration_id, title, message, **kwargs):
     api_key = SETTINGS.get("FCM_SERVER_KEY")

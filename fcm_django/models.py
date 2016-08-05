@@ -5,7 +5,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 
 from .fields import HexIntegerField
-from .settings import PUSH_NOTIFICATIONS_SETTINGS as SETTINGS
+from .settings import FCM_DJANGO_SETTINGS as SETTINGS
 
 
 @python_2_unicode_compatible

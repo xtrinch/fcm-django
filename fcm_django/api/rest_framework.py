@@ -5,9 +5,9 @@ from rest_framework.serializers import ModelSerializer, ValidationError
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.fields import IntegerField
 
-from push_notifications.models import FCMDevice
-from push_notifications.fields import hex_re
-from push_notifications.fields import UNSIGNED_64BIT_INT_MAX_VALUE
+from fcm_django.models import FCMDevice
+from fcm_django.fields import hex_re
+from fcm_django.fields import UNSIGNED_64BIT_INT_MAX_VALUE
 
 
 # Fields

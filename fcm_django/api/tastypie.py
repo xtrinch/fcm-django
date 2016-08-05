@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from push_notifications.models import FCMDevice
+from fcm_django.models import FCMDevice
 
 from tastypie.authorization import Authorization
 from tastypie.authentication import BasicAuthentication
