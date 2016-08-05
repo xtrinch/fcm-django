@@ -4,7 +4,7 @@ import push_notifications
 from distutils.core import setup
 import setuptools
 
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 
 CLASSIFIERS = [
 	"Development Status :: 5 - Production/Stable",
