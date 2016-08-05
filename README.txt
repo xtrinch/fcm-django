@@ -14,9 +14,9 @@ Dependencies
 ------------
 Currently only tested with Django 1.9.8 and DRF 3.2.4
 
-TODO: Setup
+Setup
 -----
-TODO: You can install the library directly from pypi using pip:
+You can install the library directly from pypi using pip:
 
 	$ pip install django-fcm
 
