@@ -31,6 +31,7 @@ setup(
 	],
     install_requires=[
         'pyfcm==1.0.1',
+        'Django'
     ],
 	author=push_notifications.__author__,
 	author_email=push_notifications.__email__,
