@@ -1,0 +1,17 @@
+# python compiled
+__pycache__
+*.pyc
+
+# distutils
+MANIFEST
+build
+
+# IDE
+.idea
+*.iml
+
+# virtualenv
+.env
+
+# tox
+.tox
