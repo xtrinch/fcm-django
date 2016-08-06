@@ -10,6 +10,8 @@ Functionality:
  - admin actions for testing single and bulk notification sending
  - Django rest framework viewsets
 
+NOTE: currently the server will throw an error if you send device_id with the request to the viewset, workaround is to just not send it atm, i will fix it as soon as i get the chance
+
 Dependencies
 ------------
 Currently only tested with Django 1.9.8 and DRF 3.2.4
