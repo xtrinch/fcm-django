@@ -10,7 +10,6 @@ Functionality:
  - admin actions for testing single and bulk notification sending
  - Django rest framework viewsets
 
-NOTE: currently the server will throw an error if you send device_id with the request to the viewset, workaround is to just not send it atm, i will fix it as soon as i get the chance
 
 Dependencies
 ------------
@@ -75,9 +74,11 @@ Routes can be added one of two ways:
 http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#using-routers
 
 	from fcm_django.api.rest_framework import FCMDeviceAuthorizedViewSet
+	
 	from rest_framework.routers import DefaultRouter
 
 	router = DefaultRouter()
+	
 	router.register(r'devices', FCMDeviceAuthorizedViewSet)
 
 	urlpatterns = patterns('',
