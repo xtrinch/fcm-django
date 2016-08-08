@@ -41,6 +41,8 @@ Sending messages
 
 	from fcm_django.models import FCMDevice
 	
+	device = FCMDevice.objects.all().first()
+
 	device.send_message("Title", "Message")
 
 Sending messages in bulk
@@ -48,7 +50,9 @@ Sending messages in bulk
 
 	from fcm_django.models import FCMDevice
 	
-	device.send_message("Title", "Message")
+	devices = FCMDevice.objects.all()
+	
+	devices.send_message("Title", "Message")
 
 Django REST Framework (DRF) support
 -----------------------------------
