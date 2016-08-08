@@ -1,7 +1,7 @@
 fcm-django
 =========================
 
-Django app for Firebase Cloud Messaging.
+Django app for Firebase Cloud Messaging. Used as an unified platform for sending push notifications to mobile devices (android / ios).
 
 FCMDevice model fields
  - registration_id (required - is FCM token)
