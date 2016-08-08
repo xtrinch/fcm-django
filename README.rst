@@ -3,8 +3,15 @@ fcm-django
 
 Django app for Firebase Cloud Messaging.
 
+FCMDevice model fields
+ - registration_id (required - is FCM token)
+ - name (optional)
+ - active (default: true)
+ - user (optional)
+ - device_id (optional - can be used to uniquely identify devices)
+ - type ('android' or 'ios')
+
 Functionality:
- - FCMDevice model (fields: name, active, user, device_id, registration_id, type)
  - all necessary migrations
  - model admins for django admin
  - admin actions for testing single and bulk notification sending
