@@ -40,13 +40,15 @@ Sending messages
 ----------------
 
 	from fcm_django.models import FCMDevice
+	
 	device.send_message("Title", "Message")
 
 Sending messages in bulk
 ------------------------
 
 	from fcm_django.models import FCMDevice
-	device.send_messages("Title", "Message")
+	
+	device.send_message("Title", "Message")
 
 Django REST Framework (DRF) support
 -----------------------------------
