@@ -13,28 +13,10 @@ from fcm_django.fields import UNSIGNED_64BIT_INT_MAX_VALUE
 # Fields
 
 
-class HexIntegerField(IntegerField):
-	"""
-	Store an integer represented as a hex string of form "0x01".
-	"""
-
-	def to_internal_value(self, data):
-		# validate hex string and convert it to the unsigned
-		# integer representation for internal use
-		try:
-			data = int(data, 16) if type(data) != int else data
-		except ValueError:
-			raise ValidationError("Device ID is not a valid hex number")
-		return super(HexIntegerField, self).to_internal_value(data)
-
-	def to_representation(self, value):
-		return value
-
-
 # Serializers
 class DeviceSerializerMixin(ModelSerializer):
 	class Meta:
-		fields = ("id", "name", "registration_id", "device_id", "active", "date_created")
+		fields = ("id", "name", "registration_id", "device_id", "active", "date_created", "type")
 		read_only_fields = ("date_created",)
 
 		# See https://github.com/tomchristie/django-rest-framework/issues/1101
@@ -42,12 +24,6 @@ class DeviceSerializerMixin(ModelSerializer):
 
 
 class FCMDeviceSerializer(ModelSerializer):
-	device_id = HexIntegerField(
-		help_text="ANDROID_ID / TelephonyManager.getDeviceId() (e.g: 0x01)",
-		style={"input_type": "text"},
-		required=False,
-		allow_null=True
-	)
 
 	class Meta(DeviceSerializerMixin.Meta):
 		model = FCMDevice

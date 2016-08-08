@@ -50,9 +50,10 @@ class FCMDevice(Device):
 		(u'android', u'android')
 	)
 
-	device_id = models.UUIDField(
+	device_id = models.CharField(
 		verbose_name=_("Device ID"), blank=True, null=True, db_index=True,
-		help_text=_("GUID()")
+		help_text=_("Unique device identifier"),
+        max_length=150
 	)
 	registration_id = models.TextField(verbose_name=_("Registration token"))
 	type = models.CharField(choices=DEVICE_TYPES, max_length=10)
