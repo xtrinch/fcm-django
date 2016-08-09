@@ -91,6 +91,8 @@ Sending messages
 	device = FCMDevice.objects.all().first()
 
 	device.send_message("Title", "Message")
+	device.send_message(data_message={"test": "test"})
+	device.send_message(title="Title", body="Message", icon=..., data_message={"test": "test"})
 
 Sending messages in bulk
 ------------------------
