@@ -31,6 +31,8 @@ You can install the library directly from pypi using pip:
 
 Edit your settings.py file:
 
+.. code-block:: python
+
 	INSTALLED_APPS = (
 		...
 		"fcm_django"
