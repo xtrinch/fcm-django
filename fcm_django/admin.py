@@ -29,9 +29,9 @@ class DeviceAdmin(admin.ModelAdmin):
 		for device in queryset:
 			try:
 				if bulk:
-					r = queryset.send_message("Test notification", "Test bulk notification")
+					r = queryset.send_message(title="Test notification", body="Test bulk notification")
 				else:
-					r = device.send_message("Test notification", "Test single notification")
+					r = device.send_message(title="Test notification", body="Test single notification")
 				if r:
 					ret.append(r)
 			except FCMError as e:
