@@ -44,6 +44,43 @@ Edit your settings.py file:
 
 Native Django migrations are in use. ``manage.py migrate`` will install and migrate all models.
 
+Messages
+--------
+
+You can read more about different types of messages here_.
+
+.. _here: https://firebase.google.com/docs/cloud-messaging/concept-options
+
+In short, there are two types: notifications and data messages. 
+
+Notification:
+
+.. code-block:: json
+
+	{
+	    "to" : "bk3RNwTe3H0:CI2k_HHwgIpoDKCIZvvDMExUdFQ3P1...",
+	    "notification" : {
+	      "body" : "great match!",
+	      "title" : "Portugal vs. Denmark",
+	      "icon" : "myicon"
+	    }
+	}
+	
+Data message:
+
+.. code-block:: json
+
+	{
+	   "to" : "bk3RNwTe3H0:CI2k_HHwgIpoDKCIZvvDMExUdFQ3P1...",
+	   "data" : {
+	     "Nick" : "Mario",
+	     "body" : "great match!",
+	     "Room" : "PortugalVSDenmark"
+	   },
+	}
+
+As in the following example, you can send either a notification, a data message, or both.
+
 Sending messages
 ----------------
 
@@ -64,7 +101,9 @@ Sending messages in bulk
 	
 	devices = FCMDevice.objects.all()
 	
-	devices.send_message("Title", "Message")
+	devices.send_message(title="Title", body="Message")
+	devices.send_message(title="Title", body="Message", data_message={"test": "test"})
+	devices.send_message(data_message={"test": "test"})
 
 Django REST Framework (DRF) support
 -----------------------------------
