@@ -47,6 +47,8 @@ Native Django migrations are in use. ``manage.py migrate`` will install and migr
 Sending messages
 ----------------
 
+.. code-block:: python
+
 	from fcm_django.models import FCMDevice
 	
 	device = FCMDevice.objects.all().first()
@@ -55,6 +57,8 @@ Sending messages
 
 Sending messages in bulk
 ------------------------
+
+.. code-block:: python
 
 	from fcm_django.models import FCMDevice
 	
