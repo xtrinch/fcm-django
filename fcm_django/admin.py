@@ -10,7 +10,7 @@ User = apps.get_model(*SETTINGS["USER_MODEL"].split("."))
 class DeviceAdmin(admin.ModelAdmin):
 	list_display = ("__str__", "device_id", "user", "active", "date_created")
 	list_filter = ("active",)
-	actions = ("send_message", "send_bulk_message", "enable", "disable")
+	actions = ("send_message", "send_bulk_message", "send_data_message", "send_bulk_data_message", "enable", "disable")
 	raw_id_fields = ("user",)
 
 	if hasattr(User, "USERNAME_FIELD"):
@@ -18,7 +18,7 @@ class DeviceAdmin(admin.ModelAdmin):
 	else:
 		search_fields = ("name", "device_id")
 
-	def send_messages(self, request, queryset, bulk=False):
+	def send_messages(self, request, queryset, bulk=False, data=False):
 		"""
 		Provides error handling for DeviceAdmin send_message and send_bulk_message methods.
 		"""
@@ -29,9 +29,15 @@ class DeviceAdmin(admin.ModelAdmin):
 		for device in queryset:
 			try:
 				if bulk:
-					r = queryset.send_message(title="Test notification", body="Test bulk notification")
+					if data:
+						r = queryset.send_message(data={"Nick" : "Mario"})
+					else:
+						r = queryset.send_message(title="Test notification", body="Test bulk notification")
 				else:
-					r = device.send_message(title="Test notification", body="Test single notification")
+					if data:
+						r = device.send_message(data={"Nick" : "Mario"})
+					else:
+						r = device.send_message(title="Test notification", body="Test single notification")
 				if r:
 					ret.append(r)
 			except FCMError as e:
@@ -57,12 +63,22 @@ class DeviceAdmin(admin.ModelAdmin):
 	def send_message(self, request, queryset):
 		self.send_messages(request, queryset)
 
-	send_message.short_description = _("Send test message")
+	send_message.short_description = _("Send test notification")
 
 	def send_bulk_message(self, request, queryset):
 		self.send_messages(request, queryset, True)
 
-	send_bulk_message.short_description = _("Send test message in bulk")
+	send_bulk_message.short_description = _("Send test notification in bulk")
+
+	def send_data_message(self, request, queryset):
+		self.send_messages(request, queryset, False, True)
+
+	send_data_message.short_description = _("Send test data message")
+
+	def send_bulk_data_message(self, request, queryset):
+		self.send_messages(request, queryset, True, True)
+
+	send_bulk_data_message.short_description = _("Send test data message in bulk")
 
 	def enable(self, request, queryset):
 		queryset.update(active=True)
