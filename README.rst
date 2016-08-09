@@ -86,6 +86,8 @@ Routes can be added one of two ways:
 
 http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#using-routers
 
+.. code-block:: python
+
 	from fcm_django.api.rest_framework import FCMDeviceAuthorizedViewSet
 	
 	from rest_framework.routers import DefaultRouter
@@ -103,6 +105,8 @@ http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#using-route
 - Using as_view_ (specify which views to include)
 
 http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#binding-viewsets-to-urls-explicitly
+
+.. code-block:: python
 
 	from fcm_django.api.rest_framework import FCMDeviceAuthorizedViewSet
 
