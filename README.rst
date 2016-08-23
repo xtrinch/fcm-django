@@ -91,8 +91,8 @@ Sending messages
 	device = FCMDevice.objects.all().first()
 
 	device.send_message("Title", "Message")
-	device.send_message(data_message={"test": "test"})
-	device.send_message(title="Title", body="Message", icon=..., data_message={"test": "test"})
+	device.send_message(data={"test": "test"})
+	device.send_message(title="Title", body="Message", icon=..., data={"test": "test"})
 
 Sending messages in bulk
 ------------------------
@@ -104,8 +104,8 @@ Sending messages in bulk
 	devices = FCMDevice.objects.all()
 	
 	devices.send_message(title="Title", body="Message")
-	devices.send_message(title="Title", body="Message", data_message={"test": "test"})
-	devices.send_message(data_message={"test": "test"})
+	devices.send_message(title="Title", body="Message", data={"test": "test"})
+	devices.send_message(data={"test": "test"})
 
 Django REST Framework (DRF) support
 -----------------------------------
