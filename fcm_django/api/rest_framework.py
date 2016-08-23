@@ -1,14 +1,8 @@
 from __future__ import absolute_import
-
 from rest_framework import permissions
-from rest_framework.serializers import ModelSerializer, ValidationError
+from rest_framework.serializers import ModelSerializer, ValidationError, Serializer, CurrentUserDefault
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.fields import IntegerField
-
 from fcm_django.models import FCMDevice
-from fcm_django.fields import hex_re
-from fcm_django.fields import UNSIGNED_64BIT_INT_MAX_VALUE
-
 
 # Fields
 
@@ -22,20 +16,7 @@ class DeviceSerializerMixin(ModelSerializer):
 		# See https://github.com/tomchristie/django-rest-framework/issues/1101
 		extra_kwargs = {"active": {"default": True}}
 
-
-class FCMDeviceSerializer(ModelSerializer):
-
-	class Meta(DeviceSerializerMixin.Meta):
-		model = FCMDevice
-
-		extra_kwargs = {"id": {"read_only": False, "required": False}}
-
-	#def validate_device_id(self, value):
-	#	# device ids are 64 bit unsigned values
-	#	if value > UNSIGNED_64BIT_INT_MAX_VALUE:
-	#		raise ValidationError("Device ID is out of range")
-	#	return value
-
+class UniqueRegistrationSerializerMixin(Serializer):
 	def validate(self, attrs):
 		devices = None
 		primary_key = None
@@ -54,15 +35,28 @@ class FCMDeviceSerializer(ModelSerializer):
 			elif self.context["request"].method == "POST":
 				request_method = "create"
 
+		Device = self.Meta.model
 		if request_method == "update":
-			devices = FCMDevice.objects.filter(registration_id=attrs["registration_id"]) \
+			devices = Device.objects.filter(registration_id=attrs["registration_id"]) \
 				.exclude(id=primary_key)
 		elif request_method == "create":
-			devices = FCMDevice.objects.filter(registration_id=attrs["registration_id"])
+			# if request authenticated, unique together with registration_id and user
+			user = self.context['request'].user
+			if user is not None:
+				devices = Device.objects.filter(registration_id=attrs["registration_id"], user=user)
+			else:
+				devices = Device.objects.filter(registration_id=attrs["registration_id"])
 
 		if devices:
 			raise ValidationError({'registration_id': 'This field must be unique.'})
 		return attrs
+
+class FCMDeviceSerializer(ModelSerializer, UniqueRegistrationSerializerMixin):
+
+	class Meta(DeviceSerializerMixin.Meta):
+		model = FCMDevice
+
+		extra_kwargs = {"id": {"read_only": False, "required": False}}
 
 
 # Permissions
