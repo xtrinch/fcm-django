@@ -115,6 +115,7 @@ Viewsets come in two different varieties:
 
 	- Permissions as specified in settings (``AllowAny`` by default, which is not recommended)
 	- A device may be registered without associating it with a user
+	- Will not allow duplicate registration_id's
 
 - ``FCMDeviceAuthorizedViewSet``
 
