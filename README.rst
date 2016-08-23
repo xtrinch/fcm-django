@@ -120,6 +120,7 @@ Viewsets come in two different varieties:
 
 	- Permissions are ``IsAuthenticated`` and custom permission ``IsOwner``, which will only allow the ``request.user`` to get and update devices that belong to that user
 	- Requires a user to be authenticated, so all devices will be associated with a user
+	- Will allow duplicate registration_id's for different users, so you are responsible for cleanup (if that is generally perceived as undesired behaviour or if the package itself should be doing the cleanup, open an issue or email me)
 
 Routes can be added one of two ways:
 
