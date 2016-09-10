@@ -9,7 +9,8 @@ def fcm_send_message(registration_id, title=None, body=None, icon=None, data=Non
                                                message_title=title,
                                                message_body=body,
                                                message_icon=icon,
-                                               data_message=data)
+                                               data_message=data,
+                                               **kwargs)
 
     if result['success'] == 0:
         raise FCMError(result)
@@ -30,7 +31,8 @@ def fcm_send_bulk_message(registration_ids, title=None, body=None, icon=None, da
         message_title=title,
         message_body=body,
         message_icon=icon,
-        data_message=data
+        data_message=data,
+        **kwargs
     )
 
     if result['success'] == 0:
