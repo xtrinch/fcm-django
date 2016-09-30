@@ -4,7 +4,8 @@ fcm-django
 
 .. image:: https://badge.fury.io/py/fcm-django.svg
     :target: https://badge.fury.io/py/fcm-django
-    
+.. image:: https://img.shields.io/pypi/dm/fcm-django.svg
+   :target: https://pypi.python.org/pypi/fcm-django/
     
 Django app for Firebase Cloud Messaging. Used as an unified platform for sending push notifications to mobile devices (android / ios).
 
