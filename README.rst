@@ -23,11 +23,6 @@ Functionality:
  - admin actions for testing single and bulk notification sending
  - Django rest framework viewsets
 
-
-Dependencies
-------------
-Currently only tested with Django 1.9.8 and DRF 3.2.4
-
 Setup
 -----
 You can install the library directly from pypi using pip:
@@ -49,6 +44,7 @@ Edit your settings.py file:
 	}
 
 Native Django migrations are in use. ``manage.py migrate`` will install and migrate all models.
+Devices to which notifications fail to send are automatically marked as inactive.
 
 Messages
 --------

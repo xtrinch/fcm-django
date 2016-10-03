@@ -24,41 +24,46 @@ class DeviceAdmin(admin.ModelAdmin):
 		"""
 		ret = []
 		errors = []
+		total_failure = 0
 		r = ""
 
 		for device in queryset:
-			try:
-				if bulk:
-					if data:
-						r = queryset.send_message(data={"Nick" : "Mario"})
-					else:
-						r = queryset.send_message(title="Test notification", body="Test bulk notification")
+			if bulk:
+				if data:
+					r = queryset.send_message(data={"Nick" : "Mario"})
 				else:
-					if data:
-						r = device.send_message(data={"Nick" : "Mario"})
-					else:
-						r = device.send_message(title="Test notification", body="Test single notification")
-				if r:
-					ret.append(r)
-			except FCMError as e:
-				errors.append(str(e))
+					r = queryset.send_message(title="Test notification", body="Test bulk notification")
+			else:
+				if data:
+					r = device.send_message(data={"Nick" : "Mario"})
+				else:
+					r = device.send_message(title="Test notification", body="Test single notification")
+			if r:
+				ret.append(r)
+
+			failure = int(r['failure'])
+			total_failure += failure
+			success = int(r['success'])
+			errors.append(str(r))
+
 
 			if bulk:
 				break
 
-		if errors:
-			self.message_user(
-				request, _("Some messages could not be processed: %r" % (", ".join(errors))),
-				level=messages.ERROR
-			)
 		if ret:
-			if not bulk:
-				ret = ", ".join(ret)
+			#if not bulk:
+			#	ret = ", ".join(ret)
 			if errors:
 				msg = _("Some messages were sent: %s" % (ret))
 			else:
 				msg = _("All messages were sent: %s" % (ret))
 			self.message_user(request, msg)
+
+		if errors:
+			self.message_user(
+				request, _("Some messages failed to send. %d devices were marked as inactive." % (total_failure)),
+				level=messages.ERROR
+			)
 
 	def send_message(self, request, queryset):
 		self.send_messages(request, queryset)

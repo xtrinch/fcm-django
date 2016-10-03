@@ -54,13 +54,10 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 
 			for (index, item) in enumerate(result['results']):
 				if 'error' in item:
-					error = item['error']
-
-					if error == SETTINGS['ERRORS']['invalid_registration']:
-						reg_id = reg_ids[index]
-						device = self.filter(registration_id=reg_id).first()
-						device.active = False
-						device.save()
+					reg_id = reg_ids[index]
+					device = self.filter(registration_id=reg_id).first()
+					device.active = False
+					device.save()
 
 			return result
 
@@ -96,4 +93,9 @@ class FCMDevice(Device):
 			**kwargs
 		)
 
-		return str(result)
+		device = FCMDevice.objects.filter(registration_id=self.registration_id).first()
+		if 'error' in result['results'][0]:
+			device.active = False
+			device.save()
+
+		return result
