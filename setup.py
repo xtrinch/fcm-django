@@ -4,7 +4,7 @@ import fcm_django
 from distutils.core import setup
 import setuptools
 
-VERSION = '0.2.1'
+VERSION = '0.2.2'
 
 CLASSIFIERS = [
 	"Development Status :: 5 - Production/Stable",

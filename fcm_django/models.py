@@ -55,9 +55,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 			for (index, item) in enumerate(result['results']):
 				if 'error' in item:
 					reg_id = reg_ids[index]
-					device = self.filter(registration_id=reg_id).first()
-					device.active = False
-					device.save()
+					self.filter(registration_id=reg_id).update(active=False)
 
 			return result
 
@@ -93,9 +91,8 @@ class FCMDevice(Device):
 			**kwargs
 		)
 
-		device = FCMDevice.objects.filter(registration_id=self.registration_id).first()
+		device = FCMDevice.objects.filter(registration_id=self.registration_id)
 		if 'error' in result['results'][0]:
-			device.active = False
-			device.save()
+			device.update(active=False)
 
 		return result

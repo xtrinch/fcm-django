@@ -59,10 +59,10 @@ class DeviceAdmin(admin.ModelAdmin):
 				msg = _("All messages were sent: %s" % (ret))
 			self.message_user(request, msg)
 
-		if errors:
+		if total_failure > 0:
 			self.message_user(
 				request, _("Some messages failed to send. %d devices were marked as inactive." % (total_failure)),
-				level=messages.ERROR
+				level=messages.WARNING
 			)
 
 	def send_message(self, request, queryset):

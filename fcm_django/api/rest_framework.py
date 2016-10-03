@@ -3,7 +3,7 @@ from rest_framework import permissions
 from rest_framework.serializers import ModelSerializer, ValidationError, Serializer, CurrentUserDefault
 from rest_framework.viewsets import ModelViewSet
 from fcm_django.models import FCMDevice
-
+from django.db.models import Q
 # Fields
 
 
@@ -43,7 +43,9 @@ class UniqueRegistrationSerializerMixin(Serializer):
 			# if request authenticated, unique together with registration_id and user
 			user = self.context['request'].user
 			if user is not None:
-				devices = Device.objects.filter(registration_id=attrs["registration_id"], user=user)
+				devices = Device.objects.filter(registration_id=attrs["registration_id"])
+				devices.filter(~Q(user=user)).update(active=False)
+				devices = devices.filter(user=user)
 			else:
 				devices = Device.objects.filter(registration_id=attrs["registration_id"])
 
