@@ -41,7 +41,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 			from .fcm import fcm_send_bulk_message
 
 			reg_ids = list(self.filter(active=True).values_list('registration_id', flat=True))
-			return fcm_send_bulk_message(
+			result = fcm_send_bulk_message(
 				registration_ids=reg_ids,
 				title=title,
 				body=body,
@@ -51,6 +51,18 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 				badge=badge,
 				**kwargs
 			)
+
+			for (index, item) in enumerate(result['results']):
+				if 'error' in item:
+					error = item['error']
+
+					if error == SETTINGS['ERRORS']['invalid_registration']:
+						reg_id = reg_ids[index]
+						device = self.filter(registration_id=reg_id).first()
+						device.active = False
+						device.save()
+
+			return result
 
 
 class FCMDevice(Device):
@@ -73,7 +85,7 @@ class FCMDevice(Device):
 
 	def send_message(self, title=None, body=None, icon=None, data=None, sound=None, badge=None, **kwargs):
 		from .fcm import fcm_send_message
-		return fcm_send_message(
+		result = fcm_send_message(
 			registration_id=self.registration_id,
 			title=title,
 			body=body,
@@ -83,3 +95,5 @@ class FCMDevice(Device):
 			badge=None,
 			**kwargs
 		)
+
+		return str(result)

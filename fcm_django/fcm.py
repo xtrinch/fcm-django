@@ -20,18 +20,10 @@ def fcm_send_message(registration_id,
                                                badge=badge,
                                                **kwargs)
 
-    print(result)
+    # do not raise errors, pyfcm will raise exceptions if response status will
+    # be anything but 200
 
-    # raise error only if no successful notifications were sent and there was
-    # a failed notification
-
-    if result['success'] == 0:
-        raise FCMError(result)
-
-
-    # TODO: prune devices to which notifications failed to send
-
-    return str(result)
+    return result
 
 
 def fcm_send_bulk_message(registration_ids,
@@ -55,15 +47,10 @@ def fcm_send_bulk_message(registration_ids,
         **kwargs
     )
 
-    print(result)
+    # do not raise errors, pyfcm will raise exceptions if response status will
+    # be anything but 200
 
-    # raise error only if no successful notifications were sent and there was
-    # a failed notification
-
-    if result['success'] == 0 and result['failure'] == 1:
-        raise FCMError(result)
-
-    return str(result)
+    return result
 
 class FCMError(Exception):
     """
