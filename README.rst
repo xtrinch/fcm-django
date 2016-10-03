@@ -7,7 +7,7 @@ fcm-django
 .. image:: https://img.shields.io/pypi/dm/fcm-django.svg
    :target: https://pypi.python.org/pypi/fcm-django/
     
-Django app for Firebase Cloud Messaging. Used as an unified platform for sending push notifications to mobile devices (android / ios).
+Django app for Firebase Cloud Messaging. Used as an unified platform for sending push notifications to mobile devices (android / ios). Developed with the help of https://github.com/olucurious/PyFCM
 
 FCMDevice model fields
  - registration_id (required - is FCM token)
@@ -21,6 +21,7 @@ Functionality:
  - all necessary migrations
  - model admins for django admin
  - admin actions for testing single and bulk notification sending
+ - automatic device pruning: devices to which notifications fail to send are marked as inactive
  - Django rest framework viewsets
 
 Setup
@@ -44,7 +45,6 @@ Edit your settings.py file:
 	}
 
 Native Django migrations are in use. ``manage.py migrate`` will install and migrate all models.
-Devices to which notifications fail to send are automatically marked as inactive.
 
 Messages
 --------
