@@ -36,12 +36,21 @@ class FCMDeviceManager(models.Manager):
 
 
 class FCMDeviceQuerySet(models.query.QuerySet):
-	def send_message(self, title=None, body=None, icon=None, data=None, **kwargs):
+	def send_message(self, title=None, body=None, icon=None, data=None, sound=None, badge=None, **kwargs):
 		if self:
 			from .fcm import fcm_send_bulk_message
 
 			reg_ids = list(self.filter(active=True).values_list('registration_id', flat=True))
-			return fcm_send_bulk_message(registration_ids=reg_ids, title=title, body=body, icon=icon, data=data, **kwargs)
+			return fcm_send_bulk_message(
+				registration_ids=reg_ids,
+				title=title,
+				body=body,
+				icon=icon,
+				data=data,
+				sound=sound,
+				badge=badge,
+				**kwargs
+			)
 
 
 class FCMDevice(Device):
@@ -62,6 +71,15 @@ class FCMDevice(Device):
 	class Meta:
 		verbose_name = _("FCM device")
 
-	def send_message(self, title=None, body=None, icon=None, data=None, **kwargs):
+	def send_message(self, title=None, body=None, icon=None, data=None, sound=None, badge=None, **kwargs):
 		from .fcm import fcm_send_message
-		return fcm_send_message(registration_id=self.registration_id, title=title, body=body, icon=icon, data=data, **kwargs)
+		return fcm_send_message(
+			registration_id=self.registration_id,
+			title=title,
+			body=body,
+			icon=icon,
+			data=data,
+			sound=None,
+			badge=None,
+			**kwargs
+		)

@@ -8,7 +8,7 @@ User = apps.get_model(*SETTINGS["USER_MODEL"].split("."))
 
 
 class DeviceAdmin(admin.ModelAdmin):
-	list_display = ("__str__", "device_id", "user", "active", "date_created")
+	list_display = ("__str__", "device_id", "user", "active", "date_created",)
 	list_filter = ("active",)
 	actions = ("send_message", "send_bulk_message", "send_data_message", "send_bulk_data_message", "enable", "disable")
 	raw_id_fields = ("user",)
