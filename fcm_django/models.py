@@ -86,8 +86,8 @@ class FCMDevice(Device):
 			body=body,
 			icon=icon,
 			data=data,
-			sound=None,
-			badge=None,
+			sound=sound,
+			badge=badge,
 			**kwargs
 		)
 
