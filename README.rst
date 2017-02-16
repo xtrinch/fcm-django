@@ -13,7 +13,7 @@ FCMDevice model fields
  - active (default: true)
  - user (optional)
  - device_id (optional - can be used to uniquely identify devices)
- - type ('android' or 'ios')
+ - type ('android', 'web', 'ios')
 
 Functionality:
  - all necessary migrations
