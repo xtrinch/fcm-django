@@ -159,6 +159,10 @@ http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#binding-vie
 		# ...
 	)
 
+Demo javascript app
+-------------------
+https://github.com/xtrinch/fcm-django-web-demo
+
 
 Python 3 support
 ----------------
