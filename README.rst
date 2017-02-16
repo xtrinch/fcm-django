@@ -161,6 +161,7 @@ http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#binding-vie
 
 Demo javascript app
 -------------------
+Very basic demonstration of web push notifications:
 https://github.com/xtrinch/fcm-django-web-demo
 
 
