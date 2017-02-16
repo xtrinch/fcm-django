@@ -67,7 +67,8 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 class FCMDevice(Device):
 	DEVICE_TYPES = (
 		(u'ios', u'ios'),
-		(u'android', u'android')
+		(u'android', u'android'),
+		(u'web', u'web')
 	)
 
 	device_id = models.CharField(
