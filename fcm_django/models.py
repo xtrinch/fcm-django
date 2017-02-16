@@ -41,6 +41,9 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 			from .fcm import fcm_send_bulk_message
 
 			reg_ids = list(self.filter(active=True).values_list('registration_id', flat=True))
+			if len(reg_ids) == 0:
+				return [{'failure': len(self), 'success': 0}]
+
 			result = fcm_send_bulk_message(
 				registration_ids=reg_ids,
 				title=title,
@@ -52,7 +55,8 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 				**kwargs
 			)
 
-			for (index, item) in enumerate(result['results']):
+			results = result[0]['results']
+			for (index, item) in enumerate(results):
 				if 'error' in item:
 					reg_id = reg_ids[index]
 					self.filter(registration_id=reg_id).update(active=False)

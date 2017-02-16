@@ -31,8 +31,10 @@ class DeviceAdmin(admin.ModelAdmin):
 			if bulk:
 				if data:
 					r = queryset.send_message(data={"Nick" : "Mario"})
+					r = r[0]
 				else:
 					r = queryset.send_message(title="Test notification", body="Test bulk notification")
+					r = r[0]
 			else:
 				if data:
 					r = device.send_message(data={"Nick" : "Mario"})

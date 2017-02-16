@@ -8,7 +8,12 @@ def fcm_send_message(registration_id,
                      icon=None,
                      data=None,
                      sound=None,
-                     badge=None, **kwargs):
+                     badge=None,
+                     low_priority=None,
+                     condition=None,
+                     time_to_live=None,
+                     click_action=None,
+                     collapse_key=None, **kwargs):
     api_key = SETTINGS.get("FCM_SERVER_KEY")
     push_service = FCMNotification(api_key=api_key)
     result = push_service.notify_single_device(registration_id=registration_id,
@@ -18,6 +23,11 @@ def fcm_send_message(registration_id,
                                                data_message=data,
                                                sound=sound,
                                                badge=badge,
+                                               collapse_key=collapse_key,
+                                               low_priority=low_priority,
+                                               condition=condition,
+                                               time_to_live=time_to_live,
+                                               click_action=click_action,
                                                **kwargs)
 
     # do not raise errors, pyfcm will raise exceptions if response status will
@@ -32,7 +42,12 @@ def fcm_send_bulk_message(registration_ids,
                           icon=None,
                           data=None,
                           sound=None,
-                          badge=None, **kwargs):
+                          badge=None,
+                          low_priority=None,
+                          condition=None,
+                          time_to_live=None,
+                          click_action=None,
+                          collapse_key=None, **kwargs):
     api_key = SETTINGS.get("FCM_SERVER_KEY")
     push_service = FCMNotification(api_key=api_key)
 
@@ -44,6 +59,11 @@ def fcm_send_bulk_message(registration_ids,
         data_message=data,
         sound=sound,
         badge=badge,
+        collapse_key=collapse_key,
+        low_priority=low_priority,
+        condition=condition,
+        time_to_live=time_to_live,
+        click_action=click_action,
         **kwargs
     )
 
