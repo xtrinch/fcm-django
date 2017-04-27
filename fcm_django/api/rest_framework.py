@@ -36,12 +36,19 @@ class UniqueRegistrationSerializerMixin(Serializer):
 				request_method = "create"
 
 		Device = self.Meta.model
+		# if request authenticated, unique together with registration_id and user
+		user = self.context['request'].user
 		if request_method == "update":
-			devices = Device.objects.filter(registration_id=attrs["registration_id"]) \
-				.exclude(id=primary_key)
+			if user is not None and user.is_authenticated():
+				devices = Device.objects.filter(registration_id=attrs["registration_id"]) \
+					.exclude(id=primary_key)
+				if (attrs["active"]):
+					devices.filter(~Q(user=user)).update(active=False)
+				devices = devices.filter(user=user)
+			else:
+				devices = Device.objects.filter(registration_id=attrs["registration_id"]) \
+					.exclude(id=primary_key)
 		elif request_method == "create":
-			# if request authenticated, unique together with registration_id and user
-			user = self.context['request'].user
 			if user is not None and user.is_authenticated():
 				devices = Device.objects.filter(registration_id=attrs["registration_id"])
 				devices.filter(~Q(user=user)).update(active=False)
