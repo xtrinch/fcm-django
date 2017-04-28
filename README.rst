@@ -141,6 +141,7 @@ http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#using-route
 
 	urlpatterns = patterns('',
 		# URLs will show up at <api_root>/devices
+		# DRF browsable API which lists all available endpoints
 		url(r'^', include(router.urls)),
 		# ...
 	)
