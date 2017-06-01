@@ -4,6 +4,8 @@ from rest_framework.serializers import ModelSerializer, ValidationError, Seriali
 from rest_framework.viewsets import ModelViewSet
 from fcm_django.models import FCMDevice
 from django.db.models import Q
+from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
+
 # Fields
 
 
@@ -13,7 +15,6 @@ class DeviceSerializerMixin(ModelSerializer):
 		fields = ("id", "name", "registration_id", "device_id", "active", "date_created", "type")
 		read_only_fields = ("date_created",)
 
-		# See https://github.com/tomchristie/django-rest-framework/issues/1101
 		extra_kwargs = {"active": {"default": True}}
 
 class UniqueRegistrationSerializerMixin(Serializer):
@@ -82,11 +83,24 @@ class DeviceViewSetMixin(object):
 	def perform_create(self, serializer):
 		if self.request.user.is_authenticated():
 			serializer.save(user=self.request.user)
+
+			if SETTINGS["ONE_DEVICE_PER_USER"]:
+				active = self.request.data.get('active', True)
+				if active:
+					print('is active')
+					FCMDevice.objects.filter(user=self.request.user).update(active=False)
+
 		return super(DeviceViewSetMixin, self).perform_create(serializer)
 
 	def perform_update(self, serializer):
 		if self.request.user.is_authenticated():
 			serializer.save(user=self.request.user)
+
+			if SETTINGS["ONE_DEVICE_PER_USER"]:
+				active = self.request.data.get('active', False)
+				if active:
+					FCMDevice.objects.filter(user=self.request.user).update(active=False)
+
 		return super(DeviceViewSetMixin, self).perform_update(serializer)
 
 

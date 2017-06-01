@@ -61,6 +61,8 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 					reg_id = reg_ids[index]
 					self.filter(registration_id=reg_id).update(active=False)
 
+					if SETTINGS["DELETE_INACTIVE_DEVICES"]:
+						self.filter(registration_id=reg_id).delete()
 			return result
 
 
@@ -99,5 +101,8 @@ class FCMDevice(Device):
 		device = FCMDevice.objects.filter(registration_id=self.registration_id)
 		if 'error' in result['results'][0]:
 			device.update(active=False)
+
+			if SETTINGS["DELETE_INACTIVE_DEVICES"]:
+				device.delete()
 
 		return result

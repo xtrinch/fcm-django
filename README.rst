@@ -20,6 +20,7 @@ Functionality:
  - model admins for django admin
  - admin actions for testing single and bulk notification sending
  - automatic device pruning: devices to which notifications fail to send are marked as inactive
+ - devices marked as inactive will not be sent notifications
  - Django rest framework viewsets
 
 Setup
@@ -39,7 +40,9 @@ Edit your settings.py file:
 	)
 
 	FCM_DJANGO_SETTINGS = {
-		"FCM_SERVER_KEY": "[your api key]"
+		"FCM_SERVER_KEY": "[your api key]",
+		"ONE_DEVICE_PER_USER": True/False, # true if you want to have only one active device per registered user at a time
+		"DELETE_INACTIVE_DEVICES": True/False, # devices to which notifications cannot be sent, are deleted upon receiving error response from FCM
 	}
 
 Native Django migrations are in use. ``manage.py migrate`` will install and migrate all models.
