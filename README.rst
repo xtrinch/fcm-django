@@ -5,7 +5,7 @@ fcm-django
 .. image:: https://badge.fury.io/py/fcm-django.svg
     :target: https://badge.fury.io/py/fcm-django
     
-Django app for Firebase Cloud Messaging. Used as an unified platform for sending push notifications to mobile devices & browsers (android / ios / chrome / firefox / ...). Developed with the help of https://github.com/olucurious/PyFCM
+Django app for Firebase Cloud Messaging. Used as an unified platform for sending push notifications to mobile devices & browsers (android / ios / chrome / firefox / ...).
 
 FCMDevice model fields
  - *registration_id* (required - is FCM token)
@@ -178,6 +178,10 @@ Python 3 support
 ----------------
 ``fcm-django`` is fully compatible with Python 3.4 & 3.5
 
+Acknowledgements
+----------------
+Library relies on pyFCM for sending notifications, for more info about all the possible fields, see:
+https://github.com/olucurious/PyFCM
 
 Need help, have any questions, suggestions?
 ----------------
