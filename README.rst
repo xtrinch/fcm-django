@@ -8,12 +8,12 @@ fcm-django
 Django app for Firebase Cloud Messaging. Used as an unified platform for sending push notifications to mobile devices (android / ios). Developed with the help of https://github.com/olucurious/PyFCM
 
 FCMDevice model fields
- - registration_id (required - is FCM token)
- - name (optional)
- - active (default: true)
- - user (optional)
- - device_id (optional - can be used to uniquely identify devices)
- - type ('android', 'web', 'ios')
+ - *registration_id* (required - is FCM token)
+ - *name* (optional)
+ - *active* (default: true)
+ - *user* (optional)
+ - *device_id* (optional - can be used to uniquely identify devices)
+ - *type* ('android', 'web', 'ios')
 
 Functionality:
  - all necessary migrations
@@ -41,8 +41,13 @@ Edit your settings.py file:
 
 	FCM_DJANGO_SETTINGS = {
 		"FCM_SERVER_KEY": "[your api key]",
-		"ONE_DEVICE_PER_USER": True/False, # true if you want to have only one active device per registered user at a time
-		"DELETE_INACTIVE_DEVICES": True/False, # devices to which notifications cannot be sent, are deleted upon receiving error response from FCM
+		 # true if you want to have only one active device per registered user at a time
+		 # default: False
+		"ONE_DEVICE_PER_USER": True/False,
+		 # devices to which notifications cannot be sent, 
+		 # are deleted upon receiving error response from FCM
+		 # default: False
+		"DELETE_INACTIVE_DEVICES": True/False,
 	}
 
 Native Django migrations are in use. ``manage.py migrate`` will install and migrate all models.
@@ -165,7 +170,7 @@ http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#binding-vie
 
 Demo javascript app
 -------------------
-Very basic demonstration of web push notifications:
+Demonstration of web push notifications:
 https://github.com/xtrinch/fcm-django-web-demo
 
 
@@ -173,10 +178,6 @@ Python 3 support
 ----------------
 ``fcm-django`` is fully compatible with Python 3.4 & 3.5
 
-
-Acknowledgments
-----------------
-https://github.com/jleclanche/django-push-notifications
 
 Need help, have any questions, suggestions?
 ----------------
