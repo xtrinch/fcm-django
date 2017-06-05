@@ -87,7 +87,6 @@ class DeviceViewSetMixin(object):
 			if SETTINGS["ONE_DEVICE_PER_USER"]:
 				active = self.request.data.get('active', True)
 				if active:
-					print('is active')
 					FCMDevice.objects.filter(user=self.request.user).update(active=False)
 
 		return super(DeviceViewSetMixin, self).perform_create(serializer)
