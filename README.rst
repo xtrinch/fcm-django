@@ -87,6 +87,8 @@ As in the following example, you can send either a notification, a data message,
 Sending messages
 ----------------
 
+For a list of possible parameters see https://firebase.google.com/docs/cloud-messaging/http-server-ref#notification-payload-support
+
 .. code-block:: python
 
 	from fcm_django.models import FCMDevice
@@ -109,6 +111,7 @@ Sending messages in bulk
 	devices.send_message(title="Title", body="Message")
 	devices.send_message(title="Title", body="Message", data={"test": "test"})
 	devices.send_message(data={"test": "test"})
+
 
 Django REST Framework (DRF) support
 -----------------------------------

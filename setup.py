@@ -4,7 +4,7 @@ import fcm_django
 from distutils.core import setup
 import setuptools
 
-VERSION = '0.2.9'
+VERSION = '0.2.10'
 
 CLASSIFIERS = [
 	"Development Status :: 5 - Production/Stable",
@@ -31,7 +31,7 @@ setup(
 		"fcm_django/management/commands",
 	],
     install_requires=[
-        'pyfcm==1.2.3',
+        'pyfcm==1.3.1',
         'Django'
     ],
 	author=fcm_django.__author__,
