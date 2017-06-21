@@ -67,7 +67,6 @@ def fcm_send_message(registration_id,
     """
     if api_key is None:
         api_key = SETTINGS.get("FCM_SERVER_KEY")
-    print(api_key)
     push_service = FCMNotification(api_key=api_key)
     result = push_service.notify_single_device(registration_id=registration_id,
                                                message_title=title,
@@ -163,7 +162,6 @@ def fcm_send_bulk_message(registration_ids,
 
     if api_key is None:
         api_key = SETTINGS.get("FCM_SERVER_KEY")
-    print(api_key)
     push_service = FCMNotification(api_key=api_key)
 
     result = push_service.notify_multiple_devices(
