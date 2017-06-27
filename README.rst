@@ -104,16 +104,6 @@ For a list of possible parameters see https://firebase.google.com/docs/cloud-mes
 	device.send_message(data={"test": "test"})
 	device.send_message(title="Title", body="Message", icon=..., data={"test": "test"})
 
-By default the message will be sent using the FCM server key specified in the settings.py. This default key can be overridden by specifying a key when calling send_message. This can be used to send messages using different firebase projects.
-
-.. code-block:: python
-
-    from fcm_django.models import FCMDevice
-
-    device = FCMDevice.objects.all().first()
-    device.send_message(title="Title", body="Message", api_key="[project 1 api key]")
-    device.send_message(title="Title", body="Message", api_key="[project 2 api key]")
-
 Sending messages in bulk
 ------------------------
 
@@ -127,6 +117,18 @@ Sending messages in bulk
 	devices.send_message(title="Title", body="Message", data={"test": "test"})
 	devices.send_message(data={"test": "test"})
 
+Using multiple FCM server keys
+------------------------------
+
+By default the message will be sent using the FCM server key specified in the settings.py. This default key can be overridden by specifying a key when calling send_message. This can be used to send messages using different firebase projects.
+
+.. code-block:: python
+
+    from fcm_django.models import FCMDevice
+
+    device = FCMDevice.objects.all().first()
+    device.send_message(title="Title", body="Message", api_key="[project 1 api key]")
+    device.send_message(title="Title", body="Message", api_key="[project 2 api key]")
 
 Django REST Framework (DRF) support
 -----------------------------------
