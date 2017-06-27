@@ -10,7 +10,6 @@ def fcm_send_message(registration_id,
                      data=None,
                      sound=None,
                      badge=None,
-                     api_key=None,
                      low_priority=False,
                      condition=None,
                      time_to_live=None,
@@ -27,6 +26,7 @@ def fcm_send_message(registration_id,
                      title_loc_args=None,
                      content_available=None,
                      extra_kwargs={},
+                     api_key=None,
                      **kwargs):
 
     """
@@ -106,7 +106,6 @@ def fcm_send_bulk_message(registration_ids,
                           data=None,
                           sound=None,
                           badge=None,
-                          api_key=None,
                           low_priority=False,
                           condition=None,
                           time_to_live=None,
@@ -122,7 +121,9 @@ def fcm_send_bulk_message(registration_ids,
                           title_loc_key=None,
                           title_loc_args=None,
                           content_available=None,
-                          extra_kwargs={}, **kwargs):
+                          extra_kwargs={},
+                          api_key=None,
+                          **kwargs):
     """
     Copied from https://github.com/olucurious/PyFCM/blob/master/pyfcm/fcm.py:
 
