@@ -107,6 +107,7 @@ For a list of possible parameters see https://firebase.google.com/docs/cloud-mes
 By default the message will be sent using the FCM server key specified in the settings.py. This default key can be override by specifying a key when calling send message. This can be used to send messages to different firebase projects.
 
 .. code-block:: python
+
     from fcm_django.models import FCMDevice
 
     device = FCMDevice.objects.all().first()
