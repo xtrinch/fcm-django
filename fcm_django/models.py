@@ -36,7 +36,7 @@ class FCMDeviceManager(models.Manager):
 
 
 class FCMDeviceQuerySet(models.query.QuerySet):
-	def send_message(self, title=None, body=None, icon=None, data=None, sound=None, badge=None, **kwargs):
+	def send_message(self, title=None, body=None, icon=None, data=None, sound=None, badge=None, api_key=None, **kwargs):
 		if self:
 			from .fcm import fcm_send_bulk_message
 
@@ -52,6 +52,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 				data=data,
 				sound=sound,
 				badge=badge,
+				api_key=api_key,
 				**kwargs
 			)
 
@@ -85,7 +86,7 @@ class FCMDevice(Device):
 	class Meta:
 		verbose_name = _("FCM device")
 
-	def send_message(self, title=None, body=None, icon=None, data=None, sound=None, badge=None, **kwargs):
+	def send_message(self, title=None, body=None, icon=None, data=None, sound=None, badge=None, api_key=None, **kwargs):
 		from .fcm import fcm_send_message
 		result = fcm_send_message(
 			registration_id=self.registration_id,
@@ -95,6 +96,7 @@ class FCMDevice(Device):
 			data=data,
 			sound=sound,
 			badge=badge,
+			api_key=api_key,
 			**kwargs
 		)
 

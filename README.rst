@@ -4,7 +4,7 @@ fcm-django
 
 .. image:: https://badge.fury.io/py/fcm-django.svg
     :target: https://badge.fury.io/py/fcm-django
-    
+
 Django app for Firebase Cloud Messaging. Used as an unified platform for sending push notifications to mobile devices & browsers (android / ios / chrome / firefox / ...).
 
 FCMDevice model fields
@@ -44,7 +44,7 @@ Edit your settings.py file:
 		 # true if you want to have only one active device per registered user at a time
 		 # default: False
 		"ONE_DEVICE_PER_USER": True/False,
-		 # devices to which notifications cannot be sent, 
+		 # devices to which notifications cannot be sent,
 		 # are deleted upon receiving error response from FCM
 		 # default: False
 		"DELETE_INACTIVE_DEVICES": True/False,
@@ -59,7 +59,7 @@ You can read more about different types of messages here_.
 
 .. _here: https://firebase.google.com/docs/cloud-messaging/concept-options
 
-In short, there are two types: notifications and data messages. 
+In short, there are two types: notifications and data messages.
 
 Notification:
 
@@ -73,7 +73,7 @@ Notification:
 	      "icon" : "myicon"
 	    }
 	}
-	
+
 Data message:
 
 .. code-block:: json
@@ -97,12 +97,22 @@ For a list of possible parameters see https://firebase.google.com/docs/cloud-mes
 .. code-block:: python
 
 	from fcm_django.models import FCMDevice
-	
+
 	device = FCMDevice.objects.all().first()
 
 	device.send_message("Title", "Message")
 	device.send_message(data={"test": "test"})
 	device.send_message(title="Title", body="Message", icon=..., data={"test": "test"})
+
+By default the message will be sent using the FCM server key specified in the settings.py. This default key can be override by specifying a key when calling send_message. This can be used to send messages using different firebase projects.
+
+.. code-block:: python
+
+    from fcm_django.models import FCMDevice
+
+    device = FCMDevice.objects.all().first()
+    device.send_message(title="Title", body="Message", api_key="[project 1 api key]")
+    device.send_message(title="Title", body="Message", api_key="[project 2 api key]")
 
 Sending messages in bulk
 ------------------------
@@ -110,9 +120,9 @@ Sending messages in bulk
 .. code-block:: python
 
 	from fcm_django.models import FCMDevice
-	
+
 	devices = FCMDevice.objects.all()
-	
+
 	devices.send_message(title="Title", body="Message")
 	devices.send_message(title="Title", body="Message", data={"test": "test"})
 	devices.send_message(data={"test": "test"})
@@ -143,11 +153,11 @@ http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#using-route
 .. code-block:: python
 
 	from fcm_django.api.rest_framework import FCMDeviceAuthorizedViewSet
-	
+
 	from rest_framework.routers import DefaultRouter
 
 	router = DefaultRouter()
-	
+
 	router.register(r'devices', FCMDeviceAuthorizedViewSet)
 
 	urlpatterns = patterns('',
@@ -156,7 +166,7 @@ http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#using-route
 		url(r'^', include(router.urls)),
 		# ...
 	)
-	
+
 - Using as_view_ (specify which views to include)
 
 http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#binding-viewsets-to-urls-explicitly

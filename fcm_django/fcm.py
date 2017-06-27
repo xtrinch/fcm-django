@@ -2,6 +2,7 @@ from django.core.management import CommandError
 from pyfcm import FCMNotification
 from .settings import FCM_DJANGO_SETTINGS as SETTINGS
 
+
 def fcm_send_message(registration_id,
                      title=None,
                      body=None,
@@ -25,6 +26,7 @@ def fcm_send_message(registration_id,
                      title_loc_args=None,
                      content_available=None,
                      extra_kwargs={},
+                     api_key=None,
                      **kwargs):
 
     """
@@ -53,7 +55,7 @@ def fcm_send_message(registration_id,
             receive the message. Defaults to ``None``.
         dry_run (bool, optional): If ``True`` no message will be sent but
             request will be tested.
-            
+
     Returns:
         :tuple:`multicast_id(long), success(int), failure(int), canonical_ids(int), results(list)`:
         Response from FCM server.
@@ -63,8 +65,8 @@ def fcm_send_message(registration_id,
         InvalidDataError: Invalid data provided
         InternalPackageError: JSON parsing error, mostly from changes in the response of FCM, create a new github issue to resolve it.
     """
-
-    api_key = SETTINGS.get("FCM_SERVER_KEY")
+    if api_key is None:
+        api_key = SETTINGS.get("FCM_SERVER_KEY")
     push_service = FCMNotification(api_key=api_key)
     result = push_service.notify_single_device(registration_id=registration_id,
                                                message_title=title,
@@ -119,10 +121,12 @@ def fcm_send_bulk_message(registration_ids,
                           title_loc_key=None,
                           title_loc_args=None,
                           content_available=None,
-                          extra_kwargs={}, **kwargs):
+                          extra_kwargs={},
+                          api_key=None,
+                          **kwargs):
     """
     Copied from https://github.com/olucurious/PyFCM/blob/master/pyfcm/fcm.py:
-    
+
     Send push notification to a single device
     Args:
         registration_id (str): FCM device registration IDs.
@@ -157,7 +161,8 @@ def fcm_send_bulk_message(registration_ids,
         InternalPackageError: JSON parsing error, mostly from changes in the response of FCM, create a new github issue to resolve it.
     """
 
-    api_key = SETTINGS.get("FCM_SERVER_KEY")
+    if api_key is None:
+        api_key = SETTINGS.get("FCM_SERVER_KEY")
     push_service = FCMNotification(api_key=api_key)
 
     result = push_service.notify_multiple_devices(
