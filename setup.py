@@ -4,7 +4,7 @@ import fcm_django
 from distutils.core import setup
 import setuptools
 
-VERSION = '0.2.10'
+VERSION = '0.2.11'
 
 CLASSIFIERS = [
 	"Development Status :: 5 - Production/Stable",
@@ -37,7 +37,8 @@ setup(
 	author=fcm_django.__author__,
 	author_email=fcm_django.__email__,
 	classifiers=CLASSIFIERS,
-	description="Send push notifications to mobile devices through FCM in Django.",
+	description="Send push notifications to mobile devices & browsers through "
+				"FCM in Django.",
 	download_url="https://github.com/xtrinch/fcm-django/tarball/master",
 	long_description='',
 	url="https://github.com/xtrinch/fcm-django",
