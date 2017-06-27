@@ -104,7 +104,7 @@ For a list of possible parameters see https://firebase.google.com/docs/cloud-mes
 	device.send_message(data={"test": "test"})
 	device.send_message(title="Title", body="Message", icon=..., data={"test": "test"})
 
-By default the message will be sent using the FCM server key specified in the settings.py. This default key can be override by specifying a key when calling send_message. This can be used to send messages using different firebase projects.
+By default the message will be sent using the FCM server key specified in the settings.py. This default key can be overridden by specifying a key when calling send_message. This can be used to send messages using different firebase projects.
 
 .. code-block:: python
 
