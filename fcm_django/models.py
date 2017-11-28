@@ -49,8 +49,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             sound=None,
             badge=None,
             api_key=None,
-            **kwargs
-    ):
+            **kwargs):
         if self:
             from .fcm import fcm_send_bulk_message
 
@@ -112,8 +111,7 @@ class FCMDevice(Device):
             sound=None,
             badge=None,
             api_key=None,
-            **kwargs
-    ):
+            **kwargs):
         from .fcm import fcm_send_message
         result = fcm_send_message(
             registration_id=self.registration_id,

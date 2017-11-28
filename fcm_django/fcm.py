@@ -3,32 +3,31 @@ from .settings import FCM_DJANGO_SETTINGS as SETTINGS
 
 
 def fcm_send_message(
-    registration_id,
-    title=None,
-    body=None,
-    icon=None,
-    data=None,
-    sound=None,
-    badge=None,
-    low_priority=False,
-    condition=None,
-    time_to_live=None,
-    click_action=None,
-    collapse_key=None,
-    delay_while_idle=False,
-    restricted_package_name=None,
-    dry_run=False,
-    color=None,
-    tag=None,
-    body_loc_key=None,
-    body_loc_args=None,
-    title_loc_key=None,
-    title_loc_args=None,
-    content_available=None,
-    extra_kwargs={},
-    api_key=None,
-    **kwargs
-):
+        registration_id,
+        title=None,
+        body=None,
+        icon=None,
+        data=None,
+        sound=None,
+        badge=None,
+        low_priority=False,
+        condition=None,
+        time_to_live=None,
+        click_action=None,
+        collapse_key=None,
+        delay_while_idle=False,
+        restricted_package_name=None,
+        dry_run=False,
+        color=None,
+        tag=None,
+        body_loc_key=None,
+        body_loc_args=None,
+        title_loc_key=None,
+        title_loc_args=None,
+        content_available=None,
+        extra_kwargs={},
+        api_key=None,
+        **kwargs):
 
     """
     Copied from https://github.com/olucurious/PyFCM/blob/master/pyfcm/fcm.py:
@@ -108,8 +107,15 @@ def fcm_send_message(
     return result
 
 
-def fcm_send_single_device_data_message():
-    pass
+def fcm_send_single_device_data_message(
+        registration_id,
+        api_key=None):
+    if api_key is None:
+        api_key = SETTINGS.get("FCM_SERVER_KEY")
+    push_service = FCMNotification(api_key=api_key)
+    push_service.single_device_data_message(
+        registration_id=registration_id
+    )
 
 
 def fcm_send_bulk_message(
@@ -137,8 +143,7 @@ def fcm_send_bulk_message(
         content_available=None,
         extra_kwargs={},
         api_key=None,
-        **kwargs
-):
+        **kwargs):
     """
     Copied from https://github.com/olucurious/PyFCM/blob/master/pyfcm/fcm.py:
 
