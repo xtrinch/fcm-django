@@ -40,7 +40,7 @@ class FCMDeviceManager(models.Manager):
 
 
 class FCMDeviceQuerySet(models.query.QuerySet):
-    def send_message(
+    def send_messages(
             self,
             title=None,
             body=None,
@@ -50,18 +50,22 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             badge=None,
             api_key=None,
             **kwargs):
+        """
+        Send notification for all active devices in queryset and deactivate if
+        DELETE_INACTIVE_DEVICES setting is set to True.
+        """
         if self:
             from .fcm import fcm_send_bulk_message
 
-            reg_ids = list(self.filter(active=True).values_list(
+            registration_ids = list(self.filter(active=True).values_list(
                 'registration_id',
                 flat=True
             ))
-            if len(reg_ids) == 0:
+            if len(registration_ids) == 0:
                 return [{'failure': len(self), 'success': 0}]
 
             result = fcm_send_bulk_message(
-                registration_ids=reg_ids,
+                registration_ids=registration_ids,
                 title=title,
                 body=body,
                 icon=icon,
@@ -72,15 +76,73 @@ class FCMDeviceQuerySet(models.query.QuerySet):
                 **kwargs
             )
 
-            results = result[0]['results']
-            for (index, item) in enumerate(results):
-                if 'error' in item:
-                    reg_id = reg_ids[index]
-                    self.filter(registration_id=reg_id).update(active=False)
-
-                    if SETTINGS["DELETE_INACTIVE_DEVICES"]:
-                        self.filter(registration_id=reg_id).delete()
+            self._deactivate_devices_with_error_results(
+                registration_ids,
+                result[0]['results']
+            )
             return result
+
+    def send_data_messages(
+            self,
+            api_key=None,
+            condition=None,
+            collapse_key=None,
+            delay_while_idle=False,
+            time_to_live=None,
+            restricted_package_name=None,
+            low_priority=False,
+            dry_run=False,
+            data_message=None,
+            content_available=None,
+            timeout=5):
+        """
+        Send data messages for all active devices in queryset and deactivate if
+        DELETE_INACTIVE_DEVICES setting is set to True.
+        """
+        if self:
+            from .fcm import fcm_send_bulk_data_messages
+
+            registration_ids = list(self.filter(active=True).values_list(
+                'registration_id',
+                flat=True
+            ))
+            if len(registration_ids) == 0:
+                return [{'failure': len(self), 'success': 0}]
+
+            result = fcm_send_bulk_data_messages(
+                api_key=api_key,
+                registration_ids=registration_ids,
+                condition=condition,
+                collapse_key=collapse_key,
+                delay_while_idle=delay_while_idle,
+                time_to_live=time_to_live,
+                restricted_package_name=restricted_package_name,
+                low_priority=low_priority,
+                dry_run=dry_run,
+                data_message=data_message,
+                content_available=content_available,
+                timeout=timeout
+            )
+
+            self._deactivate_devices_with_error_results(
+                registration_ids,
+                result[0]['results']
+            )
+
+            return result
+
+    def _deactivate_devices_with_error_results(self, registration_ids, results):
+        for (index, item) in enumerate(results):
+            if 'error' in item:
+                registration_id = registration_ids[index]
+                self.filter(registration_id=registration_id).update(
+                    active=False
+                )
+                self._delete_inactive_devices_if_requested(registration_id)
+
+    def _delete_inactive_devices_if_requested(self, registration_id):
+        if SETTINGS["DELETE_INACTIVE_DEVICES"]:
+            self.filter(registration_id=registration_id).delete()
 
 
 class FCMDevice(Device):
@@ -112,9 +174,12 @@ class FCMDevice(Device):
             badge=None,
             api_key=None,
             **kwargs):
+        """
+        Send single notification message.
+        """
         from .fcm import fcm_send_message
         result = fcm_send_message(
-            registration_id=self.registration_id,
+            registration_id=str(self.registration_id),
             title=title,
             body=body,
             icon=icon,
@@ -125,11 +190,51 @@ class FCMDevice(Device):
             **kwargs
         )
 
+        self._deactivate_device_on_error_result(result)
+        return result
+
+    def send_data_message(
+            self,
+            condition=None,
+            collapse_key=None,
+            delay_while_idle=False,
+            time_to_live=None,
+            restricted_package_name=None,
+            low_priority=False,
+            dry_run=False,
+            data_message=None,
+            content_available=None,
+            api_key=None,
+            timeout=5):
+        """
+        Send single data message.
+        """
+        from .fcm import fcm_send_single_device_data_message
+        result = fcm_send_single_device_data_message(
+            registration_id=str(self.registration_id),
+            condition=condition,
+            collapse_key=collapse_key,
+            delay_while_idle=delay_while_idle,
+            time_to_live=time_to_live,
+            restricted_package_name=restricted_package_name,
+            low_priority=low_priority,
+            dry_run=dry_run,
+            data_message=data_message,
+            content_available=content_available,
+            api_key=api_key,
+            timeout=timeout
+        )
+
+        self._deactivate_device_on_error_result(result)
+        return result
+
+    def _deactivate_device_on_error_result(self, result):
         device = FCMDevice.objects.filter(registration_id=self.registration_id)
         if 'error' in result['results'][0]:
             device.update(active=False)
+            self._delete_inactive_device_if_requested(device)
 
-            if SETTINGS["DELETE_INACTIVE_DEVICES"]:
-                device.delete()
-
-        return result
+    @staticmethod
+    def _delete_inactive_device_if_requested(device):
+        if SETTINGS["DELETE_INACTIVE_DEVICES"]:
+            device.delete()
