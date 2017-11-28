@@ -96,11 +96,10 @@ class DeviceViewSetMixin(object):
         if self.request.user.is_authenticated():
             serializer.save(user=self.request.user)
 
-            if SETTINGS["ONE_DEVICE_PER_USER"]:
-                active = self.request.data.get('active', True)
-                if active:
-                    FCMDevice.objects.filter(user=self.request.user).update(
-                        active=False)
+            if (SETTINGS["ONE_DEVICE_PER_USER"] and
+                    self.request.data.get('active', True)):
+                FCMDevice.objects.filter(user=self.request.user).update(
+                    active=False)
 
         return super(DeviceViewSetMixin, self).perform_create(serializer)
 
@@ -108,11 +107,10 @@ class DeviceViewSetMixin(object):
         if self.request.user.is_authenticated():
             serializer.save(user=self.request.user)
 
-            if SETTINGS["ONE_DEVICE_PER_USER"]:
-                active = self.request.data.get('active', False)
-                if active:
-                    FCMDevice.objects.filter(user=self.request.user).update(
-                        active=False)
+            if (SETTINGS["ONE_DEVICE_PER_USER"] and
+                    self.request.data.get('active', False)):
+                FCMDevice.objects.filter(user=self.request.user).update(
+                    active=False)
 
         return super(DeviceViewSetMixin, self).perform_update(serializer)
 
