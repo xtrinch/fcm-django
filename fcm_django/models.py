@@ -10,7 +10,12 @@ from .settings import FCM_DJANGO_SETTINGS as SETTINGS
 
 @python_2_unicode_compatible
 class Device(models.Model):
-    name = models.CharField(max_length=255, verbose_name=_("Name"), blank=True, null=True)
+    name = models.CharField(
+        max_length=255,
+        verbose_name=_("Name"),
+        blank=True,
+        null=True
+    )
     active = models.BooleanField(
         verbose_name=_("Is active"), default=True,
         help_text=_("Inactive devices will not be sent notifications")
@@ -36,11 +41,24 @@ class FCMDeviceManager(models.Manager):
 
 
 class FCMDeviceQuerySet(models.query.QuerySet):
-    def send_message(self, title=None, body=None, icon=None, data=None, sound=None, badge=None, api_key=None, **kwargs):
+    def send_message(
+            self,
+            title=None,
+            body=None,
+            icon=None,
+            data=None,
+            sound=None,
+            badge=None,
+            api_key=None,
+            **kwargs
+    ):
         if self:
             from .fcm import fcm_send_bulk_message
 
-            reg_ids = list(self.filter(active=True).values_list('registration_id', flat=True))
+            reg_ids = list(self.filter(active=True).values_list(
+                'registration_id',
+                flat=True
+            ))
             if len(reg_ids) == 0:
                 return [{'failure': len(self), 'success': 0}]
 
@@ -86,7 +104,17 @@ class FCMDevice(Device):
     class Meta:
         verbose_name = _("FCM device")
 
-    def send_message(self, title=None, body=None, icon=None, data=None, sound=None, badge=None, api_key=None, **kwargs):
+    def send_message(
+            self,
+            title=None,
+            body=None,
+            icon=None,
+            data=None,
+            sound=None,
+            badge=None,
+            api_key=None,
+            **kwargs
+    ):
         from .fcm import fcm_send_message
         result = fcm_send_message(
             registration_id=self.registration_id,
