@@ -225,7 +225,6 @@ class FCMDevice(Device):
             timeout=timeout
         )
 
-        print (result)
         self._deactivate_device_on_error_result(result)
         return result
 
