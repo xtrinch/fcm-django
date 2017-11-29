@@ -33,21 +33,19 @@ class DeviceAdmin(admin.ModelAdmin):
         for device in queryset:
             if bulk:
                 if data:
-                    response = queryset.send_messages(
+                    response = queryset.send_message(
                         data={"Nick": "Mario"}
                     )
-                    response = response[0]
                 else:
-                    response = queryset.send_messages(
+                    response = queryset.send_message(
                         title="Test notification",
                         body="Test bulk notification"
                     )
-                    response = response[0]
             else:
                 if data:
-                    response = device.send_messages(data={"Nick": "Mario"})
+                    response = device.send_message(data={"Nick": "Mario"})
                 else:
-                    response = device.send_messages(
+                    response = device.send_message(
                         title="Test notification",
                         body="Test single notification"
                     )

@@ -40,7 +40,7 @@ class FCMDeviceManager(models.Manager):
 
 
 class FCMDeviceQuerySet(models.query.QuerySet):
-    def send_messages(
+    def send_message(
             self,
             title=None,
             body=None,
@@ -78,11 +78,11 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 
             self._deactivate_devices_with_error_results(
                 registration_ids,
-                result[0]['results']
+                result['results']
             )
             return result
 
-    def send_data_messages(
+    def send_data_message(
             self,
             api_key=None,
             condition=None,
@@ -126,7 +126,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 
             self._deactivate_devices_with_error_results(
                 registration_ids,
-                result[0]['results']
+                result['results']
             )
 
             return result
@@ -225,12 +225,13 @@ class FCMDevice(Device):
             timeout=timeout
         )
 
+        print (result)
         self._deactivate_device_on_error_result(result)
         return result
 
     def _deactivate_device_on_error_result(self, result):
         device = FCMDevice.objects.filter(registration_id=self.registration_id)
-        if 'error' in result['results'][0]:
+        if 'error' in result['results']:
             device.update(active=False)
             self._delete_inactive_device_if_requested(device)
 
