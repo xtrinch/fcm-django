@@ -231,7 +231,7 @@ class FCMDevice(Device):
 
     def _deactivate_device_on_error_result(self, result):
         device = FCMDevice.objects.filter(registration_id=self.registration_id)
-        if 'error' in result['results']:
+        if 'error' in result['results'][0]:
             device.update(active=False)
             self._delete_inactive_device_if_requested(device)
 
