@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 import fcm_django
-from distutils.core import setup
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
-VERSION = '0.2.12'
+VERSION = '0.2.13'
 
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
