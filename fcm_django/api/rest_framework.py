@@ -47,7 +47,7 @@ class UniqueRegistrationSerializerMixin(Serializer):
         # user
         user = self.context['request'].user
         if request_method == "update":
-            if user is not None and user.is_authenticated():
+            if user is not None and user.is_authenticated:
                 devices = Device.objects.filter(
                     registration_id=attrs["registration_id"]) \
                     .exclude(id=primary_key)
@@ -59,7 +59,7 @@ class UniqueRegistrationSerializerMixin(Serializer):
                     registration_id=attrs["registration_id"]) \
                     .exclude(id=primary_key)
         elif request_method == "create":
-            if user is not None and user.is_authenticated():
+            if user is not None and user.is_authenticated:
                 devices = Device.objects.filter(
                     registration_id=attrs["registration_id"])
                 devices.filter(~Q(user=user)).update(active=False)
@@ -93,7 +93,7 @@ class DeviceViewSetMixin(object):
     lookup_field = "registration_id"
 
     def perform_create(self, serializer):
-        if self.request.user.is_authenticated():
+        if self.request.user.is_authenticated:
             serializer.save(user=self.request.user)
 
             if (SETTINGS["ONE_DEVICE_PER_USER"] and
@@ -104,7 +104,7 @@ class DeviceViewSetMixin(object):
         return super(DeviceViewSetMixin, self).perform_create(serializer)
 
     def perform_update(self, serializer):
-        if self.request.user.is_authenticated():
+        if self.request.user.is_authenticated:
             serializer.save(user=self.request.user)
 
             if (SETTINGS["ONE_DEVICE_PER_USER"] and
