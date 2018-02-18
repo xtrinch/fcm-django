@@ -10,7 +10,7 @@ from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
 
 
 # Django 2 and 1 compatibility layer
-def is_user_authenticated(self, user):
+def is_user_authenticated(user):
     """ Django 2 and 1 compatibility layer.
 
     Arguments:
