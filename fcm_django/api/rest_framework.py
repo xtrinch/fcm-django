@@ -59,8 +59,7 @@ class UniqueRegistrationSerializerMixin(Serializer):
         # user
         user = self.context['request'].user
         if request_method == "update":
-            if user is not None and 
-            (user):
+            if user is not None and is_user_authenticated(user):
                 devices = Device.objects.filter(
                     registration_id=attrs["registration_id"]) \
                     .exclude(id=primary_key)
