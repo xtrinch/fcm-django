@@ -135,11 +135,13 @@ class FCMDeviceQuerySet(models.query.QuerySet):
     def _deactivate_devices_with_error_results(self, registration_ids, results):
         for (index, item) in enumerate(results):
             if 'error' in item:
-                registration_id = registration_ids[index]
-                self.filter(registration_id=registration_id).update(
-                    active=False
-                )
-                self._delete_inactive_devices_if_requested(registration_id)
+                error_list = ['MissingRegistration', 'MismatchSenderId', 'InvalidRegistration', 'NotRegistered']
+                if item['error'] in error_list:
+                    registration_id = registration_ids[index]
+                    self.filter(registration_id=registration_id).update(
+                        active=False
+                    )
+                    self._delete_inactive_devices_if_requested(registration_id)
 
     def _delete_inactive_devices_if_requested(self, registration_id):
         if SETTINGS["DELETE_INACTIVE_DEVICES"]:
