@@ -100,13 +100,11 @@ class FCMDevice(Device):
 
 		device = FCMDevice.objects.filter(registration_id=self.registration_id)
 		if 'error' in result['results'][0]:
-			if result['results'][0] == {'error': 'NotRegistered'}:
+			error_list = ['MissingRegistration', 'MismatchSenderId', 'InvalidRegistration', 'NotRegistered']
+			if result['results'][0]['error'] in error_list:
 				device.update(active=False)
 
 				if SETTINGS["DELETE_INACTIVE_DEVICES"]:
 					device.delete()
-			elif result['results'][0] == {'error': 'Unavailable'}:
-				# Try again logic, maybe try only one or 2 times and the generate error?
-				self.send_message(*args, **kwargs)
 
 		return result
