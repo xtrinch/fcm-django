@@ -1,6 +1,5 @@
 from pyfcm import FCMNotification
 from .settings import FCM_DJANGO_SETTINGS as SETTINGS
-from rest_framework.settings import import_from_string
 
 
 def fcm_send_message(
@@ -75,7 +74,6 @@ def fcm_send_message(
     """
     if api_key is None:
         api_key = SETTINGS.get("FCM_SERVER_KEY")
-
     push_service = FCMNotification(api_key=api_key, json_encoder=json_encoder)
     result = push_service.notify_single_device(
         registration_id=registration_id,
@@ -122,8 +120,8 @@ def fcm_send_single_device_data_message(
         data_message=None,
         content_available=None,
         api_key=None,
-        json_encoder=None,
-        timeout=5):
+        timeout=5,
+        json_encoder=None):
     """
     Send push message to a single device
     All arguments correspond to that defined in pyfcm/fcm.py.
