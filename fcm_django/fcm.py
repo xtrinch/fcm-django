@@ -1,5 +1,6 @@
 from pyfcm import FCMNotification
 from .settings import FCM_DJANGO_SETTINGS as SETTINGS
+from rest_framework.settings import import_from_string
 
 
 def fcm_send_message(
@@ -27,6 +28,7 @@ def fcm_send_message(
         content_available=None,
         extra_kwargs={},
         api_key=None,
+        json_encoder=None,
         **kwargs):
 
     """
@@ -73,7 +75,8 @@ def fcm_send_message(
     """
     if api_key is None:
         api_key = SETTINGS.get("FCM_SERVER_KEY")
-    push_service = FCMNotification(api_key=api_key)
+
+    push_service = FCMNotification(api_key=api_key, json_encoder=json_encoder)
     result = push_service.notify_single_device(
         registration_id=registration_id,
         message_title=title,
@@ -119,6 +122,7 @@ def fcm_send_single_device_data_message(
         data_message=None,
         content_available=None,
         api_key=None,
+        json_encoder=None,
         timeout=5):
     """
     Send push message to a single device
@@ -162,7 +166,8 @@ def fcm_send_single_device_data_message(
             contact the project owner to resolve the issue
     """
     push_service = FCMNotification(
-        api_key=SETTINGS.get("FCM_SERVER_KEY") if api_key is None else api_key
+        api_key=SETTINGS.get("FCM_SERVER_KEY") if api_key is None else api_key,
+        json_encoder=json_encoder,
     )
     return push_service.single_device_data_message(
         registration_id=registration_id,
@@ -204,6 +209,7 @@ def fcm_send_bulk_message(
         content_available=None,
         extra_kwargs={},
         api_key=None,
+        json_encoder=None,
         **kwargs):
     """
     Copied from https://github.com/olucurious/PyFCM/blob/master/pyfcm/fcm.py:
@@ -250,7 +256,7 @@ def fcm_send_bulk_message(
 
     if api_key is None:
         api_key = SETTINGS.get("FCM_SERVER_KEY")
-    push_service = FCMNotification(api_key=api_key)
+    push_service = FCMNotification(api_key=api_key, json_encoder=json_encoder, )
 
     result = push_service.notify_multiple_devices(
         registration_ids=registration_ids,
@@ -297,7 +303,8 @@ def fcm_send_bulk_data_messages(
             dry_run=False,
             data_message=None,
             content_available=None,
-            timeout=5):
+            timeout=5,
+            json_encoder=None):
     """
     Arguments correspond to those from pyfcm/fcm.py.
 
@@ -337,7 +344,8 @@ def fcm_send_bulk_data_messages(
         InternalPackageError: JSON parsing error, mostly from changes in the response of FCM, create a new github issue to resolve it.
     """
     push_service = FCMNotification(
-        api_key=SETTINGS.get("FCM_SERVER_KEY") if api_key is None else api_key
+        api_key=SETTINGS.get("FCM_SERVER_KEY") if api_key is None else api_key,
+        json_encoder=json_encoder,
     )
     return push_service.multiple_devices_data_message(
         registration_ids=registration_ids,
