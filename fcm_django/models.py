@@ -95,7 +95,8 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             dry_run=False,
             data_message=None,
             content_available=None,
-            timeout=5):
+            timeout=5,
+            json_encoder=None):
         """
         Send data messages for all active devices in queryset and deactivate if
         DELETE_INACTIVE_DEVICES setting is set to True.
@@ -122,7 +123,8 @@ class FCMDeviceQuerySet(models.query.QuerySet):
                 dry_run=dry_run,
                 data_message=data_message,
                 content_available=content_available,
-                timeout=timeout
+                timeout=timeout,
+                json_encoder=json_encoder,
             )
 
             self._deactivate_devices_with_error_results(
@@ -208,7 +210,8 @@ class FCMDevice(Device):
             data_message=None,
             content_available=None,
             api_key=None,
-            timeout=5):
+            timeout=5,
+            json_encoder=None):
         """
         Send single data message.
         """
@@ -225,7 +228,8 @@ class FCMDevice(Device):
             data_message=data_message,
             content_available=content_available,
             api_key=api_key,
-            timeout=timeout
+            timeout=timeout,
+            json_encoder=json_encoder,
         )
 
         self._deactivate_device_on_error_result(result)
