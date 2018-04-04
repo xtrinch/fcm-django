@@ -117,6 +117,16 @@ Sending messages in bulk
 	devices.send_message(title="Title", body="Message", data={"test": "test"})
 	devices.send_message(data={"test": "test"})
 
+Sending messages to topic
+-------------------------
+
+.. code-block:: python
+
+	from fcm_django.fcm import fcm_send_topic_message
+
+	fcm_send_topic_message(topic_name='My topic', message_body='Hello', message_title='A message')
+
+
 Using multiple FCM server keys
 ------------------------------
 
