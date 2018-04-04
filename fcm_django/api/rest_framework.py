@@ -75,7 +75,7 @@ class UniqueRegistrationSerializerMixin(Serializer):
                 devices = Device.objects.filter(
                     registration_id=attrs["registration_id"])
                 devices.filter(~Q(user=user)).update(active=False)
-                devices = devices.filter(user=user)
+                devices = devices.filter(user=user, active=True)
             else:
                 devices = Device.objects.filter(
                     registration_id=attrs["registration_id"])
