@@ -201,7 +201,7 @@ https://github.com/xtrinch/fcm-django-web-demo
 
 Python 3 support
 ----------------
-``fcm-django`` is fully compatible with Python 3.4 & 3.5 & 3.6
+``fcm-django`` is fully compatible with Python 3.4 & 3.5 & 3.6 & 3.7
 
 Acknowledgements
 ----------------
