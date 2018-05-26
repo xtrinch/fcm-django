@@ -150,7 +150,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             self.filter(registration_id=registration_id).delete()
 
 
-class FCMDevice(Device):
+class AbstractFCMDevice(Device):
     DEVICE_TYPES = (
         (u'ios', u'ios'),
         (u'android', u'android'),
@@ -167,6 +167,7 @@ class FCMDevice(Device):
     objects = FCMDeviceManager()
 
     class Meta:
+        abstract = True
         verbose_name = _("FCM device")
 
     def send_message(
@@ -247,3 +248,7 @@ class FCMDevice(Device):
     def _delete_inactive_device_if_requested(device):
         if SETTINGS["DELETE_INACTIVE_DEVICES"]:
             device.delete()
+
+
+class FCMDevice(AbstractFCMDevice):
+    pass
