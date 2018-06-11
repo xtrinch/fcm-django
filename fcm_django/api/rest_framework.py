@@ -1,12 +1,21 @@
 from __future__ import absolute_import
+import rest_framework
 from rest_framework import permissions
-from rest_framework.compat import is_authenticated
 from rest_framework.serializers import ModelSerializer, ValidationError, \
-    Serializer, CurrentUserDefault
+    Serializer
 from rest_framework.viewsets import ModelViewSet
 from fcm_django.models import FCMDevice
 from django.db.models import Q
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
+
+
+def is_user_authenticated(user):
+    if rest_framework.VERSION < '3.7.0':
+        from rest_framework.compat import is_authenticated
+        return is_authenticated(user)
+    else:
+        from rest_framework.compat import authenticated
+        return authenticated(user)
 
 # Serializers
 class DeviceSerializerMixin(ModelSerializer):
@@ -44,7 +53,7 @@ class UniqueRegistrationSerializerMixin(Serializer):
         # user
         user = self.context['request'].user
         if request_method == "update":
-            if user is not None and is_authenticated(user):
+            if user is not None and is_user_authenticated(user):
                 devices = Device.objects.filter(
                     registration_id=attrs["registration_id"]) \
                     .exclude(id=primary_key)
@@ -56,7 +65,7 @@ class UniqueRegistrationSerializerMixin(Serializer):
                     registration_id=attrs["registration_id"]) \
                     .exclude(id=primary_key)
         elif request_method == "create":
-            if user is not None and is_authenticated(user):
+            if user is not None and is_user_authenticated(user):
                 devices = Device.objects.filter(
                     registration_id=attrs["registration_id"])
                 devices.filter(~Q(user=user)).update(active=False)
@@ -90,7 +99,7 @@ class DeviceViewSetMixin(object):
     lookup_field = "registration_id"
 
     def perform_create(self, serializer):
-        if is_authenticated(self.request.user):
+        if is_user_authenticated(self.request.user):
             serializer.save(user=self.request.user)
 
             if (SETTINGS["ONE_DEVICE_PER_USER"] and
@@ -101,7 +110,7 @@ class DeviceViewSetMixin(object):
         return super(DeviceViewSetMixin, self).perform_create(serializer)
 
     def perform_update(self, serializer):
-        if is_authenticated(self.request.user):
+        if is_user_authenticated(self.request.user):
             serializer.save(user=self.request.user)
 
             if (SETTINGS["ONE_DEVICE_PER_USER"] and
