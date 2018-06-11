@@ -1,27 +1,21 @@
 from __future__ import absolute_import
+import rest_framework
 from rest_framework import permissions
 from rest_framework.serializers import ModelSerializer, ValidationError, \
-    Serializer, CurrentUserDefault
+    Serializer
 from rest_framework.viewsets import ModelViewSet
 from fcm_django.models import FCMDevice
-from django import VERSION as DJ_VERSION
 from django.db.models import Q
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
 
 
-# Django 2 and 1 compatibility layer
 def is_user_authenticated(user):
-    """ Django 2 and 1 compatibility layer.
-
-    Arguments:
-    user -- Django User model.
-    """
-
-    if DJ_VERSION[0] > 1:
-        return user.is_authenticated
+    if rest_framework.VERSION < '3.7.0':
+        from rest_framework.compat import is_authenticated
+        return is_authenticated(user)
     else:
-        return user.is_authenticated()
-
+        from rest_framework.compat import authenticated
+        return authenticated(user)
 
 # Serializers
 class DeviceSerializerMixin(ModelSerializer):
