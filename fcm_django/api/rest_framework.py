@@ -90,7 +90,7 @@ class FCMDeviceSerializer(ModelSerializer, UniqueRegistrationSerializerMixin):
     class Meta(DeviceSerializerMixin.Meta):
         model = FCMDevice
 
-        extra_kwargs = {"id": {"read_only": False, "required": False}}
+        extra_kwargs = {"id": {"read_only": True, "required": False}}
         extra_kwargs.update(DeviceSerializerMixin.Meta.extra_kwargs)
 
 
