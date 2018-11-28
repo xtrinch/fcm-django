@@ -251,4 +251,7 @@ class AbstractFCMDevice(Device):
 
 
 class FCMDevice(AbstractFCMDevice):
-    pass
+    class Meta:
+        verbose_name = _('FCM device')
+        verbose_name_plural = _('FCM devices')
+
