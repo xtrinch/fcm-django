@@ -17,3 +17,4 @@ fcm_django.egg-info
 
 # tox
 .tox
+.DS_Store
