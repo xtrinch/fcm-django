@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
+from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
 
 try:
     UUIDField = models.UUIDField
@@ -14,7 +15,7 @@ except AttributeError:
 class Migration(migrations.Migration):
 
     dependencies = [
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+        migrations.swappable_dependency(SETTINGS['USER_MODEL']),
     ]
 
     operations = [
@@ -28,7 +29,7 @@ class Migration(migrations.Migration):
                 ('device_id', UUIDField(blank=True, db_index=True, help_text='GUID()', null=True, verbose_name='Device ID')),
                 ('registration_id', models.TextField(verbose_name='Registration token')),
                 ('type', models.CharField(choices=[('ios', 'ios'), ('android', 'android')], max_length=10)),
-                ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to=SETTINGS['USER_MODEL'])),
             ],
             options={
                 'verbose_name': 'FCM device',
