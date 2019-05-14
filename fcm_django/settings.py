@@ -1,8 +1,10 @@
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
 
 FCM_DJANGO_SETTINGS = getattr(settings, "FCM_DJANGO_SETTINGS", {})
 
 # FCM
+FCM_DJANGO_SETTINGS.setdefault("APP_VERBOSE_NAME", _('FCM Django'))
 FCM_DJANGO_SETTINGS.setdefault("FCM_SERVER", "https://fcm.googleapis.com/fcm/send")
 FCM_DJANGO_SETTINGS.setdefault("FCM_SERVER_KEY", None)
 FCM_DJANGO_SETTINGS.setdefault("ONE_DEVICE_PER_USER", False)

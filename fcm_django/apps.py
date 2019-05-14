@@ -1,7 +1,7 @@
 from django.apps import AppConfig
-from django.utils.translation import ugettext_lazy as _
+from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
 
 
 class FcmDjangoConfig(AppConfig):
     name = 'fcm_django'
-    verbose_name = _('FCM Django')
+    verbose_name = SETTINGS["APP_VERBOSE_NAME"]
