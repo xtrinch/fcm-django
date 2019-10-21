@@ -27,6 +27,7 @@ def fcm_send_topic_message(
         title_loc_args=None,
         content_available=None,
         timeout=5,
+        extra_notification_kwargs=None,
         extra_kwargs={}):
 
     if api_key is None:
@@ -56,7 +57,8 @@ def fcm_send_topic_message(
         title_loc_args=title_loc_args,
         content_available=content_available,
         timeout=timeout,
-        extra_kwargs=extra_kwargs
+        extra_kwargs=extra_kwargs,
+        extra_notification_kwargs=extra_notification_kwargs,
     )
 
     return result
@@ -88,6 +90,7 @@ def fcm_send_message(
         extra_kwargs={},
         api_key=None,
         json_encoder=None,
+        extra_notification_kwargs=None,
         **kwargs):
 
     """
@@ -159,6 +162,7 @@ def fcm_send_message(
         title_loc_args=title_loc_args,
         content_available=content_available,
         extra_kwargs=extra_kwargs,
+        extra_notification_kwargs=extra_notification_kwargs,
         **kwargs
     )
 
@@ -181,7 +185,9 @@ def fcm_send_single_device_data_message(
         content_available=None,
         api_key=None,
         timeout=5,
-        json_encoder=None):
+        json_encoder=None,
+        extra_notification_kwargs=None,
+    ):
     """
     Send push message to a single device
     All arguments correspond to that defined in pyfcm/fcm.py.
@@ -238,7 +244,8 @@ def fcm_send_single_device_data_message(
         dry_run=dry_run,
         data_message=data_message,
         content_available=content_available,
-        timeout=timeout
+        timeout=timeout,
+        extra_notification_kwargs=extra_notification_kwargs,
     )
 
 
@@ -268,6 +275,7 @@ def fcm_send_bulk_message(
         extra_kwargs={},
         api_key=None,
         json_encoder=None,
+        extra_notification_kwargs=None,
         **kwargs):
     """
     Copied from https://github.com/olucurious/PyFCM/blob/master/pyfcm/fcm.py:
@@ -340,6 +348,7 @@ def fcm_send_bulk_message(
         title_loc_args=title_loc_args,
         content_available=content_available,
         extra_kwargs=extra_kwargs,
+        extra_notification_kwargs=extra_notification_kwargs,
         **kwargs
     )
 
@@ -362,6 +371,7 @@ def fcm_send_bulk_data_messages(
             data_message=None,
             content_available=None,
             timeout=5,
+            extra_notification_kwargs=None,
             json_encoder=None):
     """
     Arguments correspond to those from pyfcm/fcm.py.
@@ -416,7 +426,8 @@ def fcm_send_bulk_data_messages(
         dry_run=dry_run,
         data_message=data_message,
         content_available=content_available,
-        timeout=timeout
+        timeout=timeout,
+        extra_notification_kwargs=extra_notification_kwargs,
     )
 
 
