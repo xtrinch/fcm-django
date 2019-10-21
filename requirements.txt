@@ -1,2 +1,2 @@
-pyfcm==1.4.3
+pyfcm==1.4.7
 django-uuidfield==0.5.0
