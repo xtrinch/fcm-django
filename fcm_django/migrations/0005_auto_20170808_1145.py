@@ -14,7 +14,7 @@ USER_MODEL = FCM_DJANGO_SETTINGS.get("USER_MODEL", settings.AUTH_USER_MODEL)
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('fcm_django', '0003_auto_20170313_1314'),
+        ('fcm_django', '0004_auto_20181128_1642'),
     ]
 
     operations = [
