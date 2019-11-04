@@ -108,7 +108,7 @@ class DeviceViewSetMixin(object):
 
     def perform_create(self, serializer):
         if is_user_authenticated(self.request.user):
-            serializer.save(user=self.request.user)
+            serializer.save(user=self.request.user, commit=False)
 
             if (SETTINGS["ONE_DEVICE_PER_USER"] and
                     self.request.data.get('active', True)):
@@ -119,7 +119,7 @@ class DeviceViewSetMixin(object):
 
     def perform_update(self, serializer):
         if is_user_authenticated(self.request.user):
-            serializer.save(user=self.request.user)
+            serializer.save(user=self.request.user, commit=False)
 
             if (SETTINGS["ONE_DEVICE_PER_USER"] and
                     self.request.data.get('active', False)):
