@@ -34,7 +34,6 @@ setup(
     ],
     install_requires=[
         'pyfcm==1.4.7',
-        'django-uuidfield==0.5.0',
         'Django'
     ],
     author=fcm_django.__author__,
