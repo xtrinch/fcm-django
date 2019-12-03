@@ -2,7 +2,8 @@ from __future__ import absolute_import
 from rest_framework import permissions
 from rest_framework.serializers import ModelSerializer, ValidationError, \
     Serializer, CurrentUserDefault
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.mixins import CreateModelMixin
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from fcm_django.models import FCMDevice
 from django import VERSION as DJ_VERSION
 from django.db.models import Q
@@ -63,7 +64,7 @@ class UniqueRegistrationSerializerMixin(Serializer):
                 devices = Device.objects.filter(
                     registration_id=attrs["registration_id"]) \
                     .exclude(id=primary_key)
-                if (attrs["active"]):
+                if (attrs.get('active', False)):
                     devices.filter(~Q(user=user)).update(active=False)
                 devices = devices.filter(user=user)
             else:
@@ -107,7 +108,7 @@ class DeviceViewSetMixin(object):
 
     def perform_create(self, serializer):
         if is_user_authenticated(self.request.user):
-            serializer.save(user=self.request.user)
+            serializer.save(user=self.request.user, commit=False)
 
             if (SETTINGS["ONE_DEVICE_PER_USER"] and
                     self.request.data.get('active', True)):
@@ -118,7 +119,7 @@ class DeviceViewSetMixin(object):
 
     def perform_update(self, serializer):
         if is_user_authenticated(self.request.user):
-            serializer.save(user=self.request.user)
+            serializer.save(user=self.request.user, commit=False)
 
             if (SETTINGS["ONE_DEVICE_PER_USER"] and
                     self.request.data.get('active', False)):
@@ -138,6 +139,11 @@ class AuthorizedMixin(object):
 
 # ViewSets
 class FCMDeviceViewSet(DeviceViewSetMixin, ModelViewSet):
+    queryset = FCMDevice.objects.all()
+    serializer_class = FCMDeviceSerializer
+
+
+class FCMDeviceCreateOnlyViewSet(DeviceViewSetMixin, CreateModelMixin, GenericViewSet):
     queryset = FCMDevice.objects.all()
     serializer_class = FCMDeviceSerializer
 

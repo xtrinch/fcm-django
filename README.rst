@@ -43,6 +43,8 @@ Edit your settings.py file:
 	)
 
 	FCM_DJANGO_SETTINGS = {
+		"APP_VERBOSE_NAME": "[string for AppConfig's verbose_name]",
+		 # default: _('FCM Django')
 		"FCM_SERVER_KEY": "[your api key]",
 		 # true if you want to have only one active device per registered user at a time
 		 # default: False
@@ -204,7 +206,7 @@ https://github.com/xtrinch/fcm-django-web-demo
 
 Python 3 support
 ----------------
-``fcm-django`` is fully compatible with Python 3.4 & 3.5 & 3.6 & 3.7
+``fcm-django`` is fully compatible with Python 2.7 & 3.4 & 3.5 & 3.6 & 3.7
 
 Acknowledgements
 ----------------
