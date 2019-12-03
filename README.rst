@@ -208,6 +208,10 @@ Python 3 support
 ----------------
 ``fcm-django`` is fully compatible with Python 2.7 & 3.4 & 3.5 & 3.6 & 3.7
 
+Django version compatibility
+----------------------------
+Compatible with Django versions 1.8+. For lower django versions, use fcm-django version 0.3.2 and below.
+
 Acknowledgements
 ----------------
 Library relies on pyFCM for sending notifications, for more info about all the possible fields, see:
