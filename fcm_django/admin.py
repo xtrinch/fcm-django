@@ -14,12 +14,13 @@ class DeviceAdmin(admin.ModelAdmin):
     actions = ("send_message", "send_bulk_message", "send_data_message",
                "send_bulk_data_message", "enable", "disable")
     raw_id_fields = ("user",)
+    list_select_related = ("user",)
 
-    if hasattr(User, "USERNAME_FIELD"):
-        search_fields = (
-            "name", "device_id", "user__%s" % (User.USERNAME_FIELD))
-    else:
-        search_fields = ("name", "device_id")
+    def get_search_fields(self, request):
+        if hasattr(User, "USERNAME_FIELD"):
+            return ("name", "device_id", "user__%s" % (User.USERNAME_FIELD))
+        else:
+            return ("name", "device_id")
 
     def send_messages(self, request, queryset, bulk=False, data=False):
         """
