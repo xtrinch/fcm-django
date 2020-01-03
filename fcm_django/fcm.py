@@ -1,6 +1,18 @@
 from pyfcm import FCMNotification
 from .settings import FCM_DJANGO_SETTINGS as SETTINGS
 
+
+# Copied from https://github.com/olucurious/PyFCM/blob/master/pyfcm/baseapi.py
+response_dict = {
+    'multicast_ids': [],
+    'success': 0,
+    'failure': 0,
+    'canonical_ids': 0,
+    'results': [],
+    'topic_message_id': None
+}
+
+
 def fcm_send_topic_message(
         api_key=None,
         json_encoder=None,
