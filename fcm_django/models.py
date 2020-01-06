@@ -1,8 +1,11 @@
 from __future__ import unicode_literals
 
+from copy import deepcopy
+
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from .fcm import response_dict
 from .settings import FCM_DJANGO_SETTINGS as SETTINGS
 
 
@@ -60,8 +63,9 @@ class FCMDeviceQuerySet(models.query.QuerySet):
                 'registration_id',
                 flat=True
             ))
+
             if len(registration_ids) == 0:
-                return [{'failure': len(self), 'success': 0}]
+                return dict(deepcopy(response_dict), failure=len(self), success=0)
 
             result = fcm_send_bulk_message(
                 registration_ids=registration_ids,
@@ -106,8 +110,9 @@ class FCMDeviceQuerySet(models.query.QuerySet):
                 'registration_id',
                 flat=True
             ))
+
             if len(registration_ids) == 0:
-                return [{'failure': len(self), 'success': 0}]
+                return dict(deepcopy(response_dict), failure=len(self), success=0)
 
             result = fcm_send_bulk_data_messages(
                 api_key=api_key,
@@ -239,8 +244,8 @@ class AbstractFCMDevice(Device):
         if 'error' in result['results'][0]:
             error_list = ['MissingRegistration', 'MismatchSenderId', 'InvalidRegistration', 'NotRegistered']
             if result['results'][0]['error'] in error_list:
-              device.update(active=False)
-              self._delete_inactive_device_if_requested(device)
+                device.update(active=False)
+                self._delete_inactive_device_if_requested(device)
 
     @staticmethod
     def _delete_inactive_device_if_requested(device):
