@@ -14,6 +14,7 @@ fcm_django.egg-info
 
 # virtualenv
 .env
+venv
 
 # tox
 .tox

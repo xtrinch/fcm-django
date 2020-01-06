@@ -64,7 +64,7 @@ class UniqueRegistrationSerializerMixin(Serializer):
                 devices = Device.objects.filter(
                     registration_id=attrs["registration_id"]) \
                     .exclude(id=primary_key)
-                if (attrs.get('active', False)):
+                if attrs.get('active', False):
                     devices.filter(~Q(user=user)).update(active=False)
                 devices = devices.filter(user=user)
             else:
@@ -108,25 +108,22 @@ class DeviceViewSetMixin(object):
 
     def perform_create(self, serializer):
         if is_user_authenticated(self.request.user):
-            serializer.save(user=self.request.user, commit=False)
-
             if (SETTINGS["ONE_DEVICE_PER_USER"] and
                     self.request.data.get('active', True)):
                 FCMDevice.objects.filter(user=self.request.user).update(
                     active=False)
-
-        return super(DeviceViewSetMixin, self).perform_create(serializer)
+            return serializer.save(user=self.request.user)
+        return serializer.save()
 
     def perform_update(self, serializer):
         if is_user_authenticated(self.request.user):
-            serializer.save(user=self.request.user, commit=False)
-
             if (SETTINGS["ONE_DEVICE_PER_USER"] and
                     self.request.data.get('active', False)):
                 FCMDevice.objects.filter(user=self.request.user).update(
                     active=False)
 
-        return super(DeviceViewSetMixin, self).perform_update(serializer)
+            return serializer.save(user=self.request.user)
+        return serializer.save()
 
 
 class AuthorizedMixin(object):
