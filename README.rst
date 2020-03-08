@@ -4,8 +4,6 @@ fcm-django
 
 .. image:: https://badge.fury.io/py/fcm-django.svg 
 	:target: https://badge.fury.io/py/fcm-django 
-.. image:: https://en.cryptobadges.io/badge/small/3GHRdxw64kYKbG2RXZNtKveMPpSzMy7CLR 
-	:target: https://en.cryptobadges.io/donate/3GHRdxw64kYKbG2RXZNtKveMPpSzMy7CLR
 
 
 Django app for Firebase Cloud Messaging. Used as an unified platform for sending push notifications to mobile devices & browsers (android / ios / chrome / firefox / ...).
@@ -219,4 +217,4 @@ https://github.com/olucurious/PyFCM
 
 Need help, have any questions, suggestions?
 ----------------
-Submit an issue/PR or email me at mojca.rojko@gmail.com
+Submit an issue/PR.
