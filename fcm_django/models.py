@@ -50,6 +50,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             data=None,
             sound=None,
             badge=None,
+            extra_notification_kwargs=None,
             api_key=None,
             **kwargs):
         """
@@ -75,6 +76,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
                 data=data,
                 sound=sound,
                 badge=badge,
+                extra_notification_kwargs=extra_notification_kwargs,
                 api_key=api_key,
                 **kwargs
             )
