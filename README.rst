@@ -24,6 +24,11 @@ Functionality:
  - devices marked as inactive will not be sent notifications
  - Django rest framework viewsets
 
+Demo javascript client project
+-------------------
+Unsure how to use this project? Check out the demo at:
+https://github.com/xtrinch/fcm-django-web-demo
+
 Setup
 -----
 You can install the library directly from pypi using pip:
@@ -195,12 +200,6 @@ http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#binding-vie
 		url(r'^devices?$', FCMDeviceAuthorizedViewSet.as_view({'post': 'create'}), name='create_fcm_device'),
 		# ...
 	)
-
-Demo project for implementation of web push notifications
--------------------
-Demonstrates the use of service workers:
-https://github.com/xtrinch/fcm-django-web-demo
-
 
 Python 3 support
 ----------------
