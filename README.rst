@@ -216,4 +216,4 @@ https://github.com/olucurious/PyFCM
 
 Need help, have any questions, suggestions?
 ----------------
-Submit an issue/PR. Please do not send me emails, as then the community has no chance to see your questions / provide answers.
+Submit an issue/PR on this project. Please do not send me emails, as then the community has no chance to see your questions / provide answers.
