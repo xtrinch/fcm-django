@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from copy import deepcopy
 
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .fcm import response_dict
 from .settings import FCM_DJANGO_SETTINGS as SETTINGS

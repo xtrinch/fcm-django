@@ -1,6 +1,6 @@
 from django.apps import apps
 from django.contrib import admin, messages
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from .models import FCMDevice
 from .settings import FCM_DJANGO_SETTINGS as SETTINGS
 
