@@ -46,8 +46,9 @@ Edit your settings.py file:
 	)
 
 	FCM_DJANGO_SETTINGS = {
-		"APP_VERBOSE_NAME": "[string for AppConfig's verbose_name]",
 		 # default: _('FCM Django')
+		"APP_VERBOSE_NAME": "[string for AppConfig's verbose_name]",
+		 # Your firebase API KEY
 		"FCM_SERVER_KEY": "[your api key]",
 		 # true if you want to have only one active device per registered user at a time
 		 # default: False
