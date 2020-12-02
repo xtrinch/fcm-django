@@ -5,7 +5,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-VERSION = '0.3.5'
+VERSION = '0.3.6'
 
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
