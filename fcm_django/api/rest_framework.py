@@ -51,7 +51,7 @@ class UniqueRegistrationSerializerMixin(Serializer):
         else:
             if self.context["request"].method in ["PUT", "PATCH"]:
                 request_method = "update"
-                primary_key = attrs["id"]
+                primary_key = self.instance.id
             elif self.context["request"].method == "POST":
                 request_method = "create"
 
