@@ -5,7 +5,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-VERSION = '0.3.6'
+VERSION = '0.3.7'
 
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
@@ -33,7 +33,7 @@ setup(
         "fcm_django/management/commands",
     ],
     install_requires=[
-        'pyfcm==1.4.7',
+        'pyfcm==1.4.9',
         'Django'
     ],
     author=fcm_django.__author__,
