@@ -28,8 +28,8 @@ def is_user_authenticated(user):
 class DeviceSerializerMixin(ModelSerializer):
     class Meta:
         fields = (
-            "id", "name", "registration_id", "device_id", "active", "language"
-            "date_created", "type"
+            "id", "name", "registration_id", "device_id", "active",
+            "language", "date_created", "type"
         )
         read_only_fields = ("date_created",)
 
