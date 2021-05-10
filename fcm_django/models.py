@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from copy import deepcopy
 
 from django.db import models
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 from .fcm import response_dict
@@ -24,6 +25,11 @@ class Device(models.Model):
                              on_delete=models.CASCADE)
     date_created = models.DateTimeField(
         verbose_name=_("Creation date"), auto_now_add=True, null=True
+    )
+    language = models.CharField(
+        max_length=10,
+        blank=True,
+        null=True
     )
 
     class Meta:
