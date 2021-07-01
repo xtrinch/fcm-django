@@ -1,8 +1,10 @@
 from __future__ import absolute_import
-from rest_framework import permissions
+
+from rest_framework import permissions, status
 from rest_framework.serializers import ModelSerializer, ValidationError, \
     Serializer, CurrentUserDefault
 from rest_framework.mixins import CreateModelMixin
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from fcm_django.models import FCMDevice
 from django import VERSION as DJ_VERSION
@@ -105,6 +107,28 @@ class IsOwner(permissions.BasePermission):
 # Mixins
 class DeviceViewSetMixin(object):
     lookup_field = "registration_id"
+
+    def create(self, request, *args, **kwargs):
+        serializer = None
+        is_update = False
+        if SETTINGS.get('UPDATE_ON_DUPLICATE_REG_ID') and 'registration_id' in request.data:
+            instance = self.queryset.model.objects.filter(
+                registration_id=request.data['registration_id']
+            ).first()
+            if instance:
+                serializer = self.get_serializer(instance, data=request.data)
+                is_update = True
+        if not serializer:
+            serializer = self.get_serializer(data=request.data)
+
+        serializer.is_valid(raise_exception=True)
+        if is_update:
+            self.perform_update(serializer)
+            return Response(serializer.data)
+        else:
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
         if is_user_authenticated(self.request.user):

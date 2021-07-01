@@ -57,6 +57,10 @@ Edit your settings.py file:
 		 # are deleted upon receiving error response from FCM
 		 # default: False
 		"DELETE_INACTIVE_DEVICES": True/False,
+		"UPDATE_ON_DUPLICATE_REG_ID": True/False,
+		 # Transform create of an existing Device (based on registration id) into
+		 # a update. See below section Update of device with duplicate registration ID
+		 # for more details.
 	}
 
 Native Django migrations are in use. ``manage.py migrate`` will install and migrate all models.
@@ -201,6 +205,18 @@ http://www.django-rest-framework.org/tutorial/6-viewsets-and-routers#binding-vie
 		url(r'^devices?$', FCMDeviceAuthorizedViewSet.as_view({'post': 'create'}), name='create_fcm_device'),
 		# ...
 	)
+
+Update of device with duplicate registration ID
+-----------------------------------------------
+
+The DRF viewset enforce the uniqueness of the registration ID. In same use case it
+may cause an issue: If an already registered mobile device changes its user, then
+it will fail to register because the registration ID already exist.
+
+When option ``UPDATE_ON_DUPLICATE_REG_ID`` is set to True, then any creation of
+device with an already existing registration ID will be transformed into an update.
+
+The ``UPDATE_ON_DUPLICATE_REG_ID`` only works with DRF.
 
 Python 3 support
 ----------------

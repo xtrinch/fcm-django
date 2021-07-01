@@ -9,6 +9,7 @@ FCM_DJANGO_SETTINGS.setdefault("FCM_SERVER", "https://fcm.googleapis.com/fcm/sen
 FCM_DJANGO_SETTINGS.setdefault("FCM_SERVER_KEY", None)
 FCM_DJANGO_SETTINGS.setdefault("ONE_DEVICE_PER_USER", False)
 FCM_DJANGO_SETTINGS.setdefault("DELETE_INACTIVE_DEVICES", False)
+FCM_DJANGO_SETTINGS.setdefault("UPDATE_ON_DUPLICATE_REG_ID", False)
 
 # User model
 FCM_DJANGO_SETTINGS.setdefault("USER_MODEL", settings.AUTH_USER_MODEL)
