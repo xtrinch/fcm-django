@@ -1,1 +1,4 @@
-pyfcm==1.4.9
+firebase-admin>=5,<6
+Django
+djangorestframework
+django-tastypie

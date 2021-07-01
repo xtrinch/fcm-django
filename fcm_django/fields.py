@@ -5,7 +5,6 @@ from django.core.validators import MaxValueValidator
 from django.core.validators import MinValueValidator
 from django.core.validators import RegexValidator
 from django.db import models, connection
-from django.utils import six
 from django.utils.translation import gettext_lazy as _
 
 UNSIGNED_64BIT_INT_MIN_VALUE = 0
@@ -56,7 +55,7 @@ class HexadecimalField(forms.CharField):
 
     def prepare_value(self, value):
         # converts bigint from db to hex before it is displayed in admin
-        if value and not isinstance(value, six.string_types) \
+        if value and not isinstance(value, str) \
                 and connection.vendor in ("mysql", "sqlite"):
             value = _unsigned_integer_to_hex_string(value)
         return super(forms.CharField, self).prepare_value(value)
@@ -93,7 +92,7 @@ class HexIntegerField(models.BigIntegerField):
         """ Return the integer value to be stored from the hex string """
         if value is None or value == "":
             return None
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             value = _hex_string_to_unsigned_integer(value)
         if _using_signed_storage():
             value = _unsigned_to_signed_integer(value)
@@ -109,7 +108,7 @@ class HexIntegerField(models.BigIntegerField):
 
     def to_python(self, value):
         """ Return a str representation of the hexadecimal """
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             return value
         if value is None:
             return value

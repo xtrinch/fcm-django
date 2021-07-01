@@ -5,7 +5,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-VERSION = '0.3.8'
+VERSION = '1.0.0'
 
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
@@ -14,11 +14,11 @@ CLASSIFIERS = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 2.7",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.4",
-    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: System :: Networking",
 ]
@@ -33,7 +33,7 @@ setup(
         "fcm_django/management/commands",
     ],
     install_requires=[
-        'pyfcm==1.4.9',
+        'firebase-admin>=5,<6',
         'Django'
     ],
     author=fcm_django.__author__,
