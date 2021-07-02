@@ -1,9 +1,10 @@
 from django.apps import apps
 from django.contrib import admin, messages
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ngettext_lazy
 
-from .models import FCMDevice
-from .settings import FCM_DJANGO_SETTINGS as SETTINGS
+from fcm_django.models import FCMDevice
+from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
 
 User = apps.get_model(*SETTINGS["USER_MODEL"].split("."))
 
@@ -32,11 +33,11 @@ class DeviceAdmin(admin.ModelAdmin):
 
     def get_search_fields(self, request):
         if hasattr(User, "USERNAME_FIELD"):
-            return ("name", "device_id", "user__%s" % (User.USERNAME_FIELD))
+            return "name", "device_id", f"user__{User.USERNAME_FIELD}"
         else:
-            return ("name", "device_id")
+            return "name", "device_id"
 
-    def send_messages(self, request, queryset, bulk=False, data=False):
+    def send_messages(self, request, queryset, bulk=False):
         """
         Provides error handling for DeviceAdmin send_message and
         send_bulk_message methods.
@@ -47,19 +48,13 @@ class DeviceAdmin(admin.ModelAdmin):
 
         for device in queryset:
             if bulk:
-                if data:
-                    response = queryset.send_message(data={"Nick": "Mario"})
-                else:
-                    response = queryset.send_message(
-                        title="Test notification", body="Test bulk notification"
-                    )
+                response = queryset.send_message(
+                    title="Test notification", body="Test bulk notification"
+                )
             else:
-                if data:
-                    response = device.send_message(data={"Nick": "Mario"})
-                else:
-                    response = device.send_message(
-                        title="Test notification", body="Test single notification"
-                    )
+                response = device.send_message(
+                    title="Test notification", body="Test single notification"
+                )
             if response:
                 ret.append(response)
 
@@ -72,18 +67,24 @@ class DeviceAdmin(admin.ModelAdmin):
 
         if ret:
             if errors:
-                msg = _("Some messages were sent: %s" % (ret))
+                msg = _("Some messages were sent: %(ret)") % {"ret": ret}
             else:
-                msg = _("All messages were sent: %s" % (ret))
+                msg = _("All messages were sent: %(ret)") % {"ret": ret}
             self.message_user(request, msg)
 
         if total_failure > 0:
             self.message_user(
                 request,
-                _(
-                    "Some messages failed to send. %d devices were marked as "
-                    "inactive." % total_failure
-                ),
+                ngettext_lazy(
+                    "A message failed to send. %(count)d device was marked as "
+                    "inactive.",
+                    "Some messages failed to send. %(count)d devices were marked as "
+                    "inactive.",
+                    total_failure,
+                )
+                % {
+                    "count": total_failure,
+                },
                 level=messages.WARNING,
             )
 
@@ -96,16 +97,6 @@ class DeviceAdmin(admin.ModelAdmin):
         self.send_messages(request, queryset, True)
 
     send_bulk_message.short_description = _("Send test notification in bulk")
-
-    def send_data_message(self, request, queryset):
-        self.send_messages(request, queryset, False, True)
-
-    send_data_message.short_description = _("Send test data message")
-
-    def send_bulk_data_message(self, request, queryset):
-        self.send_messages(request, queryset, True, True)
-
-    send_bulk_data_message.short_description = _("Send test data message in bulk")
 
     def enable(self, request, queryset):
         queryset.update(active=True)
