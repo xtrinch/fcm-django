@@ -122,7 +122,7 @@ For a list of possible parameters see https://firebase.google.com/docs/cloud-mes
     from fcm_django.models import FCMDevice
 
     device = FCMDevice.objects.all().first()
-    # send_message parameters include: data, dry_run, app
+    # send_message parameters include: message, dry_run, app
     device.send_message(Message(data={...}))
 
 Sending messages in bulk
@@ -135,31 +135,50 @@ Sending messages in bulk
 
     devices = FCMDevice.objects.all()
     devices.send_message(Message(data={...}))
-    # Or (send_message parameters include: data, dry_run, app)
+    # Or (send_message parameters include: messages, dry_run, app)
     FCMDevice.objects.send_message(Message(...))
+
+Subscribing or Unsubscribing Users to topic
+-------------------------------------------
+
+.. code-block:: python
+
+    from fcm_django.models import FCMDevice
+
+    # Subscribing
+    FCMDevice.objects.all().handle_topic_subscription(True, topic="TOPIC NAME"))
+    device = FCMDevice.objects.all().first()
+    device.handle_topic_subscription(True, topic="TOPIC NAME"))
+    # Unsubscribing
+    FCMDevice.objects.all().handle_topic_subscription(False, topic="TOPIC NAME"))
+    device = FCMDevice.objects.all().first()
+    device.handle_topic_subscription(False, topic="TOPIC NAME"))
 
 Sending messages to topic
 -------------------------
 
 .. code-block:: python
 
-    from fcm_django.fcm import fcm_send_topic_message
+    from firebase_admin.messaging import Message
+    from fcm_django.models import FCMDevice
 
-    fcm_send_topic_message(topic_name='My topic', message_body='Hello', message_title='A message')
+    FCMDevice.objects.all().send_message(Message(data={...}, topic="TOPIC NAME"))
+    device = FCMDevice.objects.all().first()
+    device.send_message(Message(data={...}, topic="TOPIC NAME"))
 
+Using multiple FCM apps
+-----------------------
 
-Using multiple FCM server keys
-------------------------------
-
-By default the message will be sent using the FCM server key specified in the settings.py. This default key can be overridden by specifying a key when calling send_message. This can be used to send messages using different firebase projects.
+By default the message will be sent using the default FCM ``firebase_admin.App`` (we initialized this in our settings). This default can be overridden by specifying an app when calling send_message. This can be used to send messages using different firebase projects.
 
 .. code-block:: python
 
+    from firebase_app import App
+    from firebase_app.messaging import Notification
     from fcm_django.models import FCMDevice
 
     device = FCMDevice.objects.all().first()
-    device.send_message(title="Title", body="Message", api_key="[project 1 api key]")
-    device.send_message(title="Title", body="Message", api_key="[project 2 api key]")
+    device.send_message(notification=Notification(...), app=App(...))
 
 Django REST Framework (DRF) support
 -----------------------------------

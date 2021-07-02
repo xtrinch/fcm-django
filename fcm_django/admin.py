@@ -2,7 +2,12 @@ from django.apps import apps
 from django.contrib import admin, messages
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
-from firebase_admin.messaging import Message, Notification
+from firebase_admin.messaging import (
+    Message,
+    Notification,
+    SendResponse,
+    TopicManagementResponse,
+)
 
 from fcm_django.models import FCMDevice
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
@@ -24,6 +29,10 @@ class DeviceAdmin(admin.ModelAdmin):
     actions = (
         "send_message",
         "send_bulk_message",
+        "subscribe_to_topic",
+        "bulk_subscribe_to_topic",
+        "unsubscribe_to_topic",
+        "bulk_unsubscribe_to_topic",
         "enable",
         "disable",
     )
@@ -36,13 +45,35 @@ class DeviceAdmin(admin.ModelAdmin):
         else:
             return "name", "device_id"
 
+    def _send_deactivated_message(self, request, total_failure: int, is_topic: bool):
+        if total_failure == 0:
+            return
+        if is_topic:
+            message = ngettext_lazy(
+                "A device failed to un/subscribe to topic. %(count)d device was "
+                "marked as inactive.",
+                "Some devices failed to un/subscribe to topic. %(count)d devices "
+                "were marked as inactive.",
+                total_failure,
+            )
+        else:
+            message = ngettext_lazy(
+                "A message failed to send. %(count)d device was marked as " "inactive.",
+                "Some messages failed to send. %(count)d devices were marked as "
+                "inactive.",
+                total_failure,
+            )
+        self.message_user(
+            request,
+            message % {"count": total_failure},
+            level=messages.WARNING,
+        )
+
     def send_messages(self, request, queryset, bulk=False):
         """
         Provides error handling for DeviceAdmin send_message and
         send_bulk_message methods.
         """
-        ret = []
-        errors = []
         total_failure = 0
 
         for device in queryset:
@@ -54,6 +85,8 @@ class DeviceAdmin(admin.ModelAdmin):
                         )
                     )
                 )
+                total_failure = len(response["deactivated_registration_ids"])
+                break
             else:
                 response = device.send_message(
                     Message(
@@ -62,38 +95,10 @@ class DeviceAdmin(admin.ModelAdmin):
                         )
                     )
                 )
-            if response:
-                ret.append(response)
+                if type(response) != SendResponse:
+                    total_failure += 1
 
-            failure = int(response["failure"])
-            total_failure += failure
-            errors.append(str(response))
-
-            if bulk:
-                break
-
-        if ret:
-            if errors:
-                msg = _("Some messages were sent: %(ret)") % {"ret": ret}
-            else:
-                msg = _("All messages were sent: %(ret)") % {"ret": ret}
-            self.message_user(request, msg)
-
-        if total_failure > 0:
-            self.message_user(
-                request,
-                ngettext_lazy(
-                    "A message failed to send. %(count)d device was marked as "
-                    "inactive.",
-                    "Some messages failed to send. %(count)d devices were marked as "
-                    "inactive.",
-                    total_failure,
-                )
-                % {
-                    "count": total_failure,
-                },
-                level=messages.WARNING,
-            )
+        self._send_deactivated_message(request, total_failure, False)
 
     def send_message(self, request, queryset):
         self.send_messages(request, queryset)
@@ -104,6 +109,55 @@ class DeviceAdmin(admin.ModelAdmin):
         self.send_messages(request, queryset, True)
 
     send_bulk_message.short_description = _("Send test notification in bulk")
+
+    def handle_topic_subscription(
+        self, request, queryset, should_subscribe: bool, bulk: bool = False
+    ):
+        """
+        Provides error handling for DeviceAdmin bulk_un/subscribe_to_topic and
+        un/subscribe_to_topic methods.
+        """
+        total_failure = 0
+
+        for device in queryset:
+            if bulk:
+                response = queryset.handle_topic_subscription(
+                    should_subscribe,
+                    "test-topic",
+                )
+                total_failure = len(response["deactivated_registration_ids"])
+                break
+            else:
+                response = device.send_message(
+                    should_subscribe,
+                    "test-topic",
+                )
+                if type(response) != TopicManagementResponse:
+                    total_failure += 1
+            if bulk:
+                break
+
+        self._send_deactivated_message(request, total_failure, True)
+
+    def subscribe_to_topic(self, request, queryset):
+        self.handle_topic_subscription(request, queryset, True)
+
+    subscribe_to_topic.short_description = _("Subscribe to test topic")
+
+    def bulk_subscribe_to_topic(self, request, queryset):
+        self.handle_topic_subscription(request, queryset, True, True)
+
+    bulk_subscribe_to_topic.short_description = _("Subscribe to test topic in bulk")
+
+    def unsubscribe_to_topic(self, request, queryset):
+        self.handle_topic_subscription(request, queryset, False)
+
+    unsubscribe_to_topic.short_description = _("Unsubscribe to test topic")
+
+    def bulk_unsubscribe_to_topic(self, request, queryset):
+        self.handle_topic_subscription(request, queryset, False, True)
+
+    bulk_unsubscribe_to_topic.short_description = _("Unsubscribe to test topic in bulk")
 
     def enable(self, request, queryset):
         queryset.update(active=True)
