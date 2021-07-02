@@ -85,31 +85,28 @@ In short, there are two types: notifications and data messages.
 
 Notification:
 
-.. code-block:: json
+.. code-block:: python
 
-    {
-        "to" : "bk3RNwTe3H0:CI2k_HHwgIpoDKCIZvvDMExUdFQ3P1...",
-        "notification" : {
-          "body" : "great match!",
-          "title" : "Portugal vs. Denmark",
-          "icon" : "myicon"
-        }
-    }
+    from firebase_admin.messaging import Message, Notification
+    Message(notification=Notification(title="title", body="text", image="url"))
 
 Data message:
 
-.. code-block:: json
+.. code-block:: python
 
-    {
-       "to" : "bk3RNwTe3H0:CI2k_HHwgIpoDKCIZvvDMExUdFQ3P1...",
-       "data" : {
-         "Nick" : "Mario",
-         "body" : "great match!",
-         "Room" : "PortugalVSDenmark"
-       },
-    }
+    from firebase_admin.messaging import Message
+    Message(
+        data={
+            "Nick" : "Mario",
+            "body" : "great match!",
+            "Room" : "PortugalVSDenmark"
+       }
+    )
 
 As in the following example, you can send either a notification, a data message, or both.
+You can also customize the Android, iOS, and Web configuration along with additional
+FCM conditions. Visit ``firebase_admin.messaging.Message`` to learn more about those
+configurations.
 
 Sending messages
 ----------------
