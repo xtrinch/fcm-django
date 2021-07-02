@@ -2,6 +2,7 @@ from django.apps import apps
 from django.contrib import admin, messages
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
+from firebase_admin.messaging import Message, Notification
 
 from fcm_django.models import FCMDevice
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
@@ -23,8 +24,6 @@ class DeviceAdmin(admin.ModelAdmin):
     actions = (
         "send_message",
         "send_bulk_message",
-        "send_data_message",
-        "send_bulk_data_message",
         "enable",
         "disable",
     )
@@ -49,11 +48,19 @@ class DeviceAdmin(admin.ModelAdmin):
         for device in queryset:
             if bulk:
                 response = queryset.send_message(
-                    title="Test notification", body="Test bulk notification"
+                    Message(
+                        notification=Notification(
+                            title="Test notification", body="Test bulk notification"
+                        )
+                    )
                 )
             else:
                 response = device.send_message(
-                    title="Test notification", body="Test single notification"
+                    Message(
+                        notification=Notification(
+                            title="Test notification", body="Test single notification"
+                        )
+                    )
                 )
             if response:
                 ret.append(response)
