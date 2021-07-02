@@ -224,11 +224,11 @@ Routes can be added one of two ways:
 
     from fcm_django.api.rest_framework import FCMDeviceAuthorizedViewSet
 
-    urlpatterns = patterns('',
+    urlpatterns = [
         # Only allow creation of devices by authenticated users
-        url(r'^devices?$', FCMDeviceAuthorizedViewSet.as_view({'post': 'create'}), name='create_fcm_device'),
+        path('devices', FCMDeviceAuthorizedViewSet.as_view({'post': 'create'}), name='create_fcm_device'),
         # ...
-    )
+    ]
 
 Python 3 support
 ----------------
@@ -240,8 +240,10 @@ Compatible with Django versions 2.2+. For lower django versions, use version ``f
 
 Acknowledgements
 ----------------
-Library relies on pyFCM for sending notifications, for more info about all the possible fields, see:
-https://github.com/olucurious/PyFCM
+Library relies on firebase-admin-sdk for sending notifications, for more info about all the possible fields, see:
+https://github.com/firebase/firebase-admin-python
+
+Migration from v0 to v1 was done by `Andrew-Chen-Wang <https://github.com/Andrew-Chen-Wang>`_
 
 Need help, have any questions, suggestions?
 -------------------------------------------
