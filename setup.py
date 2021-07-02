@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 import fcm_django
+
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
 
-VERSION = '1.0.0'
+VERSION = "1.0.0"
 
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
@@ -32,17 +33,14 @@ setup(
         "fcm_django/management",
         "fcm_django/management/commands",
     ],
-    install_requires=[
-        'firebase-admin>=5,<6',
-        'Django'
-    ],
+    install_requires=["firebase-admin>=5,<6", "Django"],
     author=fcm_django.__author__,
     author_email=fcm_django.__email__,
     classifiers=CLASSIFIERS,
     description="Send push notifications to mobile devices & browsers through "
-                "FCM in Django.",
+    "FCM in Django.",
     download_url="https://github.com/xtrinch/fcm-django/tarball/master",
-    long_description='',
+    long_description="",
     url="https://github.com/xtrinch/fcm-django",
     version=fcm_django.__version__,
 )

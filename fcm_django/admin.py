@@ -1,6 +1,7 @@
 from django.apps import apps
 from django.contrib import admin, messages
 from django.utils.translation import gettext_lazy as _
+
 from .models import FCMDevice
 from .settings import FCM_DJANGO_SETTINGS as SETTINGS
 
@@ -8,11 +9,24 @@ User = apps.get_model(*SETTINGS["USER_MODEL"].split("."))
 
 
 class DeviceAdmin(admin.ModelAdmin):
-    list_display = ("__str__", "device_id", "name", "type", "user", "active",
-                    "date_created")
+    list_display = (
+        "__str__",
+        "device_id",
+        "name",
+        "type",
+        "user",
+        "active",
+        "date_created",
+    )
     list_filter = ("active",)
-    actions = ("send_message", "send_bulk_message", "send_data_message",
-               "send_bulk_data_message", "enable", "disable")
+    actions = (
+        "send_message",
+        "send_bulk_message",
+        "send_data_message",
+        "send_bulk_data_message",
+        "enable",
+        "disable",
+    )
     raw_id_fields = ("user",)
     list_select_related = ("user",)
 
@@ -34,26 +48,22 @@ class DeviceAdmin(admin.ModelAdmin):
         for device in queryset:
             if bulk:
                 if data:
-                    response = queryset.send_message(
-                        data={"Nick": "Mario"}
-                    )
+                    response = queryset.send_message(data={"Nick": "Mario"})
                 else:
                     response = queryset.send_message(
-                        title="Test notification",
-                        body="Test bulk notification"
+                        title="Test notification", body="Test bulk notification"
                     )
             else:
                 if data:
                     response = device.send_message(data={"Nick": "Mario"})
                 else:
                     response = device.send_message(
-                        title="Test notification",
-                        body="Test single notification"
+                        title="Test notification", body="Test single notification"
                     )
             if response:
                 ret.append(response)
 
-            failure = int(response['failure'])
+            failure = int(response["failure"])
             total_failure += failure
             errors.append(str(response))
 
@@ -70,9 +80,11 @@ class DeviceAdmin(admin.ModelAdmin):
         if total_failure > 0:
             self.message_user(
                 request,
-                _("Some messages failed to send. %d devices were marked as "
-                  "inactive." % total_failure),
-                level=messages.WARNING
+                _(
+                    "Some messages failed to send. %d devices were marked as "
+                    "inactive." % total_failure
+                ),
+                level=messages.WARNING,
             )
 
     def send_message(self, request, queryset):
@@ -93,8 +105,7 @@ class DeviceAdmin(admin.ModelAdmin):
     def send_bulk_data_message(self, request, queryset):
         self.send_messages(request, queryset, True, True)
 
-    send_bulk_data_message.short_description = _(
-        "Send test data message in bulk")
+    send_bulk_data_message.short_description = _("Send test data message in bulk")
 
     def enable(self, request, queryset):
         queryset.update(active=True)

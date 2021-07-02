@@ -1,9 +1,10 @@
-from rest_framework import permissions
-from rest_framework.serializers import ModelSerializer, ValidationError, Serializer
-from rest_framework.mixins import CreateModelMixin
-from rest_framework.viewsets import ModelViewSet, GenericViewSet
-from fcm_django.models import FCMDevice
 from django.db.models import Q
+from rest_framework import permissions
+from rest_framework.mixins import CreateModelMixin
+from rest_framework.serializers import ModelSerializer, Serializer, ValidationError
+from rest_framework.viewsets import GenericViewSet, ModelViewSet
+
+from fcm_django.models import FCMDevice
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
 
 
@@ -11,8 +12,13 @@ from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
 class DeviceSerializerMixin(ModelSerializer):
     class Meta:
         fields = (
-            "id", "name", "registration_id", "device_id", "active",
-            "date_created", "type"
+            "id",
+            "name",
+            "registration_id",
+            "device_id",
+            "active",
+            "date_created",
+            "type",
         )
         read_only_fields = ("date_created",)
 
@@ -41,32 +47,33 @@ class UniqueRegistrationSerializerMixin(Serializer):
         Device = self.Meta.model
         # if request authenticated, unique together with registration_id and
         # user
-        user = self.context['request'].user
+        user = self.context["request"].user
         if request_method == "update":
             if user is not None and user.is_authenticated:
                 devices = Device.objects.filter(
-                    registration_id=attrs["registration_id"]) \
-                    .exclude(id=primary_key)
-                if attrs.get('active', False):
+                    registration_id=attrs["registration_id"]
+                ).exclude(id=primary_key)
+                if attrs.get("active", False):
                     devices.filter(~Q(user=user)).update(active=False)
                 devices = devices.filter(user=user)
             else:
                 devices = Device.objects.filter(
-                    registration_id=attrs["registration_id"]) \
-                    .exclude(id=primary_key)
+                    registration_id=attrs["registration_id"]
+                ).exclude(id=primary_key)
         elif request_method == "create":
             if user is not None and user.is_authenticated:
                 devices = Device.objects.filter(
-                    registration_id=attrs["registration_id"])
+                    registration_id=attrs["registration_id"]
+                )
                 devices.filter(~Q(user=user)).update(active=False)
                 devices = devices.filter(user=user, active=True)
             else:
                 devices = Device.objects.filter(
-                    registration_id=attrs["registration_id"])
+                    registration_id=attrs["registration_id"]
+                )
 
         if devices:
-            raise ValidationError(
-                {'registration_id': 'This field must be unique.'})
+            raise ValidationError({"registration_id": "This field must be unique."})
         return attrs
 
 
@@ -86,30 +93,30 @@ class IsOwner(permissions.BasePermission):
 
 
 # Mixins
-class DeviceViewSetMixin(object):
+class DeviceViewSetMixin:
     lookup_field = "registration_id"
 
     def perform_create(self, serializer):
         if self.request.user.is_authenticated:
-            if (SETTINGS["ONE_DEVICE_PER_USER"] and
-                    self.request.data.get('active', True)):
-                FCMDevice.objects.filter(user=self.request.user).update(
-                    active=False)
+            if SETTINGS["ONE_DEVICE_PER_USER"] and self.request.data.get(
+                "active", True
+            ):
+                FCMDevice.objects.filter(user=self.request.user).update(active=False)
             return serializer.save(user=self.request.user)
         return serializer.save()
 
     def perform_update(self, serializer):
         if self.request.user.is_authenticated:
-            if (SETTINGS["ONE_DEVICE_PER_USER"] and
-                    self.request.data.get('active', False)):
-                FCMDevice.objects.filter(user=self.request.user).update(
-                    active=False)
+            if SETTINGS["ONE_DEVICE_PER_USER"] and self.request.data.get(
+                "active", False
+            ):
+                FCMDevice.objects.filter(user=self.request.user).update(active=False)
 
             return serializer.save(user=self.request.user)
         return serializer.save()
 
 
-class AuthorizedMixin(object):
+class AuthorizedMixin:
     permission_classes = (permissions.IsAuthenticated, IsOwner)
 
     def get_queryset(self):

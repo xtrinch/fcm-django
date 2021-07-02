@@ -1,8 +1,8 @@
-from fcm_django.models import FCMDevice
-
-from tastypie.authorization import Authorization
 from tastypie.authentication import BasicAuthentication
+from tastypie.authorization import Authorization
 from tastypie.resources import ModelResource
+
+from fcm_django.models import FCMDevice
 
 
 class FCMDeviceResource(ModelResource):
@@ -22,8 +22,4 @@ class APNSDeviceAuthenticatedResource(FCMDeviceResource):
 
     def obj_create(self, bundle, **kwargs):
         # See https://github.com/toastdriven/django-tastypie/issues/854
-        return super(APNSDeviceAuthenticatedResource, self).obj_create(
-                bundle,
-                user=bundle.request.user,
-                **kwargs
-        )
+        return super().obj_create(bundle, user=bundle.request.user, **kwargs)

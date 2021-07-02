@@ -25,7 +25,9 @@ Functionality:
  - Django rest framework viewsets
 
 Demo javascript client project
--------------------
+------------------------------
+Note: the current demo project uses fcm-django < v1
+
 Unsure how to use this project? Check out the demo at:
 https://github.com/xtrinch/fcm-django-web-demo
 
@@ -40,10 +42,21 @@ Edit your settings.py file:
 
 .. code-block:: python
 
+    from firebase_admin import initialize_app
+
     INSTALLED_APPS = (
         ...
         "fcm_django"
+        ...
     )
+
+    # Optional ONLY IF you have initialized a firebase app already:
+    # Visit https://firebase.google.com/docs/admin/setup/#python
+    # for more options for the following:
+    # Store an environment variable called GOOGLE_APPLICATION_CREDENTIALS
+    # which is a path that point to a json file with your credentials.
+    # Additional arguments are available: credentials, options, name
+    FIREBASE_APP = initialize_app()
 
     FCM_DJANGO_SETTINGS = {
          # default: _('FCM Django')
@@ -105,26 +118,25 @@ For a list of possible parameters see https://firebase.google.com/docs/cloud-mes
 
 .. code-block:: python
 
+    from firebase_admin.messaging import Message
     from fcm_django.models import FCMDevice
 
     device = FCMDevice.objects.all().first()
-
-    device.send_message("Title", "Message")
-    device.send_message(data={"test": "test"})
-    device.send_message(title="Title", body="Message", icon=..., data={"test": "test"})
+    # send_message parameters include: data, dry_run, app
+    device.send_message(Message(data={...}))
 
 Sending messages in bulk
 ------------------------
 
 .. code-block:: python
 
+    from firebase_admin.messaging import Message
     from fcm_django.models import FCMDevice
 
     devices = FCMDevice.objects.all()
-
-    devices.send_message(title="Title", body="Message")
-    devices.send_message(title="Title", body="Message", data={"test": "test"})
-    devices.send_message(data={"test": "test"})
+    devices.send_message(Message(data={...}))
+    # Or (send_message parameters include: data, dry_run, app)
+    FCMDevice.objects.send_message(Message(...))
 
 Sending messages to topic
 -------------------------
@@ -216,5 +228,10 @@ Library relies on pyFCM for sending notifications, for more info about all the p
 https://github.com/olucurious/PyFCM
 
 Need help, have any questions, suggestions?
-----------------
+-------------------------------------------
 Submit an issue/PR on this project. Please do not send me emails, as then the community has no chance to see your questions / provide answers.
+
+Contributing
+------------
+
+To setup the development environment, simply do `pip install -r requirements.txt`

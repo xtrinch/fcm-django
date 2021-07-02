@@ -6,12 +6,15 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('fcm_django', '0003_auto_20170313_1314'),
+        ("fcm_django", "0003_auto_20170313_1314"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='fcmdevice',
-            options={'verbose_name': 'FCM device', 'verbose_name_plural': 'FCM devices'},
+            name="fcmdevice",
+            options={
+                "verbose_name": "FCM device",
+                "verbose_name_plural": "FCM devices",
+            },
         ),
     ]

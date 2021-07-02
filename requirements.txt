@@ -1,4 +1,7 @@
-firebase-admin>=5,<6
 Django
-djangorestframework
 django-tastypie
+djangorestframework
+firebase-admin>=5,<6
+
+# Development
+pre-commit==2.13.0
