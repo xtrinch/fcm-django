@@ -165,7 +165,7 @@ class AbstractFCMDevice(Device):
     device_id = models.CharField(
         verbose_name=_("Device ID"), blank=True, null=True, db_index=True,
         help_text=_("Unique device identifier"),
-        max_length=1000
+        max_length=4096
     )
     registration_id = models.TextField(verbose_name=_("Registration token"))
     type = models.CharField(choices=DEVICE_TYPES, max_length=10)
