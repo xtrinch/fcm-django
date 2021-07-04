@@ -35,12 +35,12 @@ class Device(models.Model):
     def __str__(self):
         return (
             self.name
-            or str(getattr(self, "device_id", ""))
+            or (getattr(self, "device_id") or "")
             or f"{self.__class__.__name__} for {self.user or 'unknown user'}"
         )
 
 
-class FCMDeviceManager(models.Manager):
+class _FCMDeviceManager(models.Manager):
     def get_queryset(self):
         return FCMDeviceQuerySet(self.model)
 
@@ -245,6 +245,9 @@ class FCMDeviceQuerySet(models.query.QuerySet):
                 registration_ids, response.errors
             ),
         )
+
+
+FCMDeviceManager = _FCMDeviceManager.from_queryset(FCMDeviceQuerySet)
 
 
 class AbstractFCMDevice(Device):
