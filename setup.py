@@ -30,8 +30,6 @@ setup(
         "fcm_django",
         "fcm_django/api",
         "fcm_django/migrations",
-        "fcm_django/management",
-        "fcm_django/management/commands",
     ],
     install_requires=["firebase-admin>=5,<6", "Django"],
     author=fcm_django.__author__,
