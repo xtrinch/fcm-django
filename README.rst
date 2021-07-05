@@ -80,6 +80,12 @@ There are two additional parameters to both methods:
 ``skip_registration_id_lookup`` and ``additional_registration_ids``.
 Visit ``Sending Messages`` to learn more.
 
+Note: ``registration_ids`` is actually incorrect terminology as it
+should actually be called ``registration tokens``. However, to be
+consistent with ``django-push-notifications``, we've refrained from
+switching to stay backwards compatible in the docs and with the
+sister package.
+
 Setup
 -----
 You can install the library directly from pypi using pip:

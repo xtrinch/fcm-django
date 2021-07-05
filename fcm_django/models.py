@@ -67,6 +67,8 @@ def _validate_exception_for_deactivation(exc: Union[FirebaseError]) -> bool:
 
 
 class FirebaseResponseDict(TypedDict):
+    # All errors are stored rather than raised in BatchResponse.exceptions
+    # or TopicManagementResponse.errors
     response: Union[messaging.BatchResponse, messaging.TopicManagementResponse]
     registration_ids_sent: List[str]
     deactivated_registration_ids: List[str]
