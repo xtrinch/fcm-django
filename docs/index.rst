@@ -28,10 +28,61 @@ Functionality:
 
 Demo javascript client project
 ------------------------------
-Note: the current demo project uses fcm-django < v1
-
 Unsure how to use this project? Check out the demo at:
 https://github.com/xtrinch/fcm-django-web-demo
+
+Migration to v1.0
+-----------------
+
+We've replaced Python package ``pyfcm`` for Firebase's own package ``firebase-admin``.
+Thus, we no longer use an API key. Instead, you'll need an environment variable
+``GOOGLE_APPLICATION_CREDENTIALS`` which is a path pointing to your JSON credentials.
+To learn more, visit the
+`Google Cloud docs <https://cloud.google.com/docs/authentication/getting-started>`_
+
+Finally, in your ``settings.py`` (or whatever imported file), add:
+
+.. code-block:: python
+
+    from firebase_admin import firebase_init
+    FIREBASE_APP = initialize_app()
+    # Or just
+    initialize_app()
+
+The API for sending messages is now under the ``firebase-admin`` package; hence,
+we removed the methods ``send_data_message`` from the QuerySet and class instance
+methods. Instead, everything is under a single method: ``send_message``
+
+.. code-block:: python
+
+    from fcm_django.messaging import Message, Notification
+    FCMDevice.objects.send_message(Message(data=dict())
+    # A title, body, and image kwargs are under Notification
+    FCMDevice.objects.send_message(
+        Message(notification=Notification(title="title", body="body", image="image_url")
+    )
+    device = FCMDevice.objects.first()
+    device.send_message(Message(...))
+
+Additionally, we've added Firebase's new Topic API, allowing for easier sending
+of bulk messages.
+
+.. code-block:: python
+
+    from fcm_django.messaging import Message, Notification
+    FCMDevice.objects.handle_subscription(True, "A topic")
+    message = Message(..., topic="A Topic")
+    FCMDevice.objects.filter(is_cool=True).send_message(message)
+
+There are two additional parameters to both methods:
+``skip_registration_id_lookup`` and ``additional_registration_ids``.
+Visit ``Sending Messages`` to learn more.
+
+Note: ``registration_ids`` is actually incorrect terminology as it
+should actually be called ``registration tokens``. However, to be
+consistent with ``django-push-notifications``, we've refrained from
+switching to stay backwards compatible in the docs and with the
+sister package.
 
 Setup
 -----
@@ -59,6 +110,8 @@ Edit your settings.py file:
     # which is a path that point to a json file with your credentials.
     # Additional arguments are available: credentials, options, name
     FIREBASE_APP = initialize_app()
+    # To learn more, visit the docs here:
+    # https://cloud.google.com/docs/authentication/getting-started>
 
     FCM_DJANGO_SETTINGS = {
          # default: _('FCM Django')
@@ -88,7 +141,10 @@ Notification:
 .. code-block:: python
 
     from firebase_admin.messaging import Message, Notification
-    Message(notification=Notification(title="title", body="text", image="url"))
+    Message(
+        notification=Notification(title="title", body="text", image="url"),
+        topic="Optional topic parameter: Whatever you want",
+    )
 
 Data message:
 
@@ -100,7 +156,8 @@ Data message:
             "Nick" : "Mario",
             "body" : "great match!",
             "Room" : "PortugalVSDenmark"
-       }
+       },
+       topic="Optional topic parameter: Whatever you want",
     )
 
 As in the following example, you can send either a notification, a data message, or both.
@@ -111,13 +168,16 @@ configurations.
 Sending messages
 ----------------
 
-For a list of possible parameters see https://firebase.google.com/docs/cloud-messaging/http-server-ref#notification-payload-support
+Additional parameters are ``additional_registration_ids`` and
+``skip_registration_id_lookup``. View the "Additional Parameters"
+section for more information.
 
 .. code-block:: python
 
     from firebase_admin.messaging import Message
     from fcm_django.models import FCMDevice
 
+    # You can still use .filter() or any methods that return QuerySet (from the chain)
     device = FCMDevice.objects.all().first()
     # send_message parameters include: message, dry_run, app
     device.send_message(Message(data={...}))
@@ -130,6 +190,7 @@ Sending messages in bulk
     from firebase_admin.messaging import Message
     from fcm_django.models import FCMDevice
 
+    # You can still use .filter() or any methods that return QuerySet (from the chain)
     devices = FCMDevice.objects.all()
     devices.send_message(Message(data={...}))
     # Or (send_message parameters include: messages, dry_run, app)
@@ -146,6 +207,13 @@ Subscribing or Unsubscribing Users to topic
     FCMDevice.objects.all().handle_topic_subscription(True, topic="TOPIC NAME"))
     device = FCMDevice.objects.all().first()
     device.handle_topic_subscription(True, topic="TOPIC NAME"))
+
+    # Finally you can send a message to that topic
+    from firebase_admin.messaging import Message
+    message = Message(..., topic="A topic")
+    # You can still use .filter() or any methods that return QuerySet (from the chain)
+    FCMDevice.objects.send_message(message)
+
     # Unsubscribing
     FCMDevice.objects.all().handle_topic_subscription(False, topic="TOPIC NAME"))
     device = FCMDevice.objects.all().first()
@@ -159,9 +227,26 @@ Sending messages to topic
     from firebase_admin.messaging import Message
     from fcm_django.models import FCMDevice
 
+    # You can still use .filter() or any methods that return QuerySet (from the chain)
     FCMDevice.objects.all().send_message(Message(data={...}, topic="TOPIC NAME"))
     device = FCMDevice.objects.all().first()
     device.send_message(Message(data={...}, topic="TOPIC NAME"))
+
+Additional Parameters
+---------------------
+
+You can add additional_registration_ids (Sequence) for manually
+sending registration IDs. It will append these IDs to the queryset
+lookup's returned registration IDs.
+
+You can also add skip_registration_id_lookup (bool) to skip database
+lookup that goes along with your query.
+
+.. code-block:: python
+
+    from firebase_admin.messaging import Message
+    from fcm_django.models import FCMDevice
+    FCMDevice.objects.send_message(Message(...), ["registration_ids"], False)
 
 Using multiple FCM apps
 -----------------------

@@ -2,7 +2,7 @@ fcm-django
 =========================
 
 
-.. image:: https://badge.fury.io/py/fcm-django.svg 
+.. image:: https://badge.fury.io/py/fcm-django.svg
     :target: https://badge.fury.io/py/fcm-django
 
 
@@ -28,8 +28,6 @@ Functionality:
 
 Demo javascript client project
 ------------------------------
-Note: the current demo project uses fcm-django < v1
-
 Unsure how to use this project? Check out the demo at:
 https://github.com/xtrinch/fcm-django-web-demo
 
