@@ -100,9 +100,12 @@ class DeviceViewSetMixin:
     def create(self, request, *args, **kwargs):
         serializer = None
         is_update = False
-        if SETTINGS.get('UPDATE_ON_DUPLICATE_REG_ID') and 'registration_id' in request.data:
+        if (
+            SETTINGS.get("UPDATE_ON_DUPLICATE_REG_ID")
+            and "registration_id" in request.data
+        ):
             instance = self.queryset.model.objects.filter(
-                registration_id=request.data['registration_id']
+                registration_id=request.data["registration_id"]
             ).first()
             if instance:
                 serializer = self.get_serializer(instance, data=request.data)
@@ -117,7 +120,9 @@ class DeviceViewSetMixin:
         else:
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+            return Response(
+                serializer.data, status=status.HTTP_201_CREATED, headers=headers
+            )
 
     def perform_create(self, serializer):
         if self.request.user.is_authenticated:
