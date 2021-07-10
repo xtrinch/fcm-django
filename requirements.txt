@@ -1,1 +1,7 @@
-pyfcm==1.4.9
+Django>=2.2
+django-tastypie>=0.14.0
+djangorestframework>=3.9.2
+firebase-admin>=5,<6
+
+# Development
+pre-commit>=2.0.0

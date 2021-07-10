@@ -1,11 +1,9 @@
 import re
 import struct
+
 from django import forms
-from django.core.validators import MaxValueValidator
-from django.core.validators import MinValueValidator
-from django.core.validators import RegexValidator
-from django.db import models, connection
-from django.utils import six
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
+from django.db import connection, models
 from django.utils.translation import gettext_lazy as _
 
 UNSIGNED_64BIT_INT_MIN_VALUE = 0
@@ -18,7 +16,7 @@ signed_integer_engines = [
     "django.db.backends.postgresql",
     "django.db.backends.postgresql_psycopg2",
     "django.contrib.gis.db.backends.postgis",
-    "django.db.backends.sqlite3"
+    "django.db.backends.sqlite3",
 ]
 
 
@@ -49,15 +47,17 @@ class HexadecimalField(forms.CharField):
 
     def __init__(self, *args, **kwargs):
         self.default_validators = [
-            RegexValidator(hex_re, _("Enter a valid hexadecimal number"),
-                           "invalid")
+            RegexValidator(hex_re, _("Enter a valid hexadecimal number"), "invalid")
         ]
-        super(HexadecimalField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def prepare_value(self, value):
         # converts bigint from db to hex before it is displayed in admin
-        if value and not isinstance(value, six.string_types) \
-                and connection.vendor in ("mysql", "sqlite"):
+        if (
+            value
+            and not isinstance(value, str)
+            and connection.vendor in ("mysql", "sqlite")
+        ):
             value = _unsigned_integer_to_hex_string(value)
         return super(forms.CharField, self).prepare_value(value)
 
@@ -77,7 +77,7 @@ class HexIntegerField(models.BigIntegerField):
 
     validators = [
         MinValueValidator(UNSIGNED_64BIT_INT_MIN_VALUE),
-        MaxValueValidator(UNSIGNED_64BIT_INT_MAX_VALUE)
+        MaxValueValidator(UNSIGNED_64BIT_INT_MAX_VALUE),
     ]
 
     def db_type(self, connection):
@@ -87,20 +87,20 @@ class HexIntegerField(models.BigIntegerField):
         elif "sqlite" in engine:
             return "UNSIGNED BIG INT"
         else:
-            return super(HexIntegerField, self).db_type(connection=connection)
+            return super().db_type(connection=connection)
 
     def get_prep_value(self, value):
-        """ Return the integer value to be stored from the hex string """
+        """Return the integer value to be stored from the hex string"""
         if value is None or value == "":
             return None
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             value = _hex_string_to_unsigned_integer(value)
         if _using_signed_storage():
             value = _unsigned_to_signed_integer(value)
         return value
 
     def from_db_value(self, value, expression, connection, context):
-        """ Return an unsigned int representation from all db backends """
+        """Return an unsigned int representation from all db backends"""
         if value is None:
             return value
         if _using_signed_storage():
@@ -108,8 +108,8 @@ class HexIntegerField(models.BigIntegerField):
         return value
 
     def to_python(self, value):
-        """ Return a str representation of the hexadecimal """
-        if isinstance(value, six.string_types):
+        """Return a str representation of the hexadecimal"""
+        if isinstance(value, str):
             return value
         if value is None:
             return value
