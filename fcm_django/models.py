@@ -1,5 +1,5 @@
 from itertools import repeat
-from typing import List, Optional, Sequence, TypedDict, Union
+from typing import List, NamedTuple, Optional, Sequence, TypedDict, Union
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -66,7 +66,7 @@ def _validate_exception_for_deactivation(exc: Union[FirebaseError]) -> bool:
     ) or (exc_type in fcm_error_list)
 
 
-class FirebaseResponseDict(TypedDict):
+class FirebaseResponseDict(NamedTuple):
     # All errors are stored rather than raised in BatchResponse.exceptions
     # or TopicManagementResponse.errors
     response: Union[messaging.BatchResponse, messaging.TopicManagementResponse]

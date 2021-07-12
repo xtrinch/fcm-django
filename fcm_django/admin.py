@@ -109,12 +109,12 @@ class DeviceAdmin(admin.ModelAdmin):
         if isinstance(response, list):
             # Our custom list of single responses
             _print_responses(response)
-        elif isinstance(response, dict):
+        elif isinstance(response, FirebaseResponseDict):
             # technically, type should be: FirebaseResponseDict not just dict
             _print_responses(
                 zip(
-                    response["response"].responses,
-                    response["deactivated_registration_ids"],
+                    response.response.responses,
+                    response.deactivated_registration_ids,
                 ),
             )
         else:
@@ -138,7 +138,7 @@ class DeviceAdmin(admin.ModelAdmin):
                         )
                     )
                 )
-                total_failure = len(response["deactivated_registration_ids"])
+                total_failure = len(response.deactivated_registration_ids)
                 return self._send_deactivated_message(
                     request, response, total_failure, False
                 )
@@ -183,10 +183,10 @@ class DeviceAdmin(admin.ModelAdmin):
                     should_subscribe,
                     "test-topic",
                 )
-                total_failure = response["response"].failure_count
+                total_failure = response.response.failure_count
                 single_responses = [
-                    (x, response["registration_ids_sent"][x.index])
-                    for x in response["response"].errors
+                    (x, response.registration_ids_sent[x.index])
+                    for x in response.response.errors
                 ]
                 break
             else:
@@ -195,9 +195,9 @@ class DeviceAdmin(admin.ModelAdmin):
                     "test-topic",
                 )
                 single_responses.append(
-                    (response["response"].errors[0], device.registration_id)
+                    (response.response.errors[0], device.registration_id)
                 )
-                total_failure += len(response["deactivated_registration_ids"])
+                total_failure += len(response.deactivated_registration_ids)
 
         self._send_deactivated_message(request, single_responses, total_failure, True)
 
