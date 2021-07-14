@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from fcm_django import __version__
+import fcm_django
 
 try:
     from setuptools import setup
@@ -38,5 +38,5 @@ setup(
     download_url="https://github.com/xtrinch/fcm-django/tarball/master",
     long_description="",
     url="https://github.com/xtrinch/fcm-django",
-    version=__version__,
+    version=fcm_django.__version__,
 )
