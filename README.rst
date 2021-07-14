@@ -56,10 +56,10 @@ methods. Instead, everything is under a single method: ``send_message``
 .. code-block:: python
 
     from fcm_django.messaging import Message, Notification
-    FCMDevice.objects.send_message(Message(data=dict())
+    FCMDevice.objects.send_message(Message(data=dict()))
     # A title, body, and image kwargs are under Notification
     FCMDevice.objects.send_message(
-        Message(notification=Notification(title="title", body="body", image="image_url")
+        Message(notification=Notification(title="title", body="body", image="image_url"))
     )
     device = FCMDevice.objects.first()
     device.send_message(Message(...))
