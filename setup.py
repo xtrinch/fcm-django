@@ -6,8 +6,6 @@ try:
 except ImportError:
     from distutils.core import setup
 
-VERSION = "1.0.0"
-
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Web Environment",
