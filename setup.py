@@ -1,12 +1,10 @@
 #!/usr/bin/env python
-import fcm_django
+from fcm_django.__version__ import VERSION
 
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
-
-VERSION = "1.0.0"
 
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
@@ -40,5 +38,5 @@ setup(
     download_url="https://github.com/xtrinch/fcm-django/tarball/master",
     long_description="",
     url="https://github.com/xtrinch/fcm-django",
-    version=fcm_django.__version__,
+    version=VERSION,
 )

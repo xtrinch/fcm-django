@@ -1,8 +1,10 @@
 from django import VERSION as DJANGO_VERSION
 
+from fcm_django.__version__ import VERSION
+
 __author__ = "xTrinch"
 __email__ = "mojca.rojko@gmail.com"
-__version__ = "1.0.0"
+__version__ = VERSION
 
 
 class NotificationError(Exception):
