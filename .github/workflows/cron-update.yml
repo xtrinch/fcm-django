@@ -1,0 +1,37 @@
+name: Cron Update Jobs
+
+on:
+  schedule:
+    - cron: "0 1 * * *"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Install Dependencies
+        run: |
+          pip install --upgrade pip wheel setuptools
+          pip install --upgrade firebase-admin-sdk
+      - name: Run Script
+        id: new-max-batch-number
+        run: |
+          output=$(python bin/new_max.py)
+          echo "::set-output name=new-number::$output"
+      - name: Create issue if new max batch number
+        uses: imjohnbo/issue-bot@v3
+        if: ${{ steps.new-max-batch-number.outputs.new-number != "Nothing new" }}
+        env:
+          title: New max batch number!
+          body: |-
+            :wave: New max batch number for sending messages!
+            ${{ steps.new-max-batch-number.outputs.new-number }}

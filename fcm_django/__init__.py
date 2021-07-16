@@ -1,10 +1,16 @@
 __author__ = "xTrinch"
 __email__ = "mojca.rojko@gmail.com"
-__version__ = "0.3.8"
+__version__ = "1.0.1"
 
 
 class NotificationError(Exception):
     pass
 
 
-default_app_config = 'fcm_django.apps.FcmDjangoConfig'
+try:
+    from django import VERSION as DJANGO_VERSION
+
+    if DJANGO_VERSION < (3, 2):
+        default_app_config = "fcm_django.apps.FcmDjangoConfig"
+except ImportError:
+    pass
