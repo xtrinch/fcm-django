@@ -36,9 +36,9 @@ Migration to v1.0
 
 We've replaced Python package ``pyfcm`` for Firebase's own package ``firebase-admin``.
 Thus, we no longer use an API key. Instead, you'll need an environment variable
-``GOOGLE_APPLICATION_CREDENTIALS`` which is a path pointing to your JSON credentials.
-To learn more, visit the
-`Google Cloud docs <https://cloud.google.com/docs/authentication/getting-started>`_
+``GOOGLE_APPLICATION_CREDENTIALS`` which is a path pointing to your JSON-file stored
+credentials. To learn more or view other options to input credentials, visit the
+`Google Cloud docs <https://cloud.google.com/docs/authentication/getting-started>`_.
 
 Finally, in your ``settings.py`` (or whatever imported file), add:
 
@@ -57,7 +57,7 @@ methods. Instead, everything is under a single method: ``send_message``
 
     from fcm_django.messaging import Message, Notification
     FCMDevice.objects.send_message(Message(data=dict()))
-    # A title, body, and image kwargs are under Notification
+    # Note: You can also combine the data and notification kwarg
     FCMDevice.objects.send_message(
         Message(notification=Notification(title="title", body="body", image="image_url"))
     )
@@ -70,13 +70,14 @@ of bulk messages.
 .. code-block:: python
 
     from fcm_django.messaging import Message, Notification
-    FCMDevice.objects.handle_subscription(True, "A topic")
-    message = Message(..., topic="A Topic")
+    topic = "A topic"
+    FCMDevice.objects.handle_subscription(True, topic)
+    message = Message(..., topic=topic)
     FCMDevice.objects.filter(is_cool=True).send_message(message)
 
 There are two additional parameters to both methods:
 ``skip_registration_id_lookup`` and ``additional_registration_ids``.
-Visit ``Sending Messages`` to learn more.
+Visit `Sending Messages <https://github.com/xtrinch/fcm-django#sending-messages>`_ to learn more.
 
 Note: ``registration_ids`` is actually incorrect terminology as it
 should actually be called ``registration tokens``. However, to be
@@ -88,7 +89,9 @@ Setup
 -----
 You can install the library directly from pypi using pip:
 
-    $ pip install fcm-django
+.. code-block::
+
+    pip install fcm-django
 
 
 Edit your settings.py file:
@@ -250,7 +253,7 @@ lookup that goes along with your query.
 
     from firebase_admin.messaging import Message
     from fcm_django.models import FCMDevice
-    FCMDevice.objects.send_message(Message(...), ["registration_ids"], False)
+    FCMDevice.objects.send_message(Message(...), False, ["registration_ids"])
 
 Using multiple FCM apps
 -----------------------
@@ -353,4 +356,4 @@ Submit an issue/PR on this project. Please do not send me emails, as then the co
 Contributing
 ------------
 
-To setup the development environment, simply do `pip install -r requirements.txt`
+To setup the development environment, simply do ``pip install -r requirements.txt``
