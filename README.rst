@@ -271,6 +271,7 @@ By default the message will be sent using the default FCM ``firebase_admin.App``
 
 Django REST Framework (DRF) support
 -----------------------------------
+
 Viewsets come in two different varieties:
 
 - ``FCMDeviceViewSet``
@@ -357,3 +358,4 @@ Contributing
 ------------
 
 To setup the development environment, simply do ``pip install -r requirements.txt``
+To manually run the pre-commit hook, run `pre-commit run --all-files`.g
