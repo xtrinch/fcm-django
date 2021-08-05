@@ -358,4 +358,4 @@ Contributing
 ------------
 
 To setup the development environment, simply do ``pip install -r requirements.txt``
-To manually run the pre-commit hook, run `pre-commit run --all-files`.g
+To manually run the pre-commit hook, run `pre-commit run --all-files`.
