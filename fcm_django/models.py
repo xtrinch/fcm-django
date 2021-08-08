@@ -1,5 +1,6 @@
 from itertools import repeat
 from typing import List, NamedTuple, Optional, Sequence, Union
+from copy import copy
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -78,7 +79,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
     @staticmethod
     def _prepare_message(message: messaging.Message, token: str):
         message.token = token
-        return message
+        return copy(message)
 
     @staticmethod
     def get_default_send_message_response() -> FirebaseResponseDict:
