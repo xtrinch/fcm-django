@@ -1,6 +1,6 @@
+from copy import copy
 from itertools import repeat
 from typing import List, NamedTuple, Optional, Sequence, Union
-from copy import copy
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
