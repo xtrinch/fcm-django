@@ -11,6 +11,7 @@ fcm_django.egg-info
 # IDE
 .idea
 *.iml
+.vscode
 
 # virtualenv
 .env
