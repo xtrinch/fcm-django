@@ -262,7 +262,7 @@ class AbstractFCMDevice(Device):
         null=True,
         db_index=True,
         help_text=_("Unique device identifier"),
-        max_length=3072,
+        max_length=255,
     )
     registration_id = models.TextField(verbose_name=_("Registration token"))
     type = models.CharField(choices=DEVICE_TYPES, max_length=10)

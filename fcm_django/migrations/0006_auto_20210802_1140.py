@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
                 blank=True,
                 db_index=True,
                 help_text="Unique device identifier",
-                max_length=3072,
+                max_length=255,
                 null=True,
                 verbose_name="Device ID",
             ),
