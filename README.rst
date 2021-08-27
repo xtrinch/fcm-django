@@ -44,7 +44,7 @@ Finally, in your ``settings.py`` (or whatever imported file), add:
 
 .. code-block:: python
 
-    from firebase_admin import firebase_init
+    from firebase_admin import initialize_app
     FIREBASE_APP = initialize_app()
     # Or just
     initialize_app()
@@ -55,7 +55,7 @@ methods. Instead, everything is under a single method: ``send_message``
 
 .. code-block:: python
 
-    from fcm_django.messaging import Message, Notification
+    from firebase_admin.messaging import Message, Notification
     FCMDevice.objects.send_message(Message(data=dict()))
     # Note: You can also combine the data and notification kwarg
     FCMDevice.objects.send_message(
@@ -69,7 +69,7 @@ of bulk messages.
 
 .. code-block:: python
 
-    from fcm_django.messaging import Message, Notification
+    from firebase_admin.messaging import Message, Notification
     topic = "A topic"
     FCMDevice.objects.handle_subscription(True, topic)
     message = Message(..., topic=topic)
