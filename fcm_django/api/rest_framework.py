@@ -49,28 +49,31 @@ class UniqueRegistrationSerializerMixin(Serializer):
         # if request authenticated, unique together with registration_id and
         # user
         user = self.context["request"].user
+        registration_id = attrs.get("registration_id")
+        
         if request_method == "update":
-            if user is not None and user.is_authenticated:
-                devices = Device.objects.filter(
-                    registration_id=attrs["registration_id"]
-                ).exclude(id=primary_key)
-                if attrs.get("active", False):
-                    devices.filter(~Q(user=user)).update(active=False)
-                devices = devices.filter(user=user)
-            else:
-                devices = Device.objects.filter(
-                    registration_id=attrs["registration_id"]
-                ).exclude(id=primary_key)
+            if registration_id:
+                if user is not None and user.is_authenticated:
+                    devices = Device.objects.filter(
+                        registration_id=registration_id
+                    ).exclude(id=primary_key)
+                    if attrs.get("active", False):
+                        devices.filter(~Q(user=user)).update(active=False)
+                    devices = devices.filter(user=user)
+                else:
+                    devices = Device.objects.filter(
+                        registration_id=registration_id
+                    ).exclude(id=primary_key)
         elif request_method == "create":
             if user is not None and user.is_authenticated:
                 devices = Device.objects.filter(
-                    registration_id=attrs["registration_id"]
+                    registration_id=registration_id
                 )
                 devices.filter(~Q(user=user)).update(active=False)
                 devices = devices.filter(user=user, active=True)
             else:
                 devices = Device.objects.filter(
-                    registration_id=attrs["registration_id"]
+                    registration_id=registration_id
                 )
 
         if devices:
