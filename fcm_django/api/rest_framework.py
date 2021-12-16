@@ -50,7 +50,7 @@ class UniqueRegistrationSerializerMixin(Serializer):
         # user
         user = self.context["request"].user
         registration_id = attrs.get("registration_id")
-        
+
         if request_method == "update":
             if registration_id:
                 if user is not None and user.is_authenticated:
@@ -66,15 +66,11 @@ class UniqueRegistrationSerializerMixin(Serializer):
                     ).exclude(id=primary_key)
         elif request_method == "create":
             if user is not None and user.is_authenticated:
-                devices = Device.objects.filter(
-                    registration_id=registration_id
-                )
+                devices = Device.objects.filter(registration_id=registration_id)
                 devices.filter(~Q(user=user)).update(active=False)
                 devices = devices.filter(user=user, active=True)
             else:
-                devices = Device.objects.filter(
-                    registration_id=registration_id
-                )
+                devices = Device.objects.filter(registration_id=registration_id)
 
         if devices:
             raise ValidationError({"registration_id": "This field must be unique."})
