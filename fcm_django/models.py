@@ -1,10 +1,11 @@
-from copy import copy
+from copy import copy, deepcopy
 from itertools import repeat
 from typing import List, NamedTuple, Optional, Sequence, Union
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from firebase_admin import messaging
+from third_party_services.fcm import FCMDeviceTrigger
 from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
 
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
@@ -346,6 +347,45 @@ class AbstractFCMDevice(Device):
 
 
 class FCMDevice(AbstractFCMDevice):
+    # https://github.com/Tournafest/django_backend/blob/aab3250c70fad0fdd25dad7bf472d2d1c188989d/utils/models.py#L131
+    # Followed this strategy to overwrite the save method
+    
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.original_object = deepcopy(self)
+        self.ALLOW_RUN_POST_SAVE_TRIGGERS = True
+        self.COUNT_RUN_SAVE = 0
+        self.IGNORE_COUNT_RUN_SAVE = False
+
+    
+    def save(self, *args, **kwargs):
+        
+        self.COUNT_RUN_SAVE += 1
+        if "ALLOW_RUN_POST_SAVE_TRIGGERS" in kwargs:
+            _ALLOW_RUN_POST_SAVE_TRIGGERS = kwargs.pop("ALLOW_RUN_POST_SAVE_TRIGGERS")
+        else:
+            _ALLOW_RUN_POST_SAVE_TRIGGERS = self.ALLOW_RUN_POST_SAVE_TRIGGERS
+
+        if "IGNORE_COUNT_RUN_SAVE" in kwargs:
+            _IGNORE_COUNT_RUN_SAVE = kwargs.pop("IGNORE_COUNT_RUN_SAVE")
+        else:
+            _IGNORE_COUNT_RUN_SAVE = self.IGNORE_COUNT_RUN_SAVE
+
+        # Save the object
+        super().save(*args, **kwargs)
+
+        # Process changes only for the first time the object is saved on an object
+        if _ALLOW_RUN_POST_SAVE_TRIGGERS and (
+            _IGNORE_COUNT_RUN_SAVE or (self.COUNT_RUN_SAVE == 1)
+        ):
+            # Post save processing
+            self.process_db_object_saved()
+
+    def process_db_object_saved(self):
+        FCMDeviceTrigger.db_object_trigger(
+            self.original_object, self
+        )
+    
     class Meta:
         verbose_name = _("FCM device")
         verbose_name_plural = _("FCM devices")
