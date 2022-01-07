@@ -15,6 +15,9 @@ MAX_MESSAGES_PER_BATCH = 500
 
 
 class Device(models.Model):
+    id = models.AutoField(
+        verbose_name="ID", primary_key=True, auto_created=True,
+    )
     name = models.CharField(
         max_length=255, verbose_name=_("Name"), blank=True, null=True
     )
