@@ -262,8 +262,8 @@ By default the message will be sent using the default FCM ``firebase_admin.App``
 
 .. code-block:: python
 
-    from firebase_app import App
-    from firebase_app.messaging import Notification
+    from firebase_admin import App
+    from firebase_admin.messaging import Notification
     from fcm_django.models import FCMDevice
 
     device = FCMDevice.objects.all().first()
