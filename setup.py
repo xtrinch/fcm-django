@@ -29,6 +29,7 @@ setup(
         "fcm_django/api",
         "fcm_django/migrations",
     ],
+    python_requires=">=3",
     install_requires=["firebase-admin>=5,<6", "Django"],
     author=fcm_django.__author__,
     author_email=fcm_django.__email__,
