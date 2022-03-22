@@ -231,13 +231,9 @@ Sending messages to topic
 
 .. code-block:: python
 
-    from firebase_admin.messaging import Message
-    from fcm_django.models import FCMDevice
+    from firebase_admin.messaging import send_message
 
-    # You can still use .filter() or any methods that return QuerySet (from the chain)
-    FCMDevice.objects.all().send_message(Message(data={...}, topic="TOPIC NAME"))
-    device = FCMDevice.objects.all().first()
-    device.send_message(Message(data={...}, topic="TOPIC NAME"))
+    messaging.send_message(Message(data={...}, topic="TOPIC NAME")
 
 Additional Parameters
 ---------------------
