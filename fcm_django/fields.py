@@ -7,7 +7,7 @@ from django.db import connection, models
 from django.utils.translation import gettext_lazy as _
 
 UNSIGNED_64BIT_INT_MIN_VALUE = 0
-UNSIGNED_64BIT_INT_MAX_VALUE = 2 ** 64 - 1
+UNSIGNED_64BIT_INT_MAX_VALUE = 2**64 - 1
 
 __all__ = ["HexadecimalField", "HexIntegerField"]
 
