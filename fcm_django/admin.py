@@ -195,7 +195,6 @@ class DeviceAdmin(admin.ModelAdmin):
                     should_subscribe,
                     "test-topic",
                 )
-                print(response)
                 single_responses.append(
                     (
                         response.response.errors[0]
