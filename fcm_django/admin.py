@@ -36,6 +36,7 @@ class DeviceAdmin(admin.ModelAdmin):
         "bulk_subscribe_to_topic",
         "unsubscribe_to_topic",
         "bulk_unsubscribe_to_topic",
+        "send_topic_message",
         "enable",
         "disable",
     )
@@ -194,8 +195,14 @@ class DeviceAdmin(admin.ModelAdmin):
                     should_subscribe,
                     "test-topic",
                 )
+                print(response)
                 single_responses.append(
-                    (response.response.errors[0], device.registration_id)
+                    (
+                        response.response.errors[0]
+                        if len(response.response.errors) > 0
+                        else "Success",
+                        device.registration_id,
+                    )
                 )
                 total_failure += len(response.deactivated_registration_ids)
 
@@ -220,6 +227,21 @@ class DeviceAdmin(admin.ModelAdmin):
         self.handle_topic_subscription(request, queryset, False, True)
 
     bulk_unsubscribe_to_topic.short_description = _("Unsubscribe to test topic in bulk")
+
+    def handle_send_topic_message(self, request, queryset):
+        FCMDevice.send_topic_message(
+            Message(
+                notification=Notification(
+                    title="Test notification", body="Test single notification"
+                )
+            ),
+            "test-topic",
+        )
+
+    def send_topic_message(self, request, queryset):
+        self.handle_send_topic_message(request, queryset)
+
+    send_topic_message.short_description = _("Send message test topic")
 
     def enable(self, request, queryset):
         queryset.update(active=True)

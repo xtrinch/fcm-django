@@ -153,7 +153,7 @@ class AuthorizedMixin:
 
 # ViewSets
 class FCMDeviceViewSet(DeviceViewSetMixin, ModelViewSet):
-    queryset = FCMDevice.objects.order_by('-id')
+    queryset = FCMDevice.objects.order_by("-id")
     serializer_class = FCMDeviceSerializer
 
 

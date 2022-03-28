@@ -231,9 +231,9 @@ Sending messages to topic
 
 .. code-block:: python
 
-    from firebase_admin.messaging import send_message
+    from fcm_django.models import FCMDevice
 
-    messaging.send_message(Message(data={...}, topic="TOPIC NAME")
+    FCMDevice.send_topic_message(Message(data={...}), "TOPIC NAME")
 
 Additional Parameters
 ---------------------

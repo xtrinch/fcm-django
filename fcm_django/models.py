@@ -29,7 +29,11 @@ class Device(models.Model):
         help_text=_("Inactive devices will not be sent notifications"),
     )
     user = models.ForeignKey(
-        SETTINGS["USER_MODEL"], blank=True, null=True, on_delete=models.CASCADE, related_query_name=_("device")
+        SETTINGS["USER_MODEL"],
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        related_query_name=_("device"),
     )
     date_created = models.DateTimeField(
         verbose_name=_("Creation date"), auto_now_add=True, null=True
@@ -348,6 +352,21 @@ class AbstractFCMDevice(Device):
         return cls.objects.deactivate_devices_with_error_results(
             [registration_id], [messaging.SendResponse({"name": name}, firebase_exc)]
         )
+
+    @staticmethod
+    def send_topic_message(
+        message: messaging.Message,
+        topic_name: str,
+        **more_send_message_kwargs,
+    ) -> Union[Optional[messaging.SendResponse], FirebaseError]:
+        message.topic = topic_name
+
+        try:
+            return messaging.SendResponse(
+                {"name": messaging.send(message, **more_send_message_kwargs)}, None
+            )
+        except FirebaseError as e:
+            return e
 
 
 class FCMDevice(AbstractFCMDevice):
