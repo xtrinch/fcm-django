@@ -33,7 +33,7 @@ class Device(models.Model):
         blank=True,
         null=True,
         on_delete=models.CASCADE,
-        related_query_name=_("device"),
+        related_query_name=_("fcmdevice"),
     )
     date_created = models.DateTimeField(
         verbose_name=_("Creation date"), auto_now_add=True, null=True
