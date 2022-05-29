@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 FCM_DJANGO_SETTINGS = getattr(settings, "FCM_DJANGO_SETTINGS", {})
 
 # FCM
+FCM_DJANGO_SETTINGS.setdefault("DEFAULT_FIREBASE_APP", None)
 FCM_DJANGO_SETTINGS.setdefault("APP_VERBOSE_NAME", _("FCM Django"))
 FCM_DJANGO_SETTINGS.setdefault("ONE_DEVICE_PER_USER", False)
 FCM_DJANGO_SETTINGS.setdefault("DELETE_INACTIVE_DEVICES", False)
