@@ -117,6 +117,9 @@ Edit your settings.py file:
     # https://cloud.google.com/docs/authentication/getting-started>
 
     FCM_DJANGO_SETTINGS = {
+         # an instance of firebase_admin.App to be used as default for all fcm-django requests
+         # default: None (the default Firebase app)
+        "DEFAULT_FIREBASE_APP": None,
          # default: _('FCM Django')
         "APP_VERBOSE_NAME": "[string for AppConfig's verbose_name]",
          # true if you want to have only one active device per registered user at a time
@@ -254,7 +257,10 @@ lookup that goes along with your query.
 Using multiple FCM apps
 -----------------------
 
-By default the message will be sent using the default FCM ``firebase_admin.App`` (we initialized this in our settings). This default can be overridden by specifying an app when calling send_message. This can be used to send messages using different firebase projects.
+By default the message will be sent using the default FCM ``firebase_admin.App`` (we initialized this in our settings),
+or the one specified with the ``DEFAULT_FIREBASE_APP`` setting.
+
+This default can be overridden by specifying an app when calling send_message. This can be used to send messages using different firebase projects.
 
 .. code-block:: python
 
@@ -264,6 +270,7 @@ By default the message will be sent using the default FCM ``firebase_admin.App``
 
     device = FCMDevice.objects.all().first()
     device.send_message(notification=Notification(...), app=App(...))
+
 
 Django REST Framework (DRF) support
 -----------------------------------
