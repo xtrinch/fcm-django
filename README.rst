@@ -271,6 +271,48 @@ This default can be overridden by specifying an app when calling send_message. T
     device = FCMDevice.objects.all().first()
     device.send_message(notification=Notification(...), app=App(...))
 
+Setting a default Firebase app for FCM
+--------------------------------------
+
+If you want to use a specific Firebase app for all fcm-django requests, you can create an instance of
+``firebase_admin.App`` and pass it to fcm-django with the ``DEFAULT_FIREBASE_APP`` setting.
+
+The ``DEFAULT_FIREBASE_APP`` will be used for all send / subscribe / unsubscribe requests, include ``FCMDevice``'s
+admin actions.
+
+In your ``settings.py``:
+
+.. code-block:: python
+
+    from firebase_admin import initialize_app, credentials
+    from google.auth import load_credentials_from_file
+    from google.oauth2.service_account import Credentials
+
+    # create a custom Credentials class to load a non-default google service account JSON
+    class CustomFirebaseCredentials(credentials.ApplicationDefault):
+        def __init__(self, account_file_path: str):
+            super().__init__()
+            self._account_file_path = account_file_path
+
+        def _load_credential(self):
+            if not self._g_credential:
+                self._g_credential, self._project_id = load_credentials_from_file(self._account_file_path,
+                                                                                  scopes=credentials._scopes)
+
+    # init default firebase app
+    # this loads the default google service account with GOOGLE_APPLICATION_CREDENTIALS env variable
+    FIREBASE_APP = initialize_app()
+
+    # init second firebase app for fcm-django
+    # the environment variable contains a path to the custom google service account JSON
+    custom_credentials = CustomFirebaseCredentials(os.getenv('CUSTOM_GOOGLE_APPLICATION_CREDENTIALS'))
+    FIREBASE_MESSAGING_APP = initialize_app(custom_credentials, name='messaging')
+
+    FCM_DJANGO_SETTINGS = {
+        "DEFAULT_FIREBASE_APP": FIREBASE_MESSAGING_APP,
+        # [...] your other settings
+    }
+
 
 Django REST Framework (DRF) support
 -----------------------------------
