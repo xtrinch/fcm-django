@@ -128,6 +128,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         message: messaging.Message,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Sequence[str] = None,
+        app: "firebase_admin.App" = SETTINGS["DEFAULT_FIREBASE_APP"],
         **more_send_message_kwargs,
     ) -> FirebaseResponseDict:
         """
@@ -141,10 +142,10 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         :param skip_registration_id_lookup: skips the QuerySet lookup and solely uses
         the list of IDs from additional_registration_ids
         :param additional_registration_ids: specific registration_ids to add to the
+        :param app: firebase_admin.App. Specify a specific app to use
         QuerySet lookup
         :param more_send_message_kwargs: Parameters for firebase.messaging.send_all()
         - dry_run: bool. Whether to actually send the notification to the device
-        - app: firebase_admin.App. Specify a specific app to use
         If there are any new parameters, you can still specify them here.
 
         :raises FirebaseError
@@ -166,7 +167,9 @@ class FCMDeviceQuerySet(models.query.QuerySet):
                 )
             ]
             responses.extend(
-                messaging.send_all(messages, **more_send_message_kwargs).responses
+                messaging.send_all(
+                    messages, app=app, **more_send_message_kwargs
+                ).responses
             )
         return FirebaseResponseDict(
             response=messaging.BatchResponse(responses),
@@ -217,6 +220,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         topic: str,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Sequence[str] = None,
+        app: "firebase_admin.App" = SETTINGS["DEFAULT_FIREBASE_APP"],
         **more_subscribe_kwargs,
     ) -> FirebaseResponseDict:
         """
@@ -230,10 +234,10 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         :param skip_registration_id_lookup: skips the QuerySet lookup and solely uses
         the list of IDs from additional_registration_ids
         :param additional_registration_ids: specific registration_ids to add to the
+        :param app: firebase_admin.App. Specify a specific app to use
         QuerySet lookup
         :param more_subscribe_kwargs: Parameters for
         ``firebase.messaging.subscribe_to_topic()``
-        - app: firebase_admin.App. Specify a specific app to use
         If there are any new parameters, you can still specify them here.
 
         :raises FirebaseError
@@ -249,7 +253,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             messaging.subscribe_to_topic
             if should_subscribe
             else messaging.unsubscribe_from_topic
-        )(registration_ids, topic, **more_subscribe_kwargs)
+        )(registration_ids, topic, app=app, **more_subscribe_kwargs)
         return FirebaseResponseDict(
             response=response,
             registration_ids_sent=registration_ids,
@@ -284,6 +288,7 @@ class AbstractFCMDevice(Device):
     def send_message(
         self,
         message: messaging.Message,
+        app: "firebase_admin.App" = SETTINGS["DEFAULT_FIREBASE_APP"],
         **more_send_message_kwargs,
     ) -> Union[Optional[messaging.SendResponse], FirebaseError]:
         """
@@ -292,9 +297,9 @@ class AbstractFCMDevice(Device):
 
         :param message: firebase.messaging.Message. If `message` includes a token/id, it
         will be overridden.
+        :param app: firebase_admin.App. Specify a specific app to use
         :param more_send_message_kwargs: Parameters for firebase.messaging.send_all()
         - dry_run: bool. Whether to actually send the notification to the device
-        - app: firebase_admin.App. Specify a specific app to use
         If there are any new parameters, you can still specify them here.
 
         :raises FirebaseError
@@ -304,7 +309,8 @@ class AbstractFCMDevice(Device):
         message.token = self.registration_id
         try:
             return messaging.SendResponse(
-                {"name": messaging.send(message, **more_send_message_kwargs)}, None
+                {"name": messaging.send(message, app=app, **more_send_message_kwargs)},
+                None,
             )
         except FirebaseError as e:
             self.deactivate_devices_with_error_result(self.registration_id, e)
@@ -314,6 +320,7 @@ class AbstractFCMDevice(Device):
         self,
         should_subscribe: bool,
         topic: str,
+        app: "firebase_admin.App" = SETTINGS["DEFAULT_FIREBASE_APP"],
         **more_subscribe_kwargs,
     ) -> FirebaseResponseDict:
         """
@@ -323,9 +330,9 @@ class AbstractFCMDevice(Device):
         unsubscribe to a topic (False).
         :param topic: Name of the topic to subscribe to. May contain the ``/topics/``
         prefix.
+        :param app: firebase_admin.App. Specify a specific app to use
         :param more_subscribe_kwargs: Parameters for
         ``firebase.messaging.subscribe_to_topic()``
-        - app: firebase_admin.App. Specify a specific app to use
         If there are any new parameters, you can still specify them here.
 
         :raises FirebaseError
@@ -336,7 +343,7 @@ class AbstractFCMDevice(Device):
             messaging.subscribe_to_topic
             if should_subscribe
             else messaging.unsubscribe_from_topic
-        )(_r_ids, topic, **more_subscribe_kwargs)
+        )(_r_ids, topic, app=app, **more_subscribe_kwargs)
         return FirebaseResponseDict(
             response=response,
             registration_ids_sent=_r_ids,
@@ -357,13 +364,15 @@ class AbstractFCMDevice(Device):
     def send_topic_message(
         message: messaging.Message,
         topic_name: str,
+        app: "firebase_admin.App" = SETTINGS["DEFAULT_FIREBASE_APP"],
         **more_send_message_kwargs,
     ) -> Union[Optional[messaging.SendResponse], FirebaseError]:
         message.topic = topic_name
 
         try:
             return messaging.SendResponse(
-                {"name": messaging.send(message, **more_send_message_kwargs)}, None
+                {"name": messaging.send(message, app=app, **more_send_message_kwargs)},
+                None,
             )
         except FirebaseError as e:
             return e
