@@ -28,7 +28,7 @@ class DeviceAdmin(admin.ModelAdmin):
         "active",
         "date_created",
     )
-    list_filter = ("active",)
+    list_filter = ("active", "user", "type",)
     actions = (
         "send_message",
         "send_bulk_message",
