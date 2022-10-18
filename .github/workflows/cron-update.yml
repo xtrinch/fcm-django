@@ -29,7 +29,7 @@ jobs:
           echo "::set-output name=new-number::$output"
       - name: Create issue if new max batch number
         uses: imjohnbo/issue-bot@v3
-        if: ${{ steps.new-max-batch-number.outputs.new-number != "Nothing new" }}
+        if: ${{ steps.new-max-batch-number.outputs.new-number != 'Nothing new' }}
         env:
           title: New max batch number!
           body: |-
