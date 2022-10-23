@@ -326,7 +326,7 @@ Routes can be added one of two ways:
 Update of device with duplicate registration ID
 -----------------------------------------------
 
-The DRF viewset enforce the uniqueness of the registration ID. In same use case it
+The DRF viewset enforce the uniqueness of the registration ID. In some use case it
 may cause an issue: If an already registered mobile device changes its user, then
 it will fail to register because the registration ID already exist.
 

@@ -132,6 +132,7 @@ Edit your settings.py file:
         # Transform create of an existing Device (based on registration id) into
 		    # an update. See the section
         # "Update of device with duplicate registration ID" for more details.
+        # default: False
         "UPDATE_ON_DUPLICATE_REG_ID": True/False,
     }
 
@@ -371,7 +372,7 @@ Routes can be added one of two ways:
 Update of device with duplicate registration ID
 -----------------------------------------------
 
-The DRF viewset enforce the uniqueness of the registration ID. In same use case it
+The DRF viewset enforce the uniqueness of the registration ID. In some use case it
 may cause an issue: If an already registered mobile device changes its user, then
 it will fail to register because the registration ID already exist.
 
@@ -386,7 +387,9 @@ Python 3 support
 
 Django version compatibility
 ----------------------------
-Compatible with Django versions 2.2+. For lower django versions, use version ``fcm-django < 1``.
+Compatible with Django versions 3.0+.
+For Django version 2.2, use version ``fcm-django < 2``.
+For lower django versions, use version ``fcm-django < 1``.
 
 Acknowledgements
 ----------------
