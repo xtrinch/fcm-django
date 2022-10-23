@@ -115,8 +115,6 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             list(additional_registration_ids) if additional_registration_ids else []
         )
         if not skip_registration_id_lookup:
-            if not self.exists() and not additional_registration_ids:
-                return []
             registration_ids.extend(
                 self.filter(active=True).values_list("registration_id", flat=True)
             )
