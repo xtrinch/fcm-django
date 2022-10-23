@@ -1,5 +1,4 @@
 from copy import copy
-from itertools import repeat
 from typing import List, NamedTuple, Optional, Sequence, Union
 
 from django.db import models
@@ -160,11 +159,8 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         responses: List[messaging.SendResponse] = []
         for i in range(0, len(registration_ids), MAX_MESSAGES_PER_BATCH):
             messages = [
-                self._prepare_message(m, t)
-                for m, t in zip(
-                    repeat(message, MAX_MESSAGES_PER_BATCH),
-                    registration_ids[i : i + MAX_MESSAGES_PER_BATCH],
-                )
+                self._prepare_message(message, token)
+                for token in registration_ids[i : i + MAX_MESSAGES_PER_BATCH]
             ]
             responses.extend(
                 messaging.send_all(
