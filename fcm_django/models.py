@@ -262,9 +262,13 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 FCMDeviceManager = _FCMDeviceManager.from_queryset(FCMDeviceQuerySet)
 
 
-class AbstractFCMDevice(Device):
-    DEVICE_TYPES = (("ios", "ios"), ("android", "android"), ("web", "web"))
+class DeviceType(models.TextChoices):
+    IOS = "ios", "ios"
+    ANDROID = "android", "android"
+    WEB = "web", "web"
 
+
+class AbstractFCMDevice(Device):
     device_id = models.CharField(
         verbose_name=_("Device ID"),
         blank=True,
@@ -274,7 +278,7 @@ class AbstractFCMDevice(Device):
         max_length=255,
     )
     registration_id = models.TextField(verbose_name=_("Registration token"))
-    type = models.CharField(choices=DEVICE_TYPES, max_length=10)
+    type = models.CharField(choices=DeviceType.choices, max_length=10)
     objects: "FCMDeviceQuerySet" = FCMDeviceManager()
 
     class Meta:
