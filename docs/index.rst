@@ -117,6 +117,9 @@ Edit your settings.py file:
     # https://cloud.google.com/docs/authentication/getting-started>
 
     FCM_DJANGO_SETTINGS = {
+         # an instance of firebase_admin.App to be used as default for all fcm-django requests
+         # default: None (the default Firebase app)
+        "DEFAULT_FIREBASE_APP": None,
          # default: _('FCM Django')
         "APP_VERBOSE_NAME": "[string for AppConfig's verbose_name]",
          # true if you want to have only one active device per registered user at a time
@@ -129,6 +132,7 @@ Edit your settings.py file:
         # Transform create of an existing Device (based on registration id) into
 		    # an update. See the section
         # "Update of device with duplicate registration ID" for more details.
+        # default: False
         "UPDATE_ON_DUPLICATE_REG_ID": True/False,
     }
 
@@ -231,13 +235,9 @@ Sending messages to topic
 
 .. code-block:: python
 
-    from firebase_admin.messaging import Message
     from fcm_django.models import FCMDevice
 
-    # You can still use .filter() or any methods that return QuerySet (from the chain)
-    FCMDevice.objects.all().send_message(Message(data={...}, topic="TOPIC NAME"))
-    device = FCMDevice.objects.all().first()
-    device.send_message(Message(data={...}, topic="TOPIC NAME"))
+    FCMDevice.send_topic_message(Message(data={...}), "TOPIC NAME")
 
 Additional Parameters
 ---------------------
@@ -258,16 +258,62 @@ lookup that goes along with your query.
 Using multiple FCM apps
 -----------------------
 
-By default the message will be sent using the default FCM ``firebase_admin.App`` (we initialized this in our settings). This default can be overridden by specifying an app when calling send_message. This can be used to send messages using different firebase projects.
+By default the message will be sent using the default FCM ``firebase_admin.App`` (we initialized this in our settings),
+or the one specified with the ``DEFAULT_FIREBASE_APP`` setting.
+
+This default can be overridden by specifying an app when calling send_message. This can be used to send messages using different firebase projects.
 
 .. code-block:: python
 
-    from firebase_admin import App
-    from firebase_admin.messaging import Notification
+    from firebase_app import App
+    from firebase_app.messaging import Notification
     from fcm_django.models import FCMDevice
 
     device = FCMDevice.objects.all().first()
     device.send_message(notification=Notification(...), app=App(...))
+
+Setting a default Firebase app for FCM
+--------------------------------------
+
+If you want to use a specific Firebase app for all fcm-django requests, you can create an instance of
+``firebase_admin.App`` and pass it to fcm-django with the ``DEFAULT_FIREBASE_APP`` setting.
+
+The ``DEFAULT_FIREBASE_APP`` will be used for all send / subscribe / unsubscribe requests, include ``FCMDevice``'s
+admin actions.
+
+In your ``settings.py``:
+
+.. code-block:: python
+
+    from firebase_admin import initialize_app, credentials
+    from google.auth import load_credentials_from_file
+    from google.oauth2.service_account import Credentials
+
+    # create a custom Credentials class to load a non-default google service account JSON
+    class CustomFirebaseCredentials(credentials.ApplicationDefault):
+        def __init__(self, account_file_path: str):
+            super().__init__()
+            self._account_file_path = account_file_path
+
+        def _load_credential(self):
+            if not self._g_credential:
+                self._g_credential, self._project_id = load_credentials_from_file(self._account_file_path,
+                                                                                  scopes=credentials._scopes)
+
+    # init default firebase app
+    # this loads the default google service account with GOOGLE_APPLICATION_CREDENTIALS env variable
+    FIREBASE_APP = initialize_app()
+
+    # init second firebase app for fcm-django
+    # the environment variable contains a path to the custom google service account JSON
+    custom_credentials = CustomFirebaseCredentials(os.getenv('CUSTOM_GOOGLE_APPLICATION_CREDENTIALS'))
+    FIREBASE_MESSAGING_APP = initialize_app(custom_credentials, name='messaging')
+
+    FCM_DJANGO_SETTINGS = {
+        "DEFAULT_FIREBASE_APP": FIREBASE_MESSAGING_APP,
+        # [...] your other settings
+    }
+
 
 Django REST Framework (DRF) support
 -----------------------------------
@@ -284,7 +330,7 @@ Viewsets come in two different varieties:
 
     - Permissions are ``IsAuthenticated`` and custom permission ``IsOwner``, which will only allow the ``request.user`` to get and update devices that belong to that user
     - Requires a user to be authenticated, so all devices will be associated with a user
-    - Will allow duplicate registration_id's for different users, so you are responsible for cleanup (if that is generally perceived as undesired behaviour or if the package itself should be doing the cleanup, open an issue or email me)
+    - Will allow duplicate registration_id's for different users, so you are responsible for cleanup (if you do not want duplicate registration id's, use the ``UPDATE_ON_DUPLICATE_REG_ID`` flag)
 
 Routes can be added one of two ways:
 
@@ -341,7 +387,9 @@ Python 3 support
 
 Django version compatibility
 ----------------------------
-Compatible with Django versions 2.2+. For lower django versions, use version ``fcm-django < 1``.
+Compatible with Django versions 3.0+.
+For Django version 2.2, use version ``fcm-django < 2``.
+For lower django versions, use version ``fcm-django < 1``.
 
 Acknowledgements
 ----------------
