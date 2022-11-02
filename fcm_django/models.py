@@ -1,5 +1,4 @@
 from copy import copy
-from itertools import repeat
 from typing import List, NamedTuple, Optional, Sequence, Union
 
 from django.db import models
@@ -116,8 +115,6 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             list(additional_registration_ids) if additional_registration_ids else []
         )
         if not skip_registration_id_lookup:
-            if not self.exists() and not additional_registration_ids:
-                return []
             registration_ids.extend(
                 self.filter(active=True).values_list("registration_id", flat=True)
             )
@@ -160,11 +157,8 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         responses: List[messaging.SendResponse] = []
         for i in range(0, len(registration_ids), MAX_MESSAGES_PER_BATCH):
             messages = [
-                self._prepare_message(m, t)
-                for m, t in zip(
-                    repeat(message, MAX_MESSAGES_PER_BATCH),
-                    registration_ids[i : i + MAX_MESSAGES_PER_BATCH],
-                )
+                self._prepare_message(message, token)
+                for token in registration_ids[i : i + MAX_MESSAGES_PER_BATCH]
             ]
             responses.extend(
                 messaging.send_all(
@@ -266,9 +260,13 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 FCMDeviceManager = _FCMDeviceManager.from_queryset(FCMDeviceQuerySet)
 
 
-class AbstractFCMDevice(Device):
-    DEVICE_TYPES = (("ios", "ios"), ("android", "android"), ("web", "web"))
+class DeviceType(models.TextChoices):
+    IOS = "ios", "ios"
+    ANDROID = "android", "android"
+    WEB = "web", "web"
 
+
+class AbstractFCMDevice(Device):
     device_id = models.CharField(
         verbose_name=_("Device ID"),
         blank=True,
@@ -278,7 +276,7 @@ class AbstractFCMDevice(Device):
         max_length=255,
     )
     registration_id = models.TextField(verbose_name=_("Registration token"))
-    type = models.CharField(choices=DEVICE_TYPES, max_length=10)
+    type = models.CharField(choices=DeviceType.choices, max_length=10)
     objects: "FCMDeviceQuerySet" = FCMDeviceManager()
 
     class Meta:
