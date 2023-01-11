@@ -72,8 +72,7 @@ of bulk messages.
     from firebase_admin.messaging import Message, Notification
     topic = "A topic"
     FCMDevice.objects.handle_subscription(True, topic)
-    message = Message(..., topic=topic)
-    FCMDevice.objects.filter(is_cool=True).send_message(message)
+    FCMDevice.send_topic_message(Message(data={...}), "TOPIC NAME")
 
 There are two additional parameters to both methods:
 ``skip_registration_id_lookup`` and ``additional_registration_ids``.
