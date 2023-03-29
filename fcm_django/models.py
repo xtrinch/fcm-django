@@ -275,7 +275,10 @@ class AbstractFCMDevice(Device):
         help_text=_("Unique device identifier"),
         max_length=255,
     )
-    registration_id = models.TextField(verbose_name=_("Registration token"))
+    registration_id = models.TextField(
+        verbose_name=_("Registration token"),
+        unique=True,
+    )
     type = models.CharField(choices=DeviceType.choices, max_length=10)
     objects: "FCMDeviceQuerySet" = FCMDeviceManager()
 
