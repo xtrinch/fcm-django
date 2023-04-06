@@ -88,7 +88,7 @@ Setup
 -----
 You can install the library directly from pypi using pip:
 
-.. code-block::
+.. code-block:: console
 
     pip install fcm-django
 
