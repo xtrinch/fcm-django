@@ -215,9 +215,9 @@ Subscribing or Unsubscribing Users to topic
     from fcm_django.models import FCMDevice
 
     # Subscribing
-    FCMDevice.objects.all().handle_topic_subscription(True, topic="TOPIC NAME"))
+    FCMDevice.objects.all().handle_topic_subscription(True, topic="TOPIC NAME")
     device = FCMDevice.objects.all().first()
-    device.handle_topic_subscription(True, topic="TOPIC NAME"))
+    device.handle_topic_subscription(True, topic="TOPIC NAME")
 
     # Finally you can send a message to that topic
     from firebase_admin.messaging import Message
@@ -226,9 +226,9 @@ Subscribing or Unsubscribing Users to topic
     FCMDevice.objects.send_message(message)
 
     # Unsubscribing
-    FCMDevice.objects.all().handle_topic_subscription(False, topic="TOPIC NAME"))
+    FCMDevice.objects.all().handle_topic_subscription(False, topic="TOPIC NAME")
     device = FCMDevice.objects.all().first()
-    device.handle_topic_subscription(False, topic="TOPIC NAME"))
+    device.handle_topic_subscription(False, topic="TOPIC NAME")
 
 Sending messages to topic
 -------------------------
