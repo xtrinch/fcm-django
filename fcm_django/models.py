@@ -285,6 +285,9 @@ class AbstractFCMDevice(Device):
     class Meta:
         abstract = True
         verbose_name = _("FCM device")
+        indexes = [
+            models.Index(fields=["registration_id", "user"]),
+        ]
 
     def send_message(
         self,
