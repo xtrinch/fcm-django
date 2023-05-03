@@ -72,8 +72,7 @@ of bulk messages.
     from firebase_admin.messaging import Message, Notification
     topic = "A topic"
     FCMDevice.objects.handle_subscription(True, topic)
-    message = Message(..., topic=topic)
-    FCMDevice.objects.filter(is_cool=True).send_message(message)
+    FCMDevice.send_topic_message(Message(data={...}), "TOPIC NAME")
 
 There are two additional parameters to both methods:
 ``skip_registration_id_lookup`` and ``additional_registration_ids``.
@@ -89,7 +88,7 @@ Setup
 -----
 You can install the library directly from pypi using pip:
 
-.. code-block::
+.. code-block:: console
 
     pip install fcm-django
 
@@ -215,9 +214,9 @@ Subscribing or Unsubscribing Users to topic
     from fcm_django.models import FCMDevice
 
     # Subscribing
-    FCMDevice.objects.all().handle_topic_subscription(True, topic="TOPIC NAME")
+    FCMDevice.objects.all().handle_topic_subscription(True, topic="TOPIC NAME"))
     device = FCMDevice.objects.all().first()
-    device.handle_topic_subscription(True, topic="TOPIC NAME")
+    device.handle_topic_subscription(True, topic="TOPIC NAME"))
 
     # Finally you can send a message to that topic
     from firebase_admin.messaging import Message
@@ -226,9 +225,9 @@ Subscribing or Unsubscribing Users to topic
     FCMDevice.objects.send_message(message)
 
     # Unsubscribing
-    FCMDevice.objects.all().handle_topic_subscription(False, topic="TOPIC NAME")
+    FCMDevice.objects.all().handle_topic_subscription(False, topic="TOPIC NAME"))
     device = FCMDevice.objects.all().first()
-    device.handle_topic_subscription(False, topic="TOPIC NAME")
+    device.handle_topic_subscription(False, topic="TOPIC NAME"))
 
 Sending messages to topic
 -------------------------
