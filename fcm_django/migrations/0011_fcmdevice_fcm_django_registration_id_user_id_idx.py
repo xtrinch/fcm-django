@@ -6,12 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('fcm_django', '0010_unique_registration_id'),
+        ("fcm_django", "0010_unique_registration_id"),
     ]
 
     operations = [
         migrations.AddIndex(
-            model_name='fcmdevice',
-            index=models.Index(fields=['registration_id', 'user'], name='fcm_django__registr_dacdb2_idx'),
+            model_name="fcmdevice",
+            index=models.Index(
+                fields=["registration_id", "user"],
+                name="fcm_django__registr_dacdb2_idx",
+            ),
         ),
     ]
