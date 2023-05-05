@@ -386,3 +386,7 @@ class FCMDevice(AbstractFCMDevice):
     class Meta:
         verbose_name = _("FCM device")
         verbose_name_plural = _("FCM devices")
+
+        indexes = [
+            models.Index(fields=["registration_id", "user"]),
+        ]
