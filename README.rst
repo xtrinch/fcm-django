@@ -128,11 +128,6 @@ Edit your settings.py file:
          # are deleted upon receiving error response from FCM
          # default: False
         "DELETE_INACTIVE_DEVICES": True/False,
-        # Transform create of an existing Device (based on registration id) into
-		    # an update. See the section
-        # "Update of device with duplicate registration ID" for more details.
-        # default: False
-        "UPDATE_ON_DUPLICATE_REG_ID": True/False,
     }
 
 Native Django migrations are in use. ``manage.py migrate`` will install and migrate all models.
@@ -329,7 +324,7 @@ Viewsets come in two different varieties:
 
     - Permissions are ``IsAuthenticated`` and custom permission ``IsOwner``, which will only allow the ``request.user`` to get and update devices that belong to that user
     - Requires a user to be authenticated, so all devices will be associated with a user
-    - Will allow duplicate registration_id's for different users, so you are responsible for cleanup (if you do not want duplicate registration id's, use the ``UPDATE_ON_DUPLICATE_REG_ID`` flag)
+    - Will update the device on duplicate registration id
 
 Routes can be added one of two ways:
 
@@ -371,14 +366,11 @@ Routes can be added one of two ways:
 Update of device with duplicate registration ID
 -----------------------------------------------
 
-The DRF viewset enforce the uniqueness of the registration ID. In some use case it
-may cause an issue: If an already registered mobile device changes its user, then
-it will fail to register because the registration ID already exist.
+Tokens are device specific, so if the user e.g. logs out of their account on your device, and another user
+logins on the same device, you do not wish the old user to receive messages while logged out.
 
-When option ``UPDATE_ON_DUPLICATE_REG_ID`` is set to True, then any creation of
-device with an already existing registration ID will be transformed into an update.
-
-The ``UPDATE_ON_DUPLICATE_REG_ID`` only works with DRF.
+Via DRF, any creation of device with an already existing registration ID will be transformed into an update.
+If done manually, you are responsible for deleting the old device entry.
 
 Python 3 support
 ----------------
