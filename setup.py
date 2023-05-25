@@ -18,6 +18,8 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: System :: Networking",
 ]
@@ -30,7 +32,7 @@ setup(
         "fcm_django/migrations",
     ],
     python_requires=">=3",
-    install_requires=["firebase-admin>=5,<6", "Django"],
+    install_requires=["firebase-admin>=5,<7", "Django"],
     author=fcm_django.__author__,
     author_email=fcm_django.__email__,
     classifiers=CLASSIFIERS,
