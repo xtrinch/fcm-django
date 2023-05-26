@@ -30,7 +30,7 @@ setup(
         "fcm_django/migrations",
     ],
     python_requires=">=3",
-    install_requires=["firebase-admin>=5,<6", "Django"],
+    install_requires=["firebase-admin>=5,<6", "Django", "swapper"],
     author=fcm_django.__author__,
     author_email=fcm_django.__email__,
     classifiers=CLASSIFIERS,

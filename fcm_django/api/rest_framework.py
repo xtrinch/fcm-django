@@ -4,9 +4,12 @@ from rest_framework.mixins import CreateModelMixin
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer, Serializer, ValidationError
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
+import swapper
 
-from fcm_django.models import FCMDevice
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
+
+
+FCMDevice = swapper.load_model('fcm_django', 'fcmdevice')
 
 
 # Serializers

@@ -5,6 +5,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from firebase_admin import messaging
 from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
+import swapper
 
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
 
@@ -390,3 +391,5 @@ class FCMDevice(AbstractFCMDevice):
         indexes = [
             models.Index(fields=["registration_id", "user"]),
         ]
+
+        swappable = swapper.swappable_setting('fcm_django', 'fcmdevice')
