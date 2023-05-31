@@ -20,3 +20,6 @@ venv
 # tox
 .tox
 .DS_Store
+
+# pytest
+.pytest_cache

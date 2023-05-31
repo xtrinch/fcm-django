@@ -2,6 +2,30 @@
 
 from django.db import migrations, models
 
+_MYSQL = "mysql"
+
+
+class AddIndexSkipMySQL(migrations.AddIndex):
+    def database_forwards(self, app_label, schema_editor, from_state, to_state):
+        if schema_editor.connection.vendor == _MYSQL:
+            return
+        super().database_forwards(
+            app_label=app_label,
+            schema_editor=schema_editor,
+            from_state=from_state,
+            to_state=to_state,
+        )
+
+    def database_backwards(self, app_label, schema_editor, from_state, to_state):
+        if schema_editor.connection.vendor == _MYSQL:
+            return
+        super().database_forwards(
+            app_label=app_label,
+            schema_editor=schema_editor,
+            from_state=from_state,
+            to_state=to_state,
+        )
+
 
 class Migration(migrations.Migration):
 
@@ -10,7 +34,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddIndex(
+        AddIndexSkipMySQL(
             model_name="fcmdevice",
             index=models.Index(
                 fields=["registration_id", "user"],

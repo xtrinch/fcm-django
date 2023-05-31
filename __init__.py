@@ -1,1 +1,1 @@
-__author__ = "mojca"
+__author__ = "xtrinch"
