@@ -376,6 +376,9 @@ Python 3 support
 ----------------
 ``fcm-django`` is fully compatible with Python 3.6+
 
+* but `firebase-admin with version 6 drop support of Python 3.6 <https://firebase.google.com/support/release-notes/admin/python#version_600_-_06_october_2022>`_, 
+  so make sure that the installed requirements is compatible with your version of python and downgrade them if it's required
+
 Django version compatibility
 ----------------------------
 Compatible with Django versions 3.0+.
