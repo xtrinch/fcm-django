@@ -374,16 +374,14 @@ If done manually, you are responsible for deleting the old device entry.
 
 Python 3 support
 ----------------
-``fcm-django`` is fully compatible with Python 3.6+
-
-* but `firebase-admin with version 6 drop support of Python 3.6 <https://firebase.google.com/support/release-notes/admin/python#version_600_-_06_october_2022>`_, 
-  so make sure that the installed requirements is compatible with your version of python and downgrade them if it's required
+- ``fcm-django`` is fully compatible with Python 3.7+
+- for Python 3.6, use ``fcm-django < 2.0.0`` , because `firebase-admin with version 6 drop support of Python 3.6 <https://firebase.google.com/support/release-notes/admin/python#version_600_-_06_october_2022>`_
 
 Django version compatibility
 ----------------------------
 Compatible with Django versions 3.0+.
-For Django version 2.2, use version ``fcm-django < 2``.
-For lower django versions, use version ``fcm-django < 1``.
+For Django version 2.2, use version ``fcm-django < 1.0.13``.
+For lower django versions, use version ``fcm-django < 1.0.0``.
 
 Acknowledgements
 ----------------
