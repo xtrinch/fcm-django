@@ -318,7 +318,7 @@ class AbstractFCMDevice(Device):
             )
         except FirebaseError as e:
             self.deactivate_devices_with_error_result(self.registration_id, e)
-            return e
+            raise e
 
     def handle_topic_subscription(
         self,
@@ -379,7 +379,7 @@ class AbstractFCMDevice(Device):
                 None,
             )
         except FirebaseError as e:
-            return e
+            raise e
 
 
 class FCMDevice(AbstractFCMDevice):
