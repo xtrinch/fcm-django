@@ -373,13 +373,10 @@ class AbstractFCMDevice(Device):
     ) -> Union[Optional[messaging.SendResponse], FirebaseError]:
         message.topic = topic_name
 
-        try:
-            return messaging.SendResponse(
-                {"name": messaging.send(message, app=app, **more_send_message_kwargs)},
-                None,
-            )
-        except FirebaseError as e:
-            raise e
+        return messaging.SendResponse(
+            {"name": messaging.send(message, app=app, **more_send_message_kwargs)},
+            None,
+        )
 
 
 class FCMDevice(AbstractFCMDevice):
