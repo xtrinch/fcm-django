@@ -2,28 +2,31 @@
 # ToDo: add test when unsuccessfully activation
 # ToDo: add test for tastypie
 
+import pytest
+import swapper
 from django.conf import settings
 
-import swapper
-import pytest
-
 from fcm_django.models import DeviceType
-FCMDevice = swapper.load_model('fcm_django', 'fcmdevice')
+
+FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
 
 
 @pytest.fixture
 def registration_id():
-    return '001'
+    return "001"
 
 
 @pytest.mark.django_db
 def test_drf_endpoint_add_device(client, registration_id):
     devices_qty = FCMDevice.objects.count()
 
-    response = client.post('/devices/', {
-        'registration_id': registration_id,
-        'type': 'web',
-    })
+    response = client.post(
+        "/devices/",
+        {
+            "registration_id": registration_id,
+            "type": "web",
+        },
+    )
 
     assert response.status_code == 201
     assert FCMDevice.objects.count() == devices_qty + 1
@@ -31,14 +34,19 @@ def test_drf_endpoint_add_device(client, registration_id):
 
 
 @pytest.mark.django_db
-def test_drf_endpoint_add_device_with_existed_token_wont_create_a_new_device(client, registration_id):
+def test_drf_endpoint_add_device_with_existed_token_wont_create_a_new_device(
+    client, registration_id
+):
     FCMDevice.objects.create(registration_id=registration_id, type=FCMDevice)
     devices_qty = FCMDevice.objects.count()
 
-    response = client.post('/devices/', {
-        'registration_id': registration_id,
-        'type': 'web',
-    })
+    response = client.post(
+        "/devices/",
+        {
+            "registration_id": registration_id,
+            "type": "web",
+        },
+    )
 
     assert response.status_code == 200
     assert FCMDevice.objects.count() == devices_qty
