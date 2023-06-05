@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 from unittest.mock import MagicMock, sentinel
 
 import pytest
@@ -67,7 +67,7 @@ class TestFCMDeviceSendMessage:
         message: Message,
         mock_send: MagicMock,
         app: Any = None,
-        send_message_kwargs: dict | None = None,
+        send_message_kwargs: Optional[dict] = None,
     ):
         send_message_kwargs = send_message_kwargs or {}
 
