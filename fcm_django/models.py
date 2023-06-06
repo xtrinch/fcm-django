@@ -318,7 +318,7 @@ class AbstractFCMDevice(Device):
             )
         except FirebaseError as e:
             self.deactivate_devices_with_error_result(self.registration_id, e)
-            return e
+            raise
 
     def handle_topic_subscription(
         self,
@@ -370,16 +370,13 @@ class AbstractFCMDevice(Device):
         topic_name: str,
         app: "firebase_admin.App" = SETTINGS["DEFAULT_FIREBASE_APP"],
         **more_send_message_kwargs,
-    ) -> Union[Optional[messaging.SendResponse], FirebaseError]:
+    ) -> messaging.SendResponse:
         message.topic = topic_name
 
-        try:
-            return messaging.SendResponse(
-                {"name": messaging.send(message, app=app, **more_send_message_kwargs)},
-                None,
-            )
-        except FirebaseError as e:
-            return e
+        return messaging.SendResponse(
+            {"name": messaging.send(message, app=app, **more_send_message_kwargs)},
+            None,
+        )
 
 
 class FCMDevice(AbstractFCMDevice):

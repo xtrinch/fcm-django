@@ -1,4 +1,5 @@
 from django.conf import settings
+from firebase_admin import initialize_app
 
 
 def pytest_configure():
@@ -15,3 +16,4 @@ def pytest_configure():
             },
         },
     )
+    initialize_app()  # for tests requiring Firebase
