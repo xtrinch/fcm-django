@@ -294,7 +294,7 @@ class AbstractFCMDevice(Device):
         message: messaging.Message,
         app: "firebase_admin.App" = SETTINGS["DEFAULT_FIREBASE_APP"],
         **more_send_message_kwargs,
-    ) -> Union[Optional[messaging.SendResponse], FirebaseError]:
+    ) -> messaging.SendResponse:
         """
         Send single message. The message's token should be blank (and will be
         overridden if not). Responds with message ID string.
