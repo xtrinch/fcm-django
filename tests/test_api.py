@@ -37,7 +37,9 @@ def test_drf_endpoint_add_device(client, registration_id):
 def test_drf_endpoint_add_device_with_existed_token_wont_create_a_new_device(
     client, registration_id
 ):
-    FCMDevice.objects.create(registration_id=registration_id, type=FCMDevice)
+    device = FCMDevice.objects.create(
+        registration_id=registration_id, type=DeviceType.ANDROID
+    )
     devices_qty = FCMDevice.objects.count()
 
     response = client.post(
@@ -50,3 +52,5 @@ def test_drf_endpoint_add_device_with_existed_token_wont_create_a_new_device(
 
     assert response.status_code == 200
     assert FCMDevice.objects.count() == devices_qty
+    device.refresh_from_db()
+    assert device.type == DeviceType.WEB
