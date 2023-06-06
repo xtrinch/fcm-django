@@ -4,7 +4,6 @@ from unittest.mock import MagicMock, sentinel
 import pytest
 from firebase_admin.exceptions import FirebaseError
 from firebase_admin.messaging import Message, SendResponse
-from pytest_mock import MockerFixture
 
 from fcm_django.models import DeviceType, FCMDevice
 
@@ -43,62 +42,52 @@ def test_firebase_raises(monkeypatch):
 
 
 class TestFCMDeviceSendMessage:
-    RESPONSE_MESSAGE_SEND = sentinel.RESPONSE_MESSAGE_SEND
-
-    @pytest.fixture
-    def device(self):
-        instance = FCMDevice(registration_id="123456", type=DeviceType.WEB)
-        return instance
-
-    @pytest.fixture
-    def message(self):
-        return Message(data={"foo": "bar"})
-
-    @pytest.fixture(autouse=True)
-    def mock_send(self, mocker: MockerFixture):
-        mock = mocker.patch("fcm_django.models.messaging.send")
-        mock.return_value = self.RESPONSE_MESSAGE_SEND
-        return mock
-
     def assert_sent_successfully(
         self,
         result: Any,
-        device: FCMDevice,
+        fcm_device: FCMDevice,
         message: Message,
-        mock_send: MagicMock,
+        mock_firebase_send: MagicMock,
+        message_id: str,
         app: Any = None,
         send_message_kwargs: Optional[dict] = None,
     ):
         send_message_kwargs = send_message_kwargs or {}
 
-        assert device.registration_id
-        assert message.token == device.registration_id
+        assert fcm_device.registration_id
+        assert message.token == fcm_device.registration_id
 
-        mock_send.assert_called_once_with(message, app=app, **send_message_kwargs)
+        mock_firebase_send.assert_called_once_with(
+            message, app=app, **send_message_kwargs
+        )
 
         # Ensure we properly construct the response with the exact same message that was
         # obtained from messaging.send call
         assert isinstance(result, SendResponse)
-        assert result.message_id == self.RESPONSE_MESSAGE_SEND
+        assert result.message_id == message_id
 
     def test_ok(
         self,
-        device: FCMDevice,
+        fcm_device: FCMDevice,
         message: Message,
-        mock_send: MagicMock,
+        mock_firebase_send: MagicMock,
+        firebase_message_id_send: str,
     ):
         """
         Ensure a message is being sent properly with default arguments
         """
-        result = device.send_message(message, None)
+        result = fcm_device.send_message(message, None)
 
-        self.assert_sent_successfully(result, device, message, mock_send)
+        self.assert_sent_successfully(
+            result, fcm_device, message, mock_firebase_send, firebase_message_id_send
+        )
 
     def test_custom_params(
         self,
-        device: FCMDevice,
+        fcm_device: FCMDevice,
         message: Message,
-        mock_send: MagicMock,
+        mock_firebase_send: MagicMock,
+        firebase_message_id_send: str,
     ):
         """
         Ensure custom firebase app and send_message_kwargs are being passed to
@@ -107,15 +96,36 @@ class TestFCMDeviceSendMessage:
         custom_firebase_app = sentinel.CUSTOM_FIREBASE_APP
         send_message_kwargs = {"foo": "bar"}
 
-        result = device.send_message(
+        result = fcm_device.send_message(
             message, custom_firebase_app, **send_message_kwargs
         )
 
         self.assert_sent_successfully(
             result,
-            device,
+            fcm_device,
             message,
-            mock_send,
+            mock_firebase_send,
+            firebase_message_id_send,
             app=custom_firebase_app,
             send_message_kwargs=send_message_kwargs,
+        )
+
+    def test_firebase_error(
+        self,
+        fcm_device: FCMDevice,
+        message: Message,
+        mock_firebase_send: MagicMock,
+        firebase_error: FirebaseError,
+        mock_fcm_device_deactivate: MagicMock,
+    ):
+        """
+        Ensure we call deactivate_devices_with_error_result and raise the FirebaseError
+        """
+        mock_firebase_send.side_effect = firebase_error
+
+        with pytest.raises(FirebaseError, match=str(firebase_error)):
+            fcm_device.send_message(message)
+
+        mock_fcm_device_deactivate.assert_called_once_with(
+            fcm_device, fcm_device.registration_id, firebase_error
         )
