@@ -200,6 +200,14 @@ Sending messages in bulk
     devices.send_message(Message(data={...}))
     # Or (send_message parameters include: messages, dry_run, app)
     FCMDevice.objects.send_message(Message(...))
+    
+Sending messages raises all the errors that ``firebase-admin`` raises, so make sure
+they are caught and dealt with in your application code:
+
+- ``FirebaseError`` – If an error occurs while sending the message to the FCM service.
+- ``ValueError`` – If the input arguments are invalid.
+
+For more info, see https://firebase.google.com/docs/reference/admin/python/firebase_admin.messaging#firebase_admin.messaging.BatchResponse
 
 Subscribing or Unsubscribing Users to topic
 -------------------------------------------
