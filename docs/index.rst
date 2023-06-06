@@ -201,6 +201,14 @@ Sending messages in bulk
     # Or (send_message parameters include: messages, dry_run, app)
     FCMDevice.objects.send_message(Message(...))
 
+    Sending messages raises all the errors that ``firebase-admin`` raises, so make sure
+they are caught and dealt with in your application code:
+
+- ``FirebaseError`` – If an error occurs while sending the message to the FCM service.
+- ``ValueError`` – If the input arguments are invalid.
+
+For more info, see https://firebase.google.com/docs/reference/admin/python/firebase_admin.messaging#firebase_admin.messaging.BatchResponse
+
 Subscribing or Unsubscribing Users to topic
 -------------------------------------------
 
@@ -372,6 +380,37 @@ logins on the same device, you do not wish the old user to receive messages whil
 Via DRF, any creation of device with an already existing registration ID will be transformed into an update.
 If done manually, you are responsible for deleting the old device entry.
 
+Using custom FCMDevice model
+----------------------------
+
+If there's a need to store additional information or change type of fields in the FCMDevice model.
+You could simple override this model. It could be fully your own model or you could inheriting from AbstractFCMDevice 
+
+In your ``your_app/models.py``:
+
+.. code-block:: python
+
+    import uuid
+    from django.db import models
+    from fcm_django.models import AbstractFCMDevice
+
+
+    class CustomDevice(AbstractFCMDevice, models.Model):
+        # fields could be overwritten
+        id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+        # could be added new fields
+        updated_at = models.DateTimeField(auto_now=True)
+
+In your ``settings.py``:
+
+.. code-block:: python
+
+    FCM_DJANGO_FCMDEVICE_MODEL = "your_app.CustomDevice"
+
+Note: This functionality based on [Swapper](https://pypi.org/project/swapper/) that based on functionality that allow to swap User model.
+So this functionality have the same limitations. 
+The most is important limitation it is that is difficult to start out with a default (non-swapped) model and then later to switch to a swapped implementation without doing some migration hacking.
+
 Python 3 support
 ----------------
 - ``fcm-django`` is fully compatible with Python 3.7+
@@ -379,7 +418,7 @@ Python 3 support
 
 Django version compatibility
 ----------------------------
-Compatible with Django versions 3.0+.
+Compatible with Django versions 3.2+.
 For Django version 2.2, use version ``fcm-django < 1.0.13``.
 For lower django versions, use version ``fcm-django < 1.0.0``.
 
