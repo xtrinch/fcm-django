@@ -1,5 +1,5 @@
 from copy import copy
-from typing import List, NamedTuple, Optional, Sequence, Union
+from typing import List, NamedTuple, Sequence, Union
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
