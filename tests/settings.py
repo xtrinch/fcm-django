@@ -1,8 +1,11 @@
 import dj_database_url
 
+SECRET_KEY = "ToP SeCrEt"
+
 INSTALLED_APPS = [
-    "django.contrib.contenttypes",
     "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
     "fcm_django",
 ]
 DATABASES = {"default": dj_database_url.config()}
