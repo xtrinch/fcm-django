@@ -413,6 +413,15 @@ So this functionality have the same limitations.
 The most is important limitation it is that is difficult to start out with a default (non-swapped) model 
 and then later to switch to a swapped implementation without doing some migration hacking.
 
+If you choose to move forward with swapped models then:
+
+0. After creating your own ``Model`` don't forget to create ``migrations`` and ``migrate`` commands.
+1. In the DB will be two tables one that was created by this package and other your own. New data will appears only in your own table.
+2. On existed project you have to keep in mind there are required manual work to move data from one table to anther.
+3. If there's any tables with FK to swapped model then you have to deal with them on your own.
+4. If you choose to not inherit your model from ``AbstractFCMDevice`` then you have to deal with all missed methods of ``AbstractFCMDevice``
+  and its queryeset on your own.
+
 Python 3 support
 ----------------
 - ``fcm-django`` is fully compatible with Python 3.7+
@@ -420,7 +429,7 @@ Python 3 support
 
 Django version compatibility
 ----------------------------
-Compatible with Django versions 3.2+.
+Compatible with Django versions 3.0+.
 For Django version 2.2, use version ``fcm-django < 1.0.13``.
 For lower django versions, use version ``fcm-django < 1.0.0``.
 
