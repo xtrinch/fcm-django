@@ -12,6 +12,21 @@ FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
 
 
 @pytest.fixture
+def username() -> str:
+    return "someone"
+
+
+@pytest.fixture
+def password() -> str:
+    return "something"
+
+
+@pytest.fixture
+def user(django_user_model, username: str, password: str):
+    return django_user_model.objects.create_user(username=username, password=password)
+
+
+@pytest.fixture
 def registration_id() -> str:
     return "123456"
 
