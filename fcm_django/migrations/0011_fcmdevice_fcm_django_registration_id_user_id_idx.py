@@ -19,7 +19,7 @@ class AddIndexSkipMySQL(migrations.AddIndex):
     def database_backwards(self, app_label, schema_editor, from_state, to_state):
         if schema_editor.connection.vendor == _MYSQL:
             return
-        super().database_forwards(
+        super().database_backwards(
             app_label=app_label,
             schema_editor=schema_editor,
             from_state=from_state,
