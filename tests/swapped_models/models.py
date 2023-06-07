@@ -5,7 +5,7 @@ from django.db import models
 from fcm_django.models import AbstractFCMDevice
 
 
-class CustomDevice(AbstractFCMDevice, models.Model):
+class CustomDevice(AbstractFCMDevice):
     # fields could be overwritten
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     # NOTE: the max_length could not be supported or enforced on the database level

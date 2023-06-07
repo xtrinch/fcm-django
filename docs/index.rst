@@ -395,7 +395,7 @@ In your ``your_app/models.py``:
     from fcm_django.models import AbstractFCMDevice
 
 
-    class CustomDevice(AbstractFCMDevice, models.Model):
+    class CustomDevice(AbstractFCMDevice):
         # fields could be overwritten
         id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
         # could be added new fields
