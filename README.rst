@@ -419,8 +419,7 @@ If you choose to move forward with swapped models then:
 1. In the DB will be two tables one that was created by this package and other your own. New data will appears only in your own table.
 2. On existed project you have to keep in mind there are required manual work to move data from one table to anther.
 3. If there's any tables with FK to swapped model then you have to deal with them on your own.
-4. If you choose to not inherit your model from ``AbstractFCMDevice`` then you have to deal with all missed methods of ``AbstractFCMDevice``
-    and its queryeset on your own.
+4. If you choose to not inherit your model from ``AbstractFCMDevice`` then you have to deal with all missed methods of ``AbstractFCMDevice`` and its queryeset on your own.
 
 Python 3 support
 ----------------
@@ -449,3 +448,17 @@ Contributing
 
 To setup the development environment, simply do ``pip install -r requirements_dev.txt``
 To manually run the pre-commit hook, run `pre-commit run --all-files`.
+
+Because there's possibility to use swapped models therefore tests contains two config files:
+
+1. with default settings and non swapped models ``settings.py``
+2. and with overwritten settings only that required by swapper - ``swap_settings.py``
+
+To run tests locally you could use ``pytest``, and if you need to check migrations on different DB then you have to specify environment variable ``DATABASE_URL`` ie 
+
+.. code-block:: console
+
+    export DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/postgres
+    export DJANGO_SETTINGS_MODULE=tests.settings 
+    # or export DJANGO_SETTINGS_MODULE=tests.swap_settings
+    pytest

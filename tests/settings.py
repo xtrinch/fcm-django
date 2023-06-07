@@ -16,7 +16,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
 ]
 
-DATABASES = {"default": dj_database_url.config()}
+DATABASES = {"default": dj_database_url.config(default="sqlite://")}
 USE_TZ = True
 ROOT_URLCONF = "tests.urls"
 TEMPLATES = [
