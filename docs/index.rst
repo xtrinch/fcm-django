@@ -407,9 +407,11 @@ In your ``settings.py``:
 
     FCM_DJANGO_FCMDEVICE_MODEL = "your_app.CustomDevice"
 
-Note: This functionality based on [Swapper](https://pypi.org/project/swapper/) that based on functionality that allow to swap User model.
+Note: This functionality based on `Swapper <https://pypi.org/project/swapper/>`_ that based on functionality 
+that allow to use a `custom User model <https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#substituting-a-custom-user-model>`_.
 So this functionality have the same limitations. 
-The most is important limitation it is that is difficult to start out with a default (non-swapped) model and then later to switch to a swapped implementation without doing some migration hacking.
+The most is important limitation it is that is difficult to start out with a default (non-swapped) model 
+and then later to switch to a swapped implementation without doing some migration hacking.
 
 Python 3 support
 ----------------
