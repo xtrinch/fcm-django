@@ -1,5 +1,3 @@
-# ToDo: add test for swap user when another user use the same token
-
 import base64
 
 import pytest
@@ -10,11 +8,25 @@ from fcm_django.models import DeviceType
 FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
 
 
+@pytest.fixture
+def username() -> str:
+    return "someone"
+
+
+@pytest.fixture
+def password() -> str:
+    return "something"
+
+
+@pytest.fixture
+def user(django_user_model, username: str, password: str):
+    return django_user_model.objects.create_user(username=username, password=password)
+
+
 @pytest.mark.django_db
-def test_tastypie_endpoint_add_device(client, django_user_model, registration_id):
-    username = "someone"
-    password = "something"
-    django_user_model.objects.create_user(username=username, password=password)
+def test_tastypie_endpoint_add_device(
+    client, user, username, password, registration_id
+):
     devices_qty = FCMDevice.objects.count()
 
     response = client.post(
@@ -71,3 +83,23 @@ def test_drf_endpoint_add_device_with_existed_token_wont_create_a_new_device(
     assert FCMDevice.objects.count() == devices_qty
     fcm_device.refresh_from_db()
     assert fcm_device.type == DeviceType.ANDROID
+
+
+@pytest.mark.django_db
+def test_drf_endpoint_add_device_with_existed_token_will_override_device_owner(
+    client, user, fcm_device: FCMDevice
+):
+    assert fcm_device.user != user
+    client.force_login(user)
+
+    response = client.post(
+        "/drf/devices/",
+        {
+            "registration_id": fcm_device.registration_id,
+            "type": "android",
+        },
+    )
+
+    assert response.status_code == 200
+    fcm_device.refresh_from_db()
+    assert fcm_device.user == user
