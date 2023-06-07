@@ -12,18 +12,25 @@ FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
 
 
 @pytest.fixture
-def fcm_device():
-    instance = FCMDevice.objects.create(registration_id="123456", type=DeviceType.WEB)
+def registration_id() -> str:
+    return "123456"
+
+
+@pytest.fixture
+def fcm_device(registration_id: str):
+    instance = FCMDevice.objects.create(
+        registration_id=registration_id, type=DeviceType.WEB
+    )
     return instance
 
 
 @pytest.fixture
-def message():
+def message() -> Message:
     return Message(data={"foo": "bar"})
 
 
 @pytest.fixture
-def firebase_error():
+def firebase_error() -> FirebaseError:
     return FirebaseError(code=500, message="message")
 
 

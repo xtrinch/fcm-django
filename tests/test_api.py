@@ -10,11 +10,6 @@ from fcm_django.models import DeviceType
 FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
 
 
-@pytest.fixture
-def registration_id():
-    return "001"
-
-
 @pytest.mark.django_db
 def test_tastypie_endpoint_add_device(client, django_user_model, registration_id):
     username = "someone"
@@ -59,22 +54,20 @@ def test_drf_endpoint_add_device(client, registration_id):
 
 @pytest.mark.django_db
 def test_drf_endpoint_add_device_with_existed_token_wont_create_a_new_device(
-    client, registration_id
+    client, fcm_device: FCMDevice
 ):
-    device = FCMDevice.objects.create(
-        registration_id=registration_id, type=DeviceType.ANDROID
-    )
+    assert fcm_device.type == DeviceType.WEB
     devices_qty = FCMDevice.objects.count()
 
     response = client.post(
         "/drf/devices/",
         {
-            "registration_id": registration_id,
-            "type": "web",
+            "registration_id": fcm_device.registration_id,
+            "type": "android",
         },
     )
 
     assert response.status_code == 200
     assert FCMDevice.objects.count() == devices_qty
-    device.refresh_from_db()
-    assert device.type == DeviceType.WEB
+    fcm_device.refresh_from_db()
+    assert fcm_device.type == DeviceType.ANDROID
