@@ -1,5 +1,4 @@
 # ToDo: add test for swap user when another user use the same token
-# ToDo: add test for django admin
 
 import base64
 

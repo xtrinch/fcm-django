@@ -1,3 +1,4 @@
+from django.contrib import admin
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from tastypie.api import Api
@@ -16,4 +17,5 @@ router.register(r"devices", FCMDeviceViewSet)
 urlpatterns = [
     path("tastypie/", include(api.urls)),
     path("drf/", include(router.urls)),
+    path("admin/", admin.site.urls),
 ]

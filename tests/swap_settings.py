@@ -5,3 +5,6 @@ INSTALLED_APPS += [
 ]
 
 FCM_DJANGO_FCMDEVICE_MODEL = "swapped_models.CustomDevice"
+
+
+IS_SWAP = True
