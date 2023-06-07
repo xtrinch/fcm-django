@@ -120,7 +120,6 @@ class TestFCMDeviceSendMessage:
         fcm_device: FCMDevice,
         message: Message,
         mock_firebase_send: MagicMock,
-        # firebase_error: FirebaseError,
     ):
         """
         Ensure when Invalid registration firebase error device is still active and raised the FirebaseError
