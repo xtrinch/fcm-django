@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, sentinel
 
 import pytest
 import swapper
-from firebase_admin.exceptions import FirebaseError
+from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
 from firebase_admin.messaging import Message, SendResponse
 
 from fcm_django.models import DeviceType
@@ -26,6 +26,7 @@ def test_registration_id_size():
     device.save()
 
 
+@pytest.mark.django_db
 class TestFCMDeviceSendMessage:
     def assert_sent_successfully(
         self,
@@ -101,19 +102,42 @@ class TestFCMDeviceSendMessage:
         message: Message,
         mock_firebase_send: MagicMock,
         firebase_error: FirebaseError,
-        mock_fcm_device_deactivate: MagicMock,
     ):
         """
-        Ensure we call deactivate_devices_with_error_result and raise the FirebaseError
+        Ensure when happened unknown firebase error device is still active and raised the FirebaseError
         """
         mock_firebase_send.side_effect = firebase_error
 
         with pytest.raises(FirebaseError, match=str(firebase_error)):
             fcm_device.send_message(message)
 
-        mock_fcm_device_deactivate.assert_called_once_with(
-            fcm_device, fcm_device.registration_id, firebase_error
+        fcm_device.refresh_from_db()
+        # device is still active because error is unknown
+        assert fcm_device.active
+
+    def test_firebase_invalid_registration_error(
+        self,
+        fcm_device: FCMDevice,
+        message: Message,
+        mock_firebase_send: MagicMock,
+        # firebase_error: FirebaseError,
+    ):
+        """
+        Ensure when Invalid registration firebase error device is still active and raised the FirebaseError
+        """
+        firebase_invalid_registration_error = InvalidArgumentError(
+            message="Error", cause="Invalid registration"
         )
+        mock_firebase_send.side_effect = firebase_invalid_registration_error
+
+        with pytest.raises(
+            FirebaseError, match=str(firebase_invalid_registration_error)
+        ):
+            fcm_device.send_message(message)
+
+        fcm_device.refresh_from_db()
+        # ensure that device deactivated
+        assert not fcm_device.active
 
 
 class TestFCMDeviceSendTopicMessage:
