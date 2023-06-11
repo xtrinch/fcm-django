@@ -9,18 +9,40 @@ from fcm_django.models import DeviceType, FCMDevice
 
 
 @pytest.fixture
-def fcm_device():
-    instance = FCMDevice(registration_id="123456", type=DeviceType.WEB)
+def username() -> str:
+    return "someone"
+
+
+@pytest.fixture
+def password() -> str:
+    return "something"
+
+
+@pytest.fixture
+def user(django_user_model, username: str, password: str):
+    return django_user_model.objects.create_user(username=username, password=password)
+
+
+@pytest.fixture
+def registration_id() -> str:
+    return "123456"
+
+
+@pytest.fixture
+def fcm_device(registration_id: str):
+    instance = FCMDevice.objects.create(
+        registration_id=registration_id, type=DeviceType.WEB
+    )
     return instance
 
 
 @pytest.fixture
-def message():
+def message() -> Message:
     return Message(data={"foo": "bar"})
 
 
 @pytest.fixture
-def firebase_error():
+def firebase_error() -> FirebaseError:
     return FirebaseError(code=500, message="message")
 
 

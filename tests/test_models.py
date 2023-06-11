@@ -23,6 +23,7 @@ def test_registration_id_size():
     device.save()
 
 
+@pytest.mark.django_db
 class TestFCMDeviceSendMessage:
     def assert_sent_successfully(
         self,
