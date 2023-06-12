@@ -384,7 +384,7 @@ Using custom FCMDevice model
 ----------------------------
 
 If there's a need to store additional information or change type of fields in the FCMDevice model.
-You could simple override this model. It could be fully your own model or you could inheriting from AbstractFCMDevice 
+You could simple override this model. To do this, inherit your model from the AbstractFCMDevice class.
 
 In your ``your_app/models.py``:
 
@@ -407,19 +407,19 @@ In your ``settings.py``:
 
     FCM_DJANGO_FCMDEVICE_MODEL = "your_app.CustomDevice"
 
+After setup your own ``Model`` don't forget to create ``migrations`` for your app and call ``migrate`` command.
+
+If you choose to move forward with swapped models then:
+
+1. In the DB will be two tables one that was created by this package and other your own. New data will appears only in your own table.
+2. On existed project you have to keep in mind there are required manual work to move data from one table to anther.
+3. If there's any tables with FK to swapped model then you have to deal with them on your own.
+
 Note: This functionality based on `Swapper <https://pypi.org/project/swapper/>`_ that based on functionality 
 that allow to use a `custom User model <https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#substituting-a-custom-user-model>`_.
 So this functionality have the same limitations. 
 The most is important limitation it is that is difficult to start out with a default (non-swapped) model 
 and then later to switch to a swapped implementation without doing some migration hacking.
-
-If you choose to move forward with swapped models then:
-
-0. After creating your own ``Model`` don't forget to create ``migrations`` and ``migrate`` commands.
-1. In the DB will be two tables one that was created by this package and other your own. New data will appears only in your own table.
-2. On existed project you have to keep in mind there are required manual work to move data from one table to anther.
-3. If there's any tables with FK to swapped model then you have to deal with them on your own.
-4. If you choose to not inherit your model from ``AbstractFCMDevice`` then you have to deal with all missed methods of ``AbstractFCMDevice`` and its queryeset on your own.
 
 Python 3 support
 ----------------
