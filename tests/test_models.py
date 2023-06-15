@@ -1,8 +1,11 @@
 from typing import Any, Optional
 from unittest.mock import MagicMock, sentinel
+from uuid import UUID
 
 import pytest
 import swapper
+from django.conf import settings
+from django.utils import timezone
 from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
 from firebase_admin.messaging import Message, SendResponse
 
@@ -24,6 +27,20 @@ def test_registration_id_size():
         type=DeviceType.WEB,
     )
     device.save()
+
+
+@pytest.mark.django_db
+def test_fields_on_the_device_can_be_redefined_by_swapped_model(fcm_device: FCMDevice):
+    assert isinstance(fcm_device.id, UUID if settings.IS_SWAP else int)
+
+
+@pytest.mark.django_db
+def test_fields_on_the_device_can_be_added_by_swapped_model(fcm_device: FCMDevice):
+    assert hasattr(fcm_device, "more_data") == settings.IS_SWAP
+    if settings.IS_SWAP:
+        before_update = timezone.now()
+        fcm_device.save()
+        assert before_update < fcm_device.updated_at < timezone.now()
 
 
 @pytest.mark.django_db
