@@ -1,9 +1,13 @@
-import swapper
+from django.apps.registry import apps
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from tastypie.authentication import BasicAuthentication
 from tastypie.authorization import Authorization
 from tastypie.resources import ModelResource
 
-FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
+from fcm_django.models import get_fcm_device_model
+
+FCMDevice = get_fcm_device_model()
 
 
 class FCMDeviceResource(ModelResource):

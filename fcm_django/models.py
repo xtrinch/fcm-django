@@ -1,7 +1,8 @@
 from copy import copy
 from typing import List, NamedTuple, Sequence, Union
 
-import swapper
+from django.apps.registry import apps as django_apps
+from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from firebase_admin import messaging
@@ -389,5 +390,18 @@ class FCMDevice(AbstractFCMDevice):
             models.Index(fields=["registration_id", "user"]),
         ]
 
-        app_label = "fcm_django"
-        swappable = swapper.swappable_setting("fcm_django", "fcmdevice")
+
+def get_fcm_device_model():
+    model = getattr(settings, "FCM_DJANGO_FCMDEVICE_MODEL", "fcm_django.FCMDevice")
+
+    try:
+        return django_apps.get_model(model, require_ready=False)
+    except ValueError:
+        raise ImproperlyConfigured(
+            "FCM_DJANGO_FCMDEVICE_MODEL must be of the form 'app_label.model_name'"
+        )
+    except LookupError:
+        raise ImproperlyConfigured(
+            "FCM_DJANGO_FCMDEVICE_MODEL refers to model '%s' that has not been installed"
+            % settings.FCM_DJANGO_FCMDEVICE_MODEL
+        )

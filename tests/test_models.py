@@ -3,15 +3,14 @@ from unittest.mock import MagicMock, sentinel
 from uuid import UUID
 
 import pytest
-import swapper
 from django.conf import settings
 from django.utils import timezone
 from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
 from firebase_admin.messaging import Message, SendResponse
 
-from fcm_django.models import DeviceType
+from fcm_django.models import DeviceType, get_fcm_device_model
 
-FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
+FCMDevice = get_fcm_device_model()
 
 
 @pytest.mark.django_db

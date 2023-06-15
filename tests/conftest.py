@@ -1,14 +1,13 @@
 from unittest.mock import sentinel
 
 import pytest
-import swapper
 from firebase_admin.exceptions import FirebaseError
 from firebase_admin.messaging import Message
 from pytest_mock import MockerFixture
 
-from fcm_django.models import DeviceType
+from fcm_django.models import DeviceType, get_fcm_device_model
 
-FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
+FCMDevice = get_fcm_device_model()
 
 
 @pytest.fixture
