@@ -21,7 +21,7 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install --upgrade pip wheel setuptools
-          pip install --upgrade firebase-admin
+          pip install --upgrade firebase-admin fcm-django
       - name: Run Script
         id: new-max-batch-number
         run: |
