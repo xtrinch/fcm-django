@@ -1,4 +1,4 @@
-from .settings import *
+from .base import *
 
 INSTALLED_APPS += [
     "tests.swapped_models",
@@ -6,5 +6,4 @@ INSTALLED_APPS += [
 
 FCM_DJANGO_FCMDEVICE_MODEL = "swapped_models.CustomDevice"
 
-
-IS_SWAP = True
+IS_SWAP = True  # Only to distinguish which model is used in the tests

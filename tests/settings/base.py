@@ -8,7 +8,6 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "fcm_django",
 ]
 MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -34,5 +33,3 @@ TEMPLATES = [
         },
     },
 ]
-
-IS_SWAP = False

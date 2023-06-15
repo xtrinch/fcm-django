@@ -389,4 +389,5 @@ class FCMDevice(AbstractFCMDevice):
             models.Index(fields=["registration_id", "user"]),
         ]
 
+        app_label = "fcm_django"
         swappable = swapper.swappable_setting("fcm_django", "fcmdevice")
