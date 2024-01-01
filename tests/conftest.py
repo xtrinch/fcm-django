@@ -1,11 +1,14 @@
 from unittest.mock import sentinel
 
 import pytest
+import swapper
 from firebase_admin.exceptions import FirebaseError
 from firebase_admin.messaging import Message
 from pytest_mock import MockerFixture
 
-from fcm_django.models import DeviceType, FCMDevice
+from fcm_django.models import DeviceType
+
+FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
 
 
 @pytest.fixture
@@ -59,11 +62,3 @@ def mock_firebase_send(mocker: MockerFixture, firebase_message_id_send):
     mock = mocker.patch("fcm_django.models.messaging.send")
     mock.return_value = firebase_message_id_send
     return mock
-
-
-@pytest.fixture
-def mock_fcm_device_deactivate(mocker: MockerFixture):
-    return mocker.patch(
-        "fcm_django.models.FCMDevice.deactivate_devices_with_error_result",
-        autospec=True,
-    )

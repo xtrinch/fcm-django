@@ -1,5 +1,6 @@
 from typing import List, Tuple, Union
 
+import swapper
 from django.apps import apps
 from django.contrib import admin, messages
 from django.utils.translation import gettext_lazy as _
@@ -12,10 +13,12 @@ from firebase_admin.messaging import (
     TopicManagementResponse,
 )
 
-from fcm_django.models import FCMDevice, FirebaseResponseDict, fcm_error_list
+from fcm_django.models import FirebaseResponseDict, fcm_error_list
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
 
 User = apps.get_model(*SETTINGS["USER_MODEL"].split("."))
+
+FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
 
 
 class DeviceAdmin(admin.ModelAdmin):

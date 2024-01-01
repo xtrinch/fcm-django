@@ -1,8 +1,6 @@
 import dj_database_url
-from firebase_admin import initialize_app
 
 SECRET_KEY = "ToP SeCrEt"
-
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -10,7 +8,6 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "fcm_django",
 ]
 MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -19,7 +16,6 @@ MIDDLEWARE = [
 ]
 
 DATABASES = {"default": dj_database_url.config(default="sqlite://")}
-
 USE_TZ = True
 ROOT_URLCONF = "tests.urls"
 TEMPLATES = [
@@ -37,4 +33,3 @@ TEMPLATES = [
         },
     },
 ]
-FIREBASE_APP = initialize_app()

@@ -1,6 +1,11 @@
-import pytest
+import base64
 
-from fcm_django.models import DeviceType, FCMDevice
+import pytest
+import swapper
+
+from fcm_django.models import DeviceType
+
+FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
 
 
 @pytest.mark.django_db
