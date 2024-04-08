@@ -30,7 +30,6 @@ class DeviceAdmin(admin.ModelAdmin):
     )
     list_filter = (
         "active",
-        "user",
         "type",
     )
     actions = (
