@@ -310,6 +310,11 @@ class AbstractFCMDevice(Device):
         :returns messaging.SendResponse or FirebaseError if the device was
         deactivated due to an error.
         """
+        if not self.active:
+            return messaging.SendResponse(
+                None,
+                None,
+            )
         message.token = self.registration_id
         try:
             return messaging.SendResponse(
