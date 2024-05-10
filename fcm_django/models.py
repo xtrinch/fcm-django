@@ -132,7 +132,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         """
         Send notification of single message for all active devices in
         queryset and deactivate if DELETE_INACTIVE_DEVICES setting is set to True.
-        Bulk sends using firebase.messaging.send_all. For every 500 messages, we send a
+        Bulk sends using firebase.messaging.send_each. For every 500 messages, we send a
         single HTTP request to Firebase (the 500 is set by the firebase-sdk).
 
         :param message: firebase.messaging.Message. If `message` includes a token/id, it
@@ -142,7 +142,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         :param additional_registration_ids: specific registration_ids to add to the
         :param app: firebase_admin.App. Specify a specific app to use
         QuerySet lookup
-        :param more_send_message_kwargs: Parameters for firebase.messaging.send_all()
+        :param more_send_message_kwargs: Parameters for firebase.messaging.send_each()
         - dry_run: bool. Whether to actually send the notification to the device
         If there are any new parameters, you can still specify them here.
 
@@ -162,7 +162,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
                 for token in registration_ids[i : i + MAX_MESSAGES_PER_BATCH]
             ]
             responses.extend(
-                messaging.send_all(
+                messaging.send_each(
                     messages, app=app, **more_send_message_kwargs
                 ).responses
             )
@@ -303,7 +303,7 @@ class AbstractFCMDevice(Device):
         :param message: firebase.messaging.Message. If `message` includes a token/id, it
         will be overridden.
         :param app: firebase_admin.App. Specify a specific app to use
-        :param more_send_message_kwargs: Parameters for firebase.messaging.send_all()
+        :param more_send_message_kwargs: Parameters for firebase.messaging.send_each()
         - dry_run: bool. Whether to actually send the notification to the device
         If there are any new parameters, you can still specify them here.
 
@@ -311,6 +311,11 @@ class AbstractFCMDevice(Device):
         :returns messaging.SendResponse or FirebaseError if the device was
         deactivated due to an error.
         """
+        if not self.active:
+            return messaging.SendResponse(
+                None,
+                None,
+            )
         message.token = self.registration_id
         try:
             return messaging.SendResponse(
