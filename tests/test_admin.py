@@ -3,7 +3,10 @@ import pytest
 
 @pytest.fixture
 def base_admin_url(settings) -> str:
-    return "/admin/fcm_django/fcmdevice/"
+    if settings.IS_SWAP:
+        return "/admin/swapped_models/customdevice/"
+    else:
+        return "/admin/fcm_django/fcmdevice/"
 
 
 @pytest.fixture(autouse=True)

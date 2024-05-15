@@ -1,11 +1,17 @@
 from typing import Any, Optional
 from unittest.mock import MagicMock, sentinel
+from uuid import UUID
 
 import pytest
-from firebase_admin.exceptions import FirebaseError
+import swapper
+from django.conf import settings
+from django.utils import timezone
+from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
 from firebase_admin.messaging import Message, SendResponse
 
-from fcm_django.models import DeviceType, FCMDevice
+from fcm_django.models import DeviceType
+
+FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
 
 
 @pytest.mark.django_db
@@ -21,6 +27,20 @@ def test_registration_id_size():
         type=DeviceType.WEB,
     )
     device.save()
+
+
+@pytest.mark.django_db
+def test_fields_on_the_device_can_be_redefined_by_swapped_model(fcm_device: FCMDevice):
+    assert isinstance(fcm_device.id, UUID if settings.IS_SWAP else int)
+
+
+@pytest.mark.django_db
+def test_fields_on_the_device_can_be_added_by_swapped_model(fcm_device: FCMDevice):
+    assert hasattr(fcm_device, "more_data") == settings.IS_SWAP
+    if settings.IS_SWAP:
+        before_update = timezone.now()
+        fcm_device.save()
+        assert before_update < fcm_device.updated_at < timezone.now()
 
 
 @pytest.mark.django_db
@@ -99,19 +119,41 @@ class TestFCMDeviceSendMessage:
         message: Message,
         mock_firebase_send: MagicMock,
         firebase_error: FirebaseError,
-        mock_fcm_device_deactivate: MagicMock,
     ):
         """
-        Ensure we call deactivate_devices_with_error_result and raise the FirebaseError
+        Ensure when happened unknown firebase error device is still active and raised the FirebaseError
         """
         mock_firebase_send.side_effect = firebase_error
 
         with pytest.raises(FirebaseError, match=str(firebase_error)):
             fcm_device.send_message(message)
 
-        mock_fcm_device_deactivate.assert_called_once_with(
-            fcm_device, fcm_device.registration_id, firebase_error
+        fcm_device.refresh_from_db()
+        # device is still active because error is unknown
+        assert fcm_device.active
+
+    def test_firebase_invalid_registration_error(
+        self,
+        fcm_device: FCMDevice,
+        message: Message,
+        mock_firebase_send: MagicMock,
+    ):
+        """
+        Ensure when Invalid registration firebase error device is still active and raised the FirebaseError
+        """
+        firebase_invalid_registration_error = InvalidArgumentError(
+            message="Error", cause="Invalid registration"
         )
+        mock_firebase_send.side_effect = firebase_invalid_registration_error
+
+        with pytest.raises(
+            FirebaseError, match=str(firebase_invalid_registration_error)
+        ):
+            fcm_device.send_message(message)
+
+        fcm_device.refresh_from_db()
+        # ensure that device deactivated
+        assert not fcm_device.active
 
 
 class TestFCMDeviceSendTopicMessage:
