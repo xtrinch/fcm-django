@@ -380,6 +380,74 @@ logins on the same device, you do not wish the old user to receive messages whil
 Via DRF, any creation of device with an already existing registration ID will be transformed into an update.
 If done manually, you are responsible for deleting the old device entry.
 
+Using custom FCMDevice model
+----------------------------
+
+If there's a need to store additional information or change type of fields in the FCMDevice model.
+You could simple override this model. To do this, inherit your model from the AbstractFCMDevice class.
+
+In your ``your_app/models.py``:
+
+.. code-block:: python
+
+    import uuid
+    from django.db import models
+    from fcm_django.models import AbstractFCMDevice
+
+
+    class CustomDevice(AbstractFCMDevice):
+        # fields could be overwritten
+        id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+        # could be added new fields
+        updated_at = models.DateTimeField(auto_now=True)
+
+In your ``settings.py``:
+
+.. code-block:: python
+
+    FCM_DJANGO_FCMDEVICE_MODEL = "your_app.CustomDevice"
+
+
+In the DB will be two tables one that was created by this package and other your own. New data will appears only in your own table.
+If you don't want default table appears in the DB then you should remove ``fcm_django`` out of ``INSTALLED_APPS`` at  ``settings.py``:
+
+.. code-block:: python
+
+    INSTALLED_APPS = (
+        ...
+        # "fcm_django", - remove this line
+        "your_app", # your app should appears
+        ...
+    )
+
+After setup your own ``Model`` don't forget to create ``migrations`` for your app and call ``migrate`` command.
+
+After removing ``"fcm_django"`` out of ``INSTALLED_APPS``. You will need to re-register the Device in order to see it in the admin panel. 
+This can be accomplished as follows at ``your_app/admin.py``:
+
+.. code-block:: python
+
+    from django.contrib import admin
+
+    from fcm_django.admin import DeviceAdmin
+    from your_app.models import CustomDevice
+
+
+    admin.site.unregister(CustomDevice)
+    admin.site.register(CustomDevice, DeviceAdmin)
+
+
+If you choose to move forward with swapped models then:
+
+1. On existed project you have to keep in mind there are required manual work to move data from one table to anther.
+2. If there's any tables with FK to swapped model then you have to deal with them on your own.
+
+Note: This functionality based on `Swapper <https://pypi.org/project/swapper/>`_ that based on functionality 
+that allow to use a `custom User model <https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#substituting-a-custom-user-model>`_.
+So this functionality have the same limitations. 
+The most is important limitation it is that is difficult to start out with a default (non-swapped) model 
+and then later to switch to a swapped implementation without doing some migration hacking.
+
 Python 3 support
 ----------------
 - ``fcm-django`` is fully compatible with Python 3.7+
@@ -407,3 +475,17 @@ Contributing
 
 To setup the development environment, simply do ``pip install -r requirements_dev.txt``
 To manually run the pre-commit hook, run `pre-commit run --all-files`.
+
+Because there's possibility to use swapped models therefore tests contains two config files:
+
+1. with default settings and non swapped models ``settings/default.py``
+2. and with overwritten settings only that required by swapper - ``settings/swap.py``
+
+To run tests locally you could use ``pytest``, and if you need to check migrations on different DB then you have to specify environment variable ``DATABASE_URL`` ie 
+
+.. code-block:: console
+
+    export DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/postgres
+    export DJANGO_SETTINGS_MODULE=tests.settings.default 
+    # or export DJANGO_SETTINGS_MODULE=tests.settings.swap
+    pytest
