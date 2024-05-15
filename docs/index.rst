@@ -372,6 +372,19 @@ logins on the same device, you do not wish the old user to receive messages whil
 Via DRF, any creation of device with an already existing registration ID will be transformed into an update.
 If done manually, you are responsible for deleting the old device entry.
 
+MySQL compatibility
+-------------------
+MySQL has a limit for indices and therefore the `registration_id` field cannot be made unique in MySQL.
+We detect the database backend and remove the unique constraint for MySQL in the migration files. However,
+to ensure that the constraint is removed from the actual model you have to add the following to your settings:
+
+.. code-block:: python
+
+    FCM_DJANGO_SETTINGS = {
+        "MYSQL_COMPATIBILITY": True,
+        # [...] your other settings
+    }
+
 Python 3 support
 ----------------
 - ``fcm-django`` is fully compatible with Python 3.7+

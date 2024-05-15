@@ -277,7 +277,7 @@ class AbstractFCMDevice(Device):
     )
     registration_id = models.TextField(
         verbose_name=_("Registration token"),
-        unique=True,
+        unique=not SETTINGS["MYSQL_COMPATIBILITY"],
     )
     type = models.CharField(choices=DeviceType.choices, max_length=10)
     objects: "FCMDeviceQuerySet" = FCMDeviceManager()
@@ -389,6 +389,7 @@ class FCMDevice(AbstractFCMDevice):
         verbose_name = _("FCM device")
         verbose_name_plural = _("FCM devices")
 
-        indexes = [
-            models.Index(fields=["registration_id", "user"]),
-        ]
+        if not SETTINGS["MYSQL_COMPATIBILITY"]:
+            indexes = [
+                models.Index(fields=["registration_id", "user"]),
+            ]

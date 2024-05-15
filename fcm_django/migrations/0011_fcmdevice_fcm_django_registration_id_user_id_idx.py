@@ -2,12 +2,14 @@
 
 from django.db import migrations, models
 
+from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
+
 _MYSQL = "mysql"
 
 
 class AddIndexSkipMySQL(migrations.AddIndex):
     def database_forwards(self, app_label, schema_editor, from_state, to_state):
-        if schema_editor.connection.vendor == _MYSQL:
+        if schema_editor.connection.vendor == _MYSQL or SETTINGS["MYSQL_COMPATIBILITY"]:
             return
         super().database_forwards(
             app_label=app_label,
@@ -17,7 +19,7 @@ class AddIndexSkipMySQL(migrations.AddIndex):
         )
 
     def database_backwards(self, app_label, schema_editor, from_state, to_state):
-        if schema_editor.connection.vendor == _MYSQL:
+        if schema_editor.connection.vendor == _MYSQL or SETTINGS["MYSQL_COMPATIBILITY"]:
             return
         super().database_backwards(
             app_label=app_label,
