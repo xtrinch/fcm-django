@@ -9,7 +9,7 @@ _MYSQL = "mysql"
 
 class AddIndexSkipMySQL(migrations.AddIndex):
     def database_forwards(self, app_label, schema_editor, from_state, to_state):
-        if schema_editor.connection.vendor == _MYSQL or SETTINGS["MYSQL_COMPATIBILITY"]:
+        if schema_editor.connection.vendor == _MYSQL:
             return
         super().database_forwards(
             app_label=app_label,
@@ -19,7 +19,7 @@ class AddIndexSkipMySQL(migrations.AddIndex):
         )
 
     def database_backwards(self, app_label, schema_editor, from_state, to_state):
-        if schema_editor.connection.vendor == _MYSQL or SETTINGS["MYSQL_COMPATIBILITY"]:
+        if schema_editor.connection.vendor == _MYSQL:
             return
         super().database_backwards(
             app_label=app_label,
@@ -43,4 +43,4 @@ class Migration(migrations.Migration):
                 name="fcm_django__registr_dacdb2_idx",
             ),
         ),
-    ]
+    ] if not SETTINGS["MYSQL_COMPATIBILITY"] else []
