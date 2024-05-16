@@ -35,12 +35,16 @@ class Migration(migrations.Migration):
         ("fcm_django", "0010_unique_registration_id"),
     ]
 
-    operations = [
-        AddIndexSkipMySQL(
-            model_name="fcmdevice",
-            index=models.Index(
-                fields=["registration_id", "user"],
-                name="fcm_django__registr_dacdb2_idx",
+    operations = (
+        [
+            AddIndexSkipMySQL(
+                model_name="fcmdevice",
+                index=models.Index(
+                    fields=["registration_id", "user"],
+                    name="fcm_django__registr_dacdb2_idx",
+                ),
             ),
-        ),
-    ] if not SETTINGS["MYSQL_COMPATIBILITY"] else []
+        ]
+        if not SETTINGS["MYSQL_COMPATIBILITY"]
+        else []
+    )
