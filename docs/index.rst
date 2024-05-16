@@ -400,6 +400,7 @@ FCM tokens, but in practice they are less than 200 characters long. Therefore, a
 should be sufficient and you can make it unique and index it even with MySQL:
 
 .. code-block:: python
+
     from fcm_django.models import AbstractFCMDevice, FCMDevice as OriginalFCMDevice
 
 
