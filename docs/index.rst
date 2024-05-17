@@ -380,40 +380,6 @@ logins on the same device, you do not wish the old user to receive messages whil
 Via DRF, any creation of device with an already existing registration ID will be transformed into an update.
 If done manually, you are responsible for deleting the old device entry.
 
-MySQL compatibility
--------------------
-MySQL has a limit for indices and therefore the `registration_id` field cannot be made unique in MySQL.
-We detect the database backend and remove the unique constraint for MySQL in the migration files. However,
-to ensure that the constraint is removed from the actual model you have to add the following to your settings
-to be able to run your django tests with MySQL and without running all migrations:
-
-.. code-block:: python
-
-    FCM_DJANGO_SETTINGS = {
-        "MYSQL_COMPATIBILITY": True,
-        # [...] your other settings
-    }
-
-As an alternative, you can use a custom model (see next section) and either remove the unique constraint manually
-or use a length limited CharField for the `registration_id` field. There are no guarantees on the max length of
-FCM tokens, but in practice they are less than 200 characters long. Therefore, a CharField with a length of 600
-should be sufficient and you can make it unique and index it even with MySQL:
-
-.. code-block:: python
-
-    from fcm_django.models import AbstractFCMDevice, FCMDevice as OriginalFCMDevice
-
-
-    class CustomFCMDevice(AbstractFCMDevice):
-        registration_id = models.CharField(
-            verbose_name="Registration token",
-            unique=True,
-            max_length=600,  # https://stackoverflow.com/a/64902685 better to be safe than sorry
-        )
-
-        class Meta(OriginalFCMDevice.Meta):
-            pass
-
 Using custom FCMDevice model
 ----------------------------
 
@@ -481,6 +447,40 @@ that allow to use a `custom User model <https://docs.djangoproject.com/en/4.2/to
 So this functionality have the same limitations.
 The most is important limitation it is that is difficult to start out with a default (non-swapped) model
 and then later to switch to a swapped implementation without doing some migration hacking.
+
+MySQL compatibility
+-------------------
+MySQL has a limit for indices and therefore the `registration_id` field cannot be made unique in MySQL.
+We detect the database backend and remove the unique constraint for MySQL in the migration files. However,
+to ensure that the constraint is removed from the actual model you have to add the following to your settings
+to be able to run your django tests with MySQL and without running all migrations:
+
+.. code-block:: python
+
+    FCM_DJANGO_SETTINGS = {
+        "MYSQL_COMPATIBILITY": True,
+        # [...] your other settings
+    }
+
+As an alternative, you can use a custom model (see above) and either remove the unique constraint manually
+or use a length limited CharField for the `registration_id` field. There are no guarantees on the max length of
+FCM tokens, but in practice they are less than 200 characters long. Therefore, a CharField with a length of 600
+should be sufficient and you can make it unique and index it even with MySQL:
+
+.. code-block:: python
+
+    from fcm_django.models import AbstractFCMDevice, FCMDevice as OriginalFCMDevice
+
+
+    class CustomFCMDevice(AbstractFCMDevice):
+        registration_id = models.CharField(
+            verbose_name="Registration token",
+            unique=True,
+            max_length=600,  # https://stackoverflow.com/a/64902685 better to be safe than sorry
+        )
+
+        class Meta(OriginalFCMDevice.Meta):
+            pass
 
 Python 3 support
 ----------------
