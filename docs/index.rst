@@ -422,7 +422,7 @@ If you don't want default table appears in the DB then you should remove ``fcm_d
 
 After setup your own ``Model`` don't forget to create ``migrations`` for your app and call ``migrate`` command.
 
-After removing ``"fcm_django"`` out of ``INSTALLED_APPS``. You will need to re-register the Device in order to see it in the admin panel. 
+After removing ``"fcm_django"`` out of ``INSTALLED_APPS``. You will need to re-register the Device in order to see it in the admin panel.
 This can be accomplished as follows at ``your_app/admin.py``:
 
 .. code-block:: python
@@ -442,11 +442,45 @@ If you choose to move forward with swapped models then:
 1. On existed project you have to keep in mind there are required manual work to move data from one table to anther.
 2. If there's any tables with FK to swapped model then you have to deal with them on your own.
 
-Note: This functionality based on `Swapper <https://pypi.org/project/swapper/>`_ that based on functionality 
+Note: This functionality based on `Swapper <https://pypi.org/project/swapper/>`_ that based on functionality
 that allow to use a `custom User model <https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#substituting-a-custom-user-model>`_.
-So this functionality have the same limitations. 
-The most is important limitation it is that is difficult to start out with a default (non-swapped) model 
+So this functionality have the same limitations.
+The most is important limitation it is that is difficult to start out with a default (non-swapped) model
 and then later to switch to a swapped implementation without doing some migration hacking.
+
+MySQL compatibility
+-------------------
+MySQL has a limit for indices and therefore the `registration_id` field cannot be made unique in MySQL.
+We detect the database backend and remove the unique constraint for MySQL in the migration files. However,
+to ensure that the constraint is removed from the actual model you have to add the following to your settings
+to be able to run your django tests with MySQL and without running all migrations:
+
+.. code-block:: python
+
+    FCM_DJANGO_SETTINGS = {
+        "MYSQL_COMPATIBILITY": True,
+        # [...] your other settings
+    }
+
+As an alternative, you can use a custom model (see above) and either remove the unique constraint manually
+or use a length limited CharField for the `registration_id` field. There are no guarantees on the max length of
+FCM tokens, but in practice they are less than 200 characters long. Therefore, a CharField with a length of 600
+should be sufficient and you can make it unique and index it even with MySQL:
+
+.. code-block:: python
+
+    from fcm_django.models import AbstractFCMDevice, FCMDevice as OriginalFCMDevice
+
+
+    class CustomFCMDevice(AbstractFCMDevice):
+        registration_id = models.CharField(
+            verbose_name="Registration token",
+            unique=True,
+            max_length=600,  # https://stackoverflow.com/a/64902685 better to be safe than sorry
+        )
+
+        class Meta(OriginalFCMDevice.Meta):
+            pass
 
 Python 3 support
 ----------------
@@ -481,11 +515,11 @@ Because there's possibility to use swapped models therefore tests contains two c
 1. with default settings and non swapped models ``settings/default.py``
 2. and with overwritten settings only that required by swapper - ``settings/swap.py``
 
-To run tests locally you could use ``pytest``, and if you need to check migrations on different DB then you have to specify environment variable ``DATABASE_URL`` ie 
+To run tests locally you could use ``pytest``, and if you need to check migrations on different DB then you have to specify environment variable ``DATABASE_URL`` ie
 
 .. code-block:: console
 
     export DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/postgres
-    export DJANGO_SETTINGS_MODULE=tests.settings.default 
+    export DJANGO_SETTINGS_MODULE=tests.settings.default
     # or export DJANGO_SETTINGS_MODULE=tests.settings.swap
     pytest

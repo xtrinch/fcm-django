@@ -2,6 +2,8 @@
 
 from django.db import migrations, models
 
+from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
+
 _MYSQL = "mysql"
 
 
@@ -33,13 +35,17 @@ class Migration(migrations.Migration):
         ("fcm_django", "0009_alter_fcmdevice_user"),
     ]
 
-    operations = [
-        AlterFieldSkipMySQL(
-            model_name="fcmdevice",
-            name="registration_id",
-            field=models.TextField(
-                verbose_name="Registration token",
-                unique=True,
+    operations = (
+        [
+            AlterFieldSkipMySQL(
+                model_name="fcmdevice",
+                name="registration_id",
+                field=models.TextField(
+                    verbose_name="Registration token",
+                    unique=True,
+                ),
             ),
-        ),
-    ]
+        ]
+        if not SETTINGS["MYSQL_COMPATIBILITY"]
+        else []
+    )
