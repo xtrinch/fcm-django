@@ -473,7 +473,11 @@ Submit an issue/PR on this project. Please do not send me emails, as then the co
 Contributing
 ------------
 
-To setup the development environment, simply do ``pip install -r requirements_dev.txt``
+To setup the development environment:
+  - create virtual environment with `python3 -m venv env`
+  - activate virtual environment with `source env/bin/activate` or `.\env\Scripts\activate.ps1` for Windows' Powershell  
+  - run ``pip install -r requirements_dev.txt``
+
 To manually run the pre-commit hook, run `pre-commit run --all-files`.
 
 Because there's possibility to use swapped models therefore tests contains two config files:
@@ -489,3 +493,9 @@ To run tests locally you could use ``pytest``, and if you need to check migratio
     export DJANGO_SETTINGS_MODULE=tests.settings.default 
     # or export DJANGO_SETTINGS_MODULE=tests.settings.swap
     pytest
+
+Packaging for PyPi
+
+- run `rm -rf dist/`
+- run `python3 setup.py sdist`
+- run `twine upload dist/*`
