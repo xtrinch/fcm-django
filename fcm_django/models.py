@@ -7,15 +7,17 @@ if TYPE_CHECKING:
     from firebase_admin import messaging
     from firebase_admin.exceptions import FirebaseError
     import firebase_admin
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-# firebase_admin imports moved to where they're used to avoid eager loading
 
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
 
 # Set by Firebase. Adjust when they adjust; developers can override too if we don't
 # upgrade package in time via a monkeypatch.
 MAX_MESSAGES_PER_BATCH = 500
+
+# firebase_admin imports moved to where they're used to avoid eager loading
 
 
 class Device(models.Model):
@@ -63,6 +65,7 @@ class _FCMDeviceManager(models.Manager):
 def _get_fcm_error_list():
     from firebase_admin import messaging
     from firebase_admin.exceptions import InvalidArgumentError
+
     return [
         messaging.UnregisteredError,
         messaging.SenderIdMismatchError,
@@ -76,6 +79,7 @@ def _get_fcm_error_list_str():
 
 def _validate_exception_for_deactivation(exc: Union["FirebaseError"]) -> bool:
     from firebase_admin.exceptions import InvalidArgumentError
+
     if not exc:
         return False
     exc_type = type(exc)
@@ -103,6 +107,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
     @staticmethod
     def get_default_send_message_response() -> FirebaseResponseDict:
         from firebase_admin import messaging
+
         return FirebaseResponseDict(
             response=messaging.BatchResponse([]),
             registration_ids_sent=[],
@@ -167,6 +172,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         if not registration_ids:
             return self.get_default_send_message_response()
         from firebase_admin import messaging
+
         responses: List[messaging.SendResponse] = []
         for i in range(0, len(registration_ids), MAX_MESSAGES_PER_BATCH):
             messages = [
@@ -194,6 +200,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         if not results:
             return []
         from firebase_admin import messaging
+
         if isinstance(results[0], messaging.SendResponse):
             deactivated_ids = [
                 token
@@ -217,6 +224,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
     @staticmethod
     def get_default_topic_response() -> FirebaseResponseDict:
         from firebase_admin import messaging
+
         return FirebaseResponseDict(
             response=messaging.TopicManagementResponse({"results": []}),
             registration_ids_sent=[],
@@ -259,6 +267,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         if not registration_ids:
             return self.get_default_topic_response()
         from firebase_admin import messaging
+
         response = (
             messaging.subscribe_to_topic
             if should_subscribe
@@ -327,6 +336,7 @@ class AbstractFCMDevice(Device):
         deactivated due to an error.
         """
         from firebase_admin import messaging
+
         if not self.active:
             return messaging.SendResponse(
                 None,
@@ -340,6 +350,7 @@ class AbstractFCMDevice(Device):
             )
         except Exception as e:
             from firebase_admin.exceptions import FirebaseError
+
             if isinstance(e, FirebaseError):
                 self.deactivate_devices_with_error_result(self.registration_id, e)
             raise
@@ -368,6 +379,7 @@ class AbstractFCMDevice(Device):
         """
         _r_ids = [self.registration_id]
         from firebase_admin import messaging
+
         response = (
             messaging.subscribe_to_topic
             if should_subscribe
@@ -386,6 +398,7 @@ class AbstractFCMDevice(Device):
         cls, registration_id, firebase_exc, name=None
     ) -> List[str]:
         from firebase_admin import messaging
+
         return cls.objects.deactivate_devices_with_error_results(
             [registration_id], [messaging.SendResponse({"name": name}, firebase_exc)]
         )
@@ -398,6 +411,7 @@ class AbstractFCMDevice(Device):
         **more_send_message_kwargs,
     ) -> "messaging.SendResponse":
         from firebase_admin import messaging
+
         message.topic = topic_name
 
         return messaging.SendResponse(

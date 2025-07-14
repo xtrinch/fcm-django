@@ -4,14 +4,17 @@ import swapper
 
 if TYPE_CHECKING:
     from firebase_admin.messaging import SendResponse
+
 from django.apps import apps
 from django.contrib import admin, messages
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
-# firebase_admin imports moved to where they're used to avoid eager loading
 
 from fcm_django.models import FirebaseResponseDict, _get_fcm_error_list
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
+
+# firebase_admin imports moved to where they're used to avoid eager loading
+
 
 User = apps.get_model(*SETTINGS["USER_MODEL"].split("."))
 
@@ -87,7 +90,8 @@ class DeviceAdmin(admin.ModelAdmin):
         )
 
         def _get_to_str_obj(obj):
-            from firebase_admin.messaging import SendResponse, TopicManagementResponse
+            from firebase_admin.messaging import (SendResponse, TopicManagementResponse)
+
             if isinstance(obj, SendResponse):
                 return obj.exception
             elif isinstance(obj, TopicManagementResponse):
@@ -96,6 +100,7 @@ class DeviceAdmin(admin.ModelAdmin):
 
         def _print_responses(_response):
             from firebase_admin.messaging import ErrorInfo
+
             __error_list = _get_fcm_error_list() + [ErrorInfo]
             # TODO Aggregate error response text. Each firebase error
             #  has multiple response texts too
@@ -138,6 +143,7 @@ class DeviceAdmin(admin.ModelAdmin):
             device: "FCMDevice"
             if bulk:
                 from firebase_admin.messaging import Message, Notification
+
                 response = queryset.send_message(
                     Message(
                         notification=Notification(
@@ -151,6 +157,7 @@ class DeviceAdmin(admin.ModelAdmin):
                 )
             else:
                 from firebase_admin.messaging import Message, Notification
+
                 response = device.send_message(
                     Message(
                         notification=Notification(
@@ -160,6 +167,7 @@ class DeviceAdmin(admin.ModelAdmin):
                 )
                 single_responses.append((response, device.registration_id))
                 from firebase_admin.messaging import SendResponse
+
                 if type(response) != SendResponse:
                     total_failure += 1
 
@@ -237,6 +245,7 @@ class DeviceAdmin(admin.ModelAdmin):
 
     def handle_send_topic_message(self, request, queryset):
         from firebase_admin.messaging import Message, Notification
+
         FCMDevice.send_topic_message(
             Message(
                 notification=Notification(

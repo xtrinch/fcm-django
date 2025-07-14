@@ -3,7 +3,6 @@ from unittest.mock import sentinel
 
 import pytest
 import swapper
-# firebase_admin imports moved to where they're used to avoid eager loading
 from pytest_mock import MockerFixture
 
 if TYPE_CHECKING:
@@ -13,6 +12,8 @@ if TYPE_CHECKING:
 from fcm_django.models import DeviceType
 
 FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
+
+# firebase_admin imports moved to where they're used to avoid eager loading
 
 
 @pytest.fixture
@@ -46,12 +47,14 @@ def fcm_device(registration_id: str):
 @pytest.fixture
 def message() -> "Message":
     from firebase_admin.messaging import Message
+
     return Message(data={"foo": "bar"})
 
 
 @pytest.fixture
 def firebase_error() -> "FirebaseError":
     from firebase_admin.exceptions import FirebaseError
+
     return FirebaseError(code=500, message="message")
 
 
