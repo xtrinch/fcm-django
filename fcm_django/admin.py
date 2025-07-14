@@ -6,6 +6,7 @@ import swapper
 
 if TYPE_CHECKING:
     from firebase_admin.messaging import SendResponse
+
 from django.apps import apps
 from django.contrib import admin, messages
 from django.utils.translation import gettext_lazy as _
@@ -14,6 +15,9 @@ from django.utils.translation import ngettext_lazy
 from fcm_django.models import _get_fcm_error_list
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
 from fcm_django.types import FirebaseResponseDict
+
+# firebase_admin imports moved to where they're used to avoid eager loading
+
 
 User = apps.get_model(*SETTINGS["USER_MODEL"].split("."))
 

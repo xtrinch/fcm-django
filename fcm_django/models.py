@@ -23,6 +23,8 @@ from fcm_django.types import DeviceDeactivationData, FirebaseResponseDict
 MAX_MESSAGES_PER_BATCH = 500
 MAX_DEVICES_PER_SUBSCRIBE_REQUEST = 1000
 
+# firebase_admin imports moved to where they're used to avoid eager loading
+
 
 class Device(models.Model):
     id = models.AutoField(
@@ -109,6 +111,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
     @staticmethod
     def get_default_send_message_response() -> FirebaseResponseDict:
         from firebase_admin import messaging
+
         return FirebaseResponseDict(
             response=messaging.BatchResponse([]),
             registration_ids_sent=[],
@@ -548,6 +551,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
     @staticmethod
     def get_default_topic_response() -> FirebaseResponseDict:
         from firebase_admin import messaging
+
         return FirebaseResponseDict(
             response=messaging.TopicManagementResponse({"results": []}),
             registration_ids_sent=[],
@@ -664,6 +668,7 @@ class AbstractFCMDevice(Device):
         deactivated due to an error.
         """
         from firebase_admin import messaging
+
         if not self.active:
             return messaging.SendResponse(
                 None,
@@ -678,6 +683,7 @@ class AbstractFCMDevice(Device):
             )
         except Exception as e:
             from firebase_admin.exceptions import FirebaseError
+
             if isinstance(e, FirebaseError):
                 self.deactivate_devices_with_error_result(self.registration_id, e)
             raise
@@ -707,6 +713,7 @@ class AbstractFCMDevice(Device):
         app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
         _r_ids = [self.registration_id]
         from firebase_admin import messaging
+
         response = (
             messaging.subscribe_to_topic
             if should_subscribe
