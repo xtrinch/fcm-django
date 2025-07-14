@@ -90,7 +90,7 @@ class DeviceAdmin(admin.ModelAdmin):
         )
 
         def _get_to_str_obj(obj):
-            from firebase_admin.messaging import (SendResponse, TopicManagementResponse)
+            from firebase_admin.messaging import SendResponse, TopicManagementResponse
 
             if isinstance(obj, SendResponse):
                 return obj.exception
