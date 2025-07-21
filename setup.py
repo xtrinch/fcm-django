@@ -29,7 +29,7 @@ setup(
         "fcm_django/migrations",
     ],
     python_requires=">=3.9",
-    install_requires=["firebase-admin>=6.2,<7", "Django", "swapper"],
+    install_requires=["firebase-admin>=6.2,<8", "Django", "swapper"],
     author=fcm_django.__author__,
     author_email=fcm_django.__email__,
     classifiers=CLASSIFIERS,
