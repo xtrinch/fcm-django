@@ -1,15 +1,21 @@
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 from unittest.mock import MagicMock, sentinel
 from uuid import UUID
 
 import pytest
+
+if TYPE_CHECKING:
+    from firebase_admin.messaging import Message
+    from firebase_admin.exceptions import FirebaseError
+
 import swapper
 from django.conf import settings
 from django.utils import timezone
-from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
-from firebase_admin.messaging import Message, SendResponse
 
 from fcm_django.models import DeviceType
+
+# firebase_admin imports moved to where they're used to avoid eager loading
+
 
 FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
 
@@ -49,7 +55,7 @@ class TestFCMDeviceSendMessage:
         self,
         result: Any,
         fcm_device: FCMDevice,
-        message: Message,
+        message: "Message",
         mock_firebase_send: MagicMock,
         message_id: str,
         app: Any = None,
@@ -66,13 +72,15 @@ class TestFCMDeviceSendMessage:
 
         # Ensure we properly construct the response with the exact same message that was
         # obtained from messaging.send call
+        from firebase_admin.messaging import SendResponse
+
         assert isinstance(result, SendResponse)
         assert result.message_id == message_id
 
     def test_ok(
         self,
         fcm_device: FCMDevice,
-        message: Message,
+        message: "Message",
         mock_firebase_send: MagicMock,
         firebase_message_id_send: str,
     ):
@@ -88,7 +96,7 @@ class TestFCMDeviceSendMessage:
     def test_custom_params(
         self,
         fcm_device: FCMDevice,
-        message: Message,
+        message: "Message",
         mock_firebase_send: MagicMock,
         firebase_message_id_send: str,
     ):
@@ -116,14 +124,16 @@ class TestFCMDeviceSendMessage:
     def test_firebase_error(
         self,
         fcm_device: FCMDevice,
-        message: Message,
+        message: "Message",
         mock_firebase_send: MagicMock,
-        firebase_error: FirebaseError,
+        firebase_error: "FirebaseError",
     ):
         """
         Ensure when happened unknown firebase error device is still active and raised the FirebaseError
         """
         mock_firebase_send.side_effect = firebase_error
+
+        from firebase_admin.exceptions import FirebaseError
 
         with pytest.raises(FirebaseError, match=str(firebase_error)):
             fcm_device.send_message(message)
@@ -135,12 +145,14 @@ class TestFCMDeviceSendMessage:
     def test_firebase_invalid_registration_error(
         self,
         fcm_device: FCMDevice,
-        message: Message,
+        message: "Message",
         mock_firebase_send: MagicMock,
     ):
         """
         Ensure when Invalid registration firebase error device is still active and raised the FirebaseError
         """
+        from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
+
         firebase_invalid_registration_error = InvalidArgumentError(
             message="Error", cause="Invalid registration"
         )
@@ -160,7 +172,7 @@ class TestFCMDeviceSendTopicMessage:
     def assert_sent_successfully(
         self,
         result: Any,
-        message: Message,
+        message: "Message",
         topic: str,
         mock_firebase_send: MagicMock,
         message_id: str,
@@ -177,12 +189,14 @@ class TestFCMDeviceSendTopicMessage:
 
         # Ensure we properly construct the response with the exact same message that was
         # obtained from messaging.send call
+        from firebase_admin.messaging import SendResponse
+
         assert isinstance(result, SendResponse)
         assert result.message_id == message_id
 
     def test_ok(
         self,
-        message: Message,
+        message: "Message",
         mock_firebase_send: MagicMock,
         firebase_message_id_send: str,
     ):
@@ -199,7 +213,7 @@ class TestFCMDeviceSendTopicMessage:
 
     def test_custom_params(
         self,
-        message: Message,
+        message: "Message",
         mock_firebase_send: MagicMock,
         firebase_message_id_send: str,
     ):
@@ -227,14 +241,16 @@ class TestFCMDeviceSendTopicMessage:
 
     def test_firebase_error(
         self,
-        message: Message,
+        message: "Message",
         mock_firebase_send: MagicMock,
-        firebase_error: FirebaseError,
+        firebase_error: "FirebaseError",
     ):
         """
         Ensure we raise an error in case firebase_admin.messaging.send throws one
         """
         mock_firebase_send.side_effect = firebase_error
+
+        from firebase_admin.exceptions import FirebaseError
 
         with pytest.raises(FirebaseError, match=str(firebase_error)):
             FCMDevice.send_topic_message(message, "example")
