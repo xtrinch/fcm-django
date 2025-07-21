@@ -3,20 +3,24 @@ repos:
   rev: 'v5.0.0'
   hooks:
   - id: check-merge-conflict
+
 - repo: https://github.com/asottile/yesqa
   rev: v1.5.0
   hooks:
   - id: yesqa
+
 - repo: https://github.com/pycqa/isort
   rev: '6.0.1'
   hooks:
   - id: isort
     args: ["--profile", "black"]
+
 - repo: https://github.com/psf/black
   rev: '25.1.0'
   hooks:
   - id: black
     language_version: python3 # Should be a command that runs python3.6+
+
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: 'v5.0.0'
   hooks:
@@ -47,11 +51,13 @@ repos:
     args: ['--allow-missing-credentials']
   - id: detect-private-key
     exclude: ^examples|(?:tests/ssl)/
+
 - repo: https://github.com/asottile/pyupgrade
   rev: 'v3.20.0'
   hooks:
   - id: pyupgrade
     args: ['--py36-plus', '--keep-mock']
+
 - repo: https://github.com/Lucas-C/pre-commit-hooks-markup
   rev: v1.0.1
   hooks:
