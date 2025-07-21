@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from copy import copy
-from typing import List, NamedTuple, Sequence, Union
+from typing import NamedTuple, Union
 
 import swapper
 from django.db import models
@@ -80,8 +81,8 @@ class FirebaseResponseDict(NamedTuple):
     # All errors are stored rather than raised in BatchResponse.exceptions
     # or TopicManagementResponse.errors
     response: Union[messaging.BatchResponse, messaging.TopicManagementResponse]
-    registration_ids_sent: List[str]
-    deactivated_registration_ids: List[str]
+    registration_ids_sent: list[str]
+    deactivated_registration_ids: list[str]
 
 
 class FCMDeviceQuerySet(models.query.QuerySet):
@@ -102,7 +103,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         self,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Sequence[str] = None,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Uses the current filtering/QuerySet chain to get registration IDs
 
@@ -155,7 +156,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         )
         if not registration_ids:
             return self.get_default_send_message_response()
-        responses: List[messaging.SendResponse] = []
+        responses: list[messaging.SendResponse] = []
         for i in range(0, len(registration_ids), MAX_MESSAGES_PER_BATCH):
             messages = [
                 self._prepare_message(message, token)
@@ -176,9 +177,9 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 
     def deactivate_devices_with_error_results(
         self,
-        registration_ids: List[str],
-        results: List[Union[messaging.SendResponse, messaging.ErrorInfo]],
-    ) -> List[str]:
+        registration_ids: list[str],
+        results: list[Union[messaging.SendResponse, messaging.ErrorInfo]],
+    ) -> list[str]:
         if not results:
             return []
         if isinstance(results[0], messaging.SendResponse):
@@ -197,7 +198,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         self._delete_inactive_devices_if_requested(deactivated_ids)
         return deactivated_ids
 
-    def _delete_inactive_devices_if_requested(self, registration_ids: List[str]):
+    def _delete_inactive_devices_if_requested(self, registration_ids: list[str]):
         if SETTINGS["DELETE_INACTIVE_DEVICES"]:
             self.filter(registration_id__in=registration_ids).delete()
 
@@ -365,7 +366,7 @@ class AbstractFCMDevice(Device):
     @classmethod
     def deactivate_devices_with_error_result(
         cls, registration_id, firebase_exc, name=None
-    ) -> List[str]:
+    ) -> list[str]:
         return cls.objects.deactivate_devices_with_error_results(
             [registration_id], [messaging.SendResponse({"name": name}, firebase_exc)]
         )

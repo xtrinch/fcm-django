@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import Union
 
 import swapper
 from django.apps import apps
@@ -60,8 +60,8 @@ class DeviceAdmin(admin.ModelAdmin):
         request,
         response: Union[
             FirebaseResponseDict,
-            List[FirebaseResponseDict],
-            List[Tuple[SendResponse, str]],
+            list[FirebaseResponseDict],
+            list[tuple[SendResponse, str]],
         ],
         total_failure: int,
         is_topic: bool,
@@ -133,7 +133,7 @@ class DeviceAdmin(admin.ModelAdmin):
         send_bulk_message methods.
         """
         total_failure = 0
-        single_responses: List[Tuple[SendResponse, str]] = []
+        single_responses: list[tuple[SendResponse, str]] = []
 
         for device in queryset:
             device: "FCMDevice"
