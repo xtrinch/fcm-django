@@ -203,9 +203,11 @@ class DeviceAdmin(admin.ModelAdmin):
                 )
                 single_responses.append(
                     (
-                        response.response.errors[0]
-                        if len(response.response.errors) > 0
-                        else "Success",
+                        (
+                            response.response.errors[0]
+                            if len(response.response.errors) > 0
+                            else "Success"
+                        ),
                         device.registration_id,
                     )
                 )
