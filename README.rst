@@ -497,6 +497,7 @@ To run tests locally you could use ``pytest``, and if you need to check migratio
 
 Packaging for PyPi
 
+- run `source env/bin/activate`
 - run `rm -rf dist/`
 - run `python3 setup.py sdist`
 - run `twine upload dist/*`
