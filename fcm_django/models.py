@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from copy import copy
-from typing import NamedTuple, Union
+from typing import NamedTuple, Union, Callable, Dict, Any
 
 import swapper
 from django.db import models
@@ -167,6 +167,100 @@ class FCMDeviceQuerySet(models.query.QuerySet):
                     messages, app=app, **more_send_message_kwargs
                 ).responses
             )
+        return FirebaseResponseDict(
+            response=messaging.BatchResponse(responses),
+            registration_ids_sent=registration_ids,
+            deactivated_registration_ids=self.deactivate_devices_with_error_results(
+                registration_ids, responses
+            ),
+        )
+
+    def send_bulk_personalized_messages(
+        self,
+        title_template: str,
+        body_template: str,
+        message_data: Dict[str, Dict[str, Any]] = None,
+        data_fields: Dict[str, Any] = None,
+        skip_registration_id_lookup: bool = False,
+        additional_registration_ids: Sequence[str] = None,
+        app: "firebase_admin.App" = SETTINGS["DEFAULT_FIREBASE_APP"],
+        **more_send_message_kwargs,
+    ) -> FirebaseResponseDict:
+        """
+        Send bulk personalized messages to multiple devices using simple string templates.
+        Each device receives a customized message based on its registration_id and provided data.
+        Messages are sent efficiently in batches of up to 500 devices per HTTP request.
+
+        :param title_template: String template for notification title. Use {field_name}
+        to insert values from message_data. Example: "Hello {name}!"
+        :param body_template: String template for notification body. Use {field_name}
+        to insert values from message_data. Example: "You have {count} new messages"
+        :param message_data: Dictionary mapping registration_ids to custom data.
+        Keys in the data will be available as template variables for personalization.
+        :param data_fields: Optional dictionary with additional data fields to include
+        in all messages (sent as data payload, not notification)
+        :param skip_registration_id_lookup: skips the QuerySet lookup and solely uses
+        the list of IDs from additional_registration_ids
+        :param additional_registration_ids: specific registration_ids to add to the
+        QuerySet lookup
+        :param app: firebase_admin.App. Specify a specific app to use
+        :param more_send_message_kwargs: Parameters for firebase.messaging.send_each()
+        - dry_run: bool. Whether to actually send the notification to the device
+
+        :raises FirebaseError
+        :returns FirebaseResponseDict
+        """
+        registration_ids = self.get_registration_ids(
+            skip_registration_id_lookup,
+            additional_registration_ids,
+        )
+        if not registration_ids:
+            return self.get_default_send_message_response()
+
+        # Prepare personalized messages for each registration_id
+        personalized_messages = []
+        for token in registration_ids:
+            # Get custom data for this token, or empty dict if not provided
+            data = message_data.get(token, {}) if message_data else {}
+            
+            try:
+                # Format title and body using the templates
+                title = title_template.format(**data)
+                body = body_template.format(**data)
+            except KeyError as e:
+                # If template variable is missing, use default values
+                title = title_template.format(**{k: f"{{{k}}}" for k in data.keys()})
+                body = body_template.format(**{k: f"{{{k}}}" for k in data.keys()})
+            except Exception:
+                # Fallback to original templates if formatting fails
+                title = title_template
+                body = body_template
+
+            # Create the message
+            message = messaging.Message(
+                notification=messaging.Notification(
+                    title=title,
+                    body=body
+                ),
+                token=token
+            )
+
+            # Add data fields if provided
+            if data_fields:
+                message.data = {str(k): str(v) for k, v in data_fields.items()}
+
+            personalized_messages.append(message)
+
+        # Send messages in batches
+        responses: list[messaging.SendResponse] = []
+        for i in range(0, len(personalized_messages), MAX_MESSAGES_PER_BATCH):
+            batch_messages = personalized_messages[i : i + MAX_MESSAGES_PER_BATCH]
+            responses.extend(
+                messaging.send_each(
+                    batch_messages, app=app, **more_send_message_kwargs
+                ).responses
+            )
+
         return FirebaseResponseDict(
             response=messaging.BatchResponse(responses),
             registration_ids_sent=registration_ids,
