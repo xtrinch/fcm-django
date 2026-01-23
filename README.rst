@@ -501,10 +501,47 @@ In your ``settings.py``:
 The callable is invoked lazily on the first ``send_message``, ``handle_topic_subscription``,
 or ``send_topic_message`` call. The resulting app is cached for subsequent operations.
 
+This also works with custom credentials classes:
+
+.. code-block:: python
+
+    import os
+
+    def initialize_firebase():
+        from firebase_admin import initialize_app, credentials
+        from google.auth import load_credentials_from_file
+
+        class CustomFirebaseCredentials(credentials.ApplicationDefault):
+            def __init__(self, account_file_path: str):
+                super().__init__()
+                self._account_file_path = account_file_path
+
+            def _load_credential(self):
+                if not self._g_credential:
+                    self._g_credential, self._project_id = load_credentials_from_file(
+                        self._account_file_path,
+                        scopes=credentials._scopes
+                    )
+
+        custom_credentials = CustomFirebaseCredentials(
+            os.getenv('CUSTOM_GOOGLE_APPLICATION_CREDENTIALS')
+        )
+        return initialize_app(custom_credentials, name='messaging')
+
+    FCM_DJANGO_SETTINGS = {
+        "INITIALIZE_APP_CALLABLE": initialize_firebase,
+        # [...] your other settings
+    }
+
 Your callable must either:
 
 - Return a ``firebase_admin.App`` instance, or
 - Call ``initialize_app()`` (the default app will be retrieved automatically)
+
+The returned app is cached and used as the default for all subsequent fcm-django operations.
+Because of this, you should use either ``DEFAULT_FIREBASE_APP`` or ``INITIALIZE_APP_CALLABLE``,
+but not both. If both are set, ``DEFAULT_FIREBASE_APP`` takes priority and the callable is
+never invoked.
 
 
 Django REST Framework (DRF) support
