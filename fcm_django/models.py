@@ -25,6 +25,48 @@ MAX_DEVICES_PER_SUBSCRIBE_REQUEST = 1000
 
 # firebase_admin imports moved to where they're used to avoid eager loading
 
+_cached_app = None
+
+
+def _get_app(app=None):
+    """Get Firebase app, initializing lazily if INITIALIZE_APP_CALLABLE is set."""
+    global _cached_app
+
+    if app is not None:
+        return app
+
+    if _cached_app is not None:
+        return _cached_app
+
+    if SETTINGS.get("DEFAULT_FIREBASE_APP") is not None:
+        _cached_app = SETTINGS["DEFAULT_FIREBASE_APP"]
+        return _cached_app
+
+    from firebase_admin import get_app
+
+    try:
+        _cached_app = get_app()
+        return _cached_app
+    except ValueError:
+        pass
+
+    init_callable = SETTINGS.get("INITIALIZE_APP_CALLABLE")
+    if not init_callable:
+        return None
+
+    result = init_callable()
+    if result is not None:
+        _cached_app = result
+        return _cached_app
+
+    try:
+        _cached_app = get_app()
+        return _cached_app
+    except ValueError:
+        raise ValueError(
+            "INITIALIZE_APP_CALLABLE must return an App or call initialize_app()"
+        )
+
 
 class Device(models.Model):
     id = models.AutoField(
@@ -242,6 +284,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         :raises FirebaseError
         :returns FirebaseResponseDict
         """
+        app = _get_app(app)
         registration_ids = self.get_registration_ids(
             skip_registration_id_lookup,
             additional_registration_ids,
@@ -588,6 +631,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         :raises FirebaseError
         :returns FirebaseResponseDict
         """
+        app = _get_app(app)
         registration_ids = self.get_registration_ids(
             skip_registration_id_lookup,
             additional_registration_ids,
@@ -669,6 +713,8 @@ class AbstractFCMDevice(Device):
         """
         from firebase_admin import messaging
 
+        app = _get_app(app)
+
         if not self.active:
             return messaging.SendResponse(
                 None,
@@ -710,9 +756,10 @@ class AbstractFCMDevice(Device):
         :raises FirebaseError
         :returns FirebaseResponseDict
         """
-        app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
-        _r_ids = [self.registration_id]
         from firebase_admin import messaging
+
+        app = _get_app(app)
+        _r_ids = [self.registration_id]
 
         response = (
             messaging.subscribe_to_topic
@@ -746,7 +793,7 @@ class AbstractFCMDevice(Device):
     ) -> messaging.SendResponse:
         from firebase_admin import messaging
 
-        app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
+        app = _get_app(app)
         message.topic = topic_name
 
         return messaging.SendResponse(
