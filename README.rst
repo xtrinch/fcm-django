@@ -122,6 +122,10 @@ Edit your settings.py file:
          # an instance of firebase_admin.App to be used as default for all fcm-django requests
          # default: None (the default Firebase app)
         "DEFAULT_FIREBASE_APP": None,
+         # a callable that initializes and returns a firebase_admin.App
+         # called lazily on first FCM operation; result is cached
+         # default: None
+        "INITIALIZE_APP_CALLABLE": None,
          # default: _('FCM Django')
         "APP_VERBOSE_NAME": "[string for AppConfig's verbose_name]",
          # true if you want to have only one active device per registered user at a time
@@ -469,6 +473,38 @@ In your ``settings.py``:
         "DEFAULT_FIREBASE_APP": FIREBASE_MESSAGING_APP,
         # [...] your other settings
     }
+
+Lazy Firebase app initialization
+--------------------------------
+
+If you need to defer Firebase initialization until the first FCM operation (e.g., when
+credentials aren't available at import time), use the ``INITIALIZE_APP_CALLABLE`` setting
+instead of calling ``initialize_app()`` at the top of your settings file.
+
+In your ``settings.py``:
+
+.. code-block:: python
+
+    import os
+
+    def initialize_firebase():
+        from firebase_admin import initialize_app, credentials
+
+        cred = credentials.Certificate(os.getenv('GOOGLE_APPLICATION_CREDENTIALS'))
+        return initialize_app(cred)
+
+    FCM_DJANGO_SETTINGS = {
+        "INITIALIZE_APP_CALLABLE": initialize_firebase,
+        # [...] your other settings
+    }
+
+The callable is invoked lazily on the first ``send_message``, ``handle_topic_subscription``,
+or ``send_topic_message`` call. The resulting app is cached for subsequent operations.
+
+Your callable must either:
+
+- Return a ``firebase_admin.App`` instance, or
+- Call ``initialize_app()`` (the default app will be retrieved automatically)
 
 
 Django REST Framework (DRF) support
