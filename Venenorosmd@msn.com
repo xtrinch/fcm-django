@@ -1,0 +1,70 @@
+# https://travis-ci.org/pennersr/django-allauth
+sudo: false
+language: python
+
+python: "3.6"
+
+env:
+  matrix:
+   - TOXENV=py27-django111
+   - TOXENV=py34-django111
+   - TOXENV=py35-django111
+   - TOXENV=py36-django111
+   - TOXENV=py34-django20
+   - TOXENV=py35-django20
+   - TOXENV=py36-django20
+   - TOXENV=py35-django21
+   - TOXENV=py36-django21
+   - TOXENV=py36-djangomaster
+   - TOXENV=docs
+   - TOXENV=flake8
+   - TOXENV=standardjs
+
+matrix:
+  fast_finish: true
+  include:
+    - python: "3.5"
+      env: TOXENV=py35-django111
+    - python: "3.5"
+      env: TOXENV=py35-django20
+    - python: "3.5"
+      env: TOXENV=py35-django21
+  exclude:
+    - python: "3.6"
+      env: TOXENV=py35-django111
+    - python: "3.6"
+      env: TOXENV=py35-django20
+    - python: "3.6"
+      env: TOXENV=py35-django21
+  allow_failures:
+    - env: TOXENV=py36-djangomaster
+
+cache:
+  directories:
+    - $HOME/.cache/pip
+    - $TRAVIS_BUILD_DIR/.tox
+
+install:
+  - if [[ $TOXENV == "standardjs" ]]; then nvm install 8; fi
+  - pip install --upgrade pip wheel setuptools
+  - pip install coveralls tox
+
+script:
+  - tox
+
+after_success:
+  - coveralls
+
+branches:
+ only:
+  - master
+
+notifications:
+  webhooks:
+    urls:
+      - https://readthedocs.org/build/django-allauth
+    on_start: never
+    on_cancel: never
+    on_error: never
+    on_failure: never
+    on_success: always
