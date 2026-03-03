@@ -1,5 +1,4 @@
 import swapper
-from django.db.models import Q
 from rest_framework import permissions, status
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.response import Response
