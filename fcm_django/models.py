@@ -13,6 +13,7 @@ from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
 # Set by Firebase. Adjust when they adjust; developers can override too if we don't
 # upgrade package in time via a monkeypatch.
 MAX_MESSAGES_PER_BATCH = 500
+MAX_DEVICES_PER_SUBSCRIBE_REQUEST = 1000
 
 
 class Device(models.Model):
@@ -221,7 +222,8 @@ class FCMDeviceQuerySet(models.query.QuerySet):
     ) -> FirebaseResponseDict:
         """
         Subscribes or Unsubscribes filtered and/or given tokens/registration_ids
-        to given topic.
+        to given topic. For every 1000 tokens/registration_ids, we send a
+        single HTTP request to Firebase (the 1000 is set by the firebase-sdk).
 
         :param should_subscribe: whether to have these users subscribe (True) or
         unsubscribe to a topic (False).
@@ -245,16 +247,20 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         )
         if not registration_ids:
             return self.get_default_topic_response()
-        response = (
-            messaging.subscribe_to_topic
-            if should_subscribe
-            else messaging.unsubscribe_from_topic
-        )(registration_ids, topic, app=app, **more_subscribe_kwargs)
+        responses: list[messaging.SendResponse] = []
+        for i in range(0, len(registration_ids), MAX_DEVICES_PER_SUBSCRIBE_REQUEST):
+            batch_ids = registration_ids[i : i + MAX_DEVICES_PER_SUBSCRIBE_REQUEST]
+            responses.extend(
+                messaging.subscribe_to_topic
+                if should_subscribe
+                else messaging.unsubscribe_from_topic
+            )(batch_ids, topic, app=app, **more_subscribe_kwargs)
+
         return FirebaseResponseDict(
-            response=response,
+            response=messaging.BatchResponse(responses),
             registration_ids_sent=registration_ids,
             deactivated_registration_ids=self.deactivate_devices_with_error_results(
-                registration_ids, response.errors
+                registration_ids, responses
             ),
         )
 
