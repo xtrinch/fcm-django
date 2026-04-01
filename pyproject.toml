@@ -1,3 +1,54 @@
+[build-system]
+requires = ["setuptools>=71.1.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fcm-django"
+dynamic = ["version"]
+description = "Send push notifications to mobile devices and browsers through FCM in Django."
+readme = "README.rst"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+    { name = "xTrinch", email = "mojca.rojko@gmail.com" },
+]
+dependencies = [
+    "firebase-admin>=6.2,<8",
+    "Django>=4.2",
+    "swapper",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.1",
+    "Framework :: Django :: 5.2",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Networking",
+]
+
+[project.urls]
+Homepage = "https://github.com/xtrinch/fcm-django"
+Repository = "https://github.com/xtrinch/fcm-django"
+Documentation = "https://github.com/xtrinch/fcm-django#readme"
+Issues = "https://github.com/xtrinch/fcm-django/issues"
+
+[tool.setuptools]
+packages = ["fcm_django", "fcm_django.api", "fcm_django.migrations"]
+
+[tool.setuptools.dynamic]
+version = { attr = "fcm_django.__version__" }
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 DJANGO_SETTINGS_MODULE = "tests.settings.default"
