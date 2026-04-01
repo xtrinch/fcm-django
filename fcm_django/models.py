@@ -1,8 +1,10 @@
+import asyncio
 from collections.abc import Sequence
 from copy import copy
 from typing import Any, Optional, Union
 
 import swapper
+from asgiref.sync import sync_to_async
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from firebase_admin import messaging
@@ -132,6 +134,39 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             )
         return registration_ids
 
+    async def aget_registration_ids(
+        self,
+        skip_registration_id_lookup: bool = False,
+        additional_registration_ids: Sequence[str] = None,
+    ) -> list[str]:
+        registration_ids = (
+            list(additional_registration_ids) if additional_registration_ids else []
+        )
+        if not skip_registration_id_lookup:
+            async for registration_id in (
+                self.filter(active=True)
+                .values_list("registration_id", flat=True)
+                .aiterator()
+            ):
+                registration_ids.append(registration_id)
+        return registration_ids
+
+    @staticmethod
+    async def _send_each_async(
+        messages: list[messaging.Message],
+        app: Optional["firebase_admin.App"] = None,
+        **more_send_message_kwargs,
+    ) -> messaging.BatchResponse:
+        send_each_async = getattr(messaging, "send_each_async", None)
+        if callable(send_each_async):
+            return await send_each_async(messages, app=app, **more_send_message_kwargs)
+        return await asyncio.to_thread(
+            messaging.send_each,
+            messages,
+            app=app,
+            **more_send_message_kwargs,
+        )
+
     def send_message(
         self,
         message: messaging.Message,
@@ -182,6 +217,39 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             response=messaging.BatchResponse(responses),
             registration_ids_sent=registration_ids,
             deactivated_registration_ids=self.deactivate_devices_with_error_results(
+                registration_ids, responses
+            ),
+        )
+
+    async def asend_message(
+        self,
+        message: messaging.Message,
+        skip_registration_id_lookup: bool = False,
+        additional_registration_ids: Sequence[str] = None,
+        app: Optional["firebase_admin.App"] = None,
+        **more_send_message_kwargs,
+    ) -> FirebaseResponseDict:
+        registration_ids = await self.aget_registration_ids(
+            skip_registration_id_lookup,
+            additional_registration_ids,
+        )
+        app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
+        if not registration_ids:
+            return self.get_default_send_message_response()
+        responses: list[messaging.SendResponse] = []
+        for i in range(0, len(registration_ids), MAX_MESSAGES_PER_BATCH):
+            messages = [
+                self._prepare_message(message, token)
+                for token in registration_ids[i : i + MAX_MESSAGES_PER_BATCH]
+            ]
+            batch_response = await self._send_each_async(
+                messages, app=app, **more_send_message_kwargs
+            )
+            responses.extend(batch_response.responses)
+        return FirebaseResponseDict(
+            response=messaging.BatchResponse(responses),
+            registration_ids_sent=registration_ids,
+            deactivated_registration_ids=await self.adeactivate_devices_with_error_results(
                 registration_ids, responses
             ),
         )
@@ -262,6 +330,60 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             ),
         )
 
+    async def asend_bulk_personalized_messages(
+        self,
+        title_template: str,
+        body_template: str,
+        message_data: Optional[dict[str, dict[str, Any]]] = None,
+        data_fields: Optional[dict[str, Any]] = None,
+        skip_registration_id_lookup: bool = False,
+        additional_registration_ids: Sequence[str] = None,
+        app: Optional["firebase_admin.App"] = None,
+        **more_send_message_kwargs,
+    ) -> FirebaseResponseDict:
+        registration_ids = await self.aget_registration_ids(
+            skip_registration_id_lookup,
+            additional_registration_ids,
+        )
+        app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
+        if not registration_ids:
+            return self.get_default_send_message_response()
+
+        responses: list[messaging.SendResponse] = []
+        for i in range(0, len(registration_ids), MAX_MESSAGES_PER_BATCH):
+            batch_ids = registration_ids[i : i + MAX_MESSAGES_PER_BATCH]
+            messages = []
+            for token in batch_ids:
+                template_data = message_data.get(token) if message_data else None
+                message_kwargs: dict[str, Any] = {
+                    "notification": messaging.Notification(
+                        title=self._render_message_template(
+                            title_template, template_data
+                        ),
+                        body=self._render_message_template(
+                            body_template, template_data
+                        ),
+                    ),
+                    "token": token,
+                }
+                if data_fields:
+                    message_kwargs["data"] = {
+                        str(key): str(value) for key, value in data_fields.items()
+                    }
+                messages.append(messaging.Message(**message_kwargs))
+            batch_response = await self._send_each_async(
+                messages, app=app, **more_send_message_kwargs
+            )
+            responses.extend(batch_response.responses)
+
+        return FirebaseResponseDict(
+            response=messaging.BatchResponse(responses),
+            registration_ids_sent=registration_ids,
+            deactivated_registration_ids=await self.adeactivate_devices_with_error_results(
+                registration_ids, responses
+            ),
+        )
+
     def deactivate(
         self,
         *,
@@ -279,6 +401,32 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 
         active_devices.update(active=False)
         self._emit_device_deactivated_signal(
+            device_rows=device_rows,
+            reason=reason,
+            source=source,
+            metadata=metadata,
+        )
+        return [device_row.registration_id for device_row in device_rows]
+
+    async def adeactivate(
+        self,
+        *,
+        reason: str,
+        source: str,
+        metadata: Optional[dict[str, Any]] = None,
+    ) -> list[str]:
+        active_devices = self.filter(active=True)
+        device_rows = [
+            DeviceDeactivationData(*row)
+            for row in await sync_to_async(list)(
+                active_devices.values_list("registration_id", "id", "user_id")
+            )
+        ]
+        if not device_rows:
+            return []
+
+        await active_devices.aupdate(active=False)
+        await sync_to_async(self._emit_device_deactivated_signal)(
             device_rows=device_rows,
             reason=reason,
             source=source,
@@ -316,9 +464,43 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         self._delete_inactive_devices_if_requested(deactivated_ids)
         return deactivated_ids
 
+    async def adeactivate_devices_with_error_results(
+        self,
+        registration_ids: list[str],
+        results: list[Union[messaging.SendResponse, messaging.ErrorInfo]],
+    ) -> list[str]:
+        if not results:
+            return []
+        if isinstance(results[0], messaging.SendResponse):
+            deactivation_candidates = [
+                token
+                for item, token in zip(results, registration_ids)
+                if _validate_exception_for_deactivation(item.exception)
+            ]
+        else:
+            deactivation_candidates = [
+                registration_ids[x.index]
+                for x in results
+                if _validate_exception_for_deactivation(x.reason)
+            ]
+        failed_exceptions = self._get_failed_exception_codes(results)
+        deactivated_ids = await self.filter(
+            registration_id__in=deactivation_candidates
+        ).adeactivate(
+            reason="firebase_error",
+            source="send_message",
+            metadata={"failed_exceptions": failed_exceptions},
+        )
+        await self._adelete_inactive_devices_if_requested(deactivated_ids)
+        return deactivated_ids
+
     def _delete_inactive_devices_if_requested(self, registration_ids: list[str]):
         if SETTINGS["DELETE_INACTIVE_DEVICES"]:
             self.filter(registration_id__in=registration_ids).delete()
+
+    async def _adelete_inactive_devices_if_requested(self, registration_ids: list[str]):
+        if SETTINGS["DELETE_INACTIVE_DEVICES"]:
+            await self.filter(registration_id__in=registration_ids).adelete()
 
     @staticmethod
     def _get_failed_exception_codes(

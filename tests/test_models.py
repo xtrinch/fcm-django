@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, Optional
 from unittest.mock import MagicMock, sentinel
 from uuid import UUID
@@ -411,6 +412,164 @@ class TestFCMDeviceQuerySetSendBulkPersonalizedMessages:
         )
 
         message = mock_firebase_send_each.call_args.args[0][0]
+        assert message.notification.title == "Hello Alice"
+        assert message.notification.body == "You have {count} updates"
+
+
+@pytest.mark.django_db(transaction=True)
+class TestFCMDeviceQuerySetAsyncSendMessage:
+    def test_ok(
+        self,
+        fcm_device: FCMDevice,
+        message: Message,
+        mock_firebase_send_each_async: MagicMock,
+        mocker,
+    ):
+        response = mocker.Mock(spec=SendResponse)
+        mock_firebase_send_each_async.return_value.responses = [response]
+
+        result = asyncio.run(
+            FCMDevice.objects.filter(pk=fcm_device.pk).asend_message(
+                message,
+                dry_run=True,
+            )
+        )
+
+        assert result.registration_ids_sent == [fcm_device.registration_id]
+        assert result.deactivated_registration_ids == []
+        mock_firebase_send_each_async.assert_awaited_once()
+        sent_message = mock_firebase_send_each_async.call_args.args[0][0]
+        assert sent_message.token == fcm_device.registration_id
+        assert mock_firebase_send_each_async.call_args.kwargs["app"] is None
+        assert mock_firebase_send_each_async.call_args.kwargs["dry_run"] is True
+
+    def test_invalid_argument_error_does_not_deactivate_device(
+        self,
+        fcm_device: FCMDevice,
+        message: Message,
+        mock_firebase_send_each_async: MagicMock,
+        mocker,
+    ):
+        failed_response = mocker.Mock(spec=SendResponse)
+        failed_response.exception = InvalidArgumentError(
+            message="Error", cause="Invalid TTL"
+        )
+        mock_firebase_send_each_async.return_value.responses = [failed_response]
+
+        result = asyncio.run(
+            FCMDevice.objects.filter(pk=fcm_device.pk).asend_message(message)
+        )
+
+        assert result.failed_exceptions == [failed_response.exception]
+        assert result.deactivated_registration_ids == []
+        fcm_device.refresh_from_db()
+        assert fcm_device.active
+
+    def test_delete_inactive_devices_follows_override_settings(
+        self,
+        fcm_device: FCMDevice,
+        message: Message,
+        mock_firebase_send_each_async: MagicMock,
+        mocker,
+    ):
+        failed_response = mocker.Mock(spec=SendResponse)
+        failed_response.exception = InvalidArgumentError(
+            message="Error", cause="Invalid registration"
+        )
+        mock_firebase_send_each_async.return_value.responses = [failed_response]
+
+        with override_settings(FCM_DJANGO_SETTINGS={"DELETE_INACTIVE_DEVICES": True}):
+            asyncio.run(
+                FCMDevice.objects.filter(pk=fcm_device.pk).asend_message(message)
+            )
+
+        assert not FCMDevice.objects.filter(pk=fcm_device.pk).exists()
+
+
+@pytest.mark.django_db(transaction=True)
+class TestFCMDeviceQuerySetAsyncSendBulkPersonalizedMessages:
+    def test_ok(
+        self,
+        mocker,
+        mock_firebase_send_each_async: MagicMock,
+    ):
+        first_device = FCMDevice.objects.create(
+            registration_id="token-1", type=DeviceType.WEB
+        )
+        second_device = FCMDevice.objects.create(
+            registration_id="token-2", type=DeviceType.WEB
+        )
+        first_response = mocker.Mock(spec=SendResponse)
+        second_response = mocker.Mock(spec=SendResponse)
+        mock_firebase_send_each_async.return_value.responses = [
+            first_response,
+            second_response,
+        ]
+
+        result = asyncio.run(
+            FCMDevice.objects.asend_bulk_personalized_messages(
+                title_template="Hello {name}",
+                body_template="You have {count} updates",
+                message_data={
+                    first_device.registration_id: {"name": "Alice", "count": 3},
+                    second_device.registration_id: {"name": "Bob", "count": 7},
+                },
+                data_fields={"kind": "digest"},
+                dry_run=True,
+            )
+        )
+
+        assert sorted(result.registration_ids_sent) == sorted(
+            [
+                first_device.registration_id,
+                second_device.registration_id,
+            ]
+        )
+        assert result.deactivated_registration_ids == []
+        mock_firebase_send_each_async.assert_awaited_once()
+        messages = mock_firebase_send_each_async.call_args.args[0]
+        messages_by_token = {message.token: message for message in messages}
+        assert set(messages_by_token) == {
+            first_device.registration_id,
+            second_device.registration_id,
+        }
+        assert (
+            messages_by_token[first_device.registration_id].notification.title
+            == "Hello Alice"
+        )
+        assert (
+            messages_by_token[second_device.registration_id].notification.title
+            == "Hello Bob"
+        )
+        assert (
+            messages_by_token[first_device.registration_id].notification.body
+            == "You have 3 updates"
+        )
+        assert (
+            messages_by_token[second_device.registration_id].notification.body
+            == "You have 7 updates"
+        )
+        assert all(message.data == {"kind": "digest"} for message in messages)
+        assert mock_firebase_send_each_async.call_args.kwargs["app"] is None
+        assert mock_firebase_send_each_async.call_args.kwargs["dry_run"] is True
+
+    def test_missing_template_values_are_left_unchanged(
+        self,
+        mock_firebase_send_each_async: MagicMock,
+    ):
+        device = FCMDevice.objects.create(
+            registration_id="token-1", type=DeviceType.WEB
+        )
+
+        asyncio.run(
+            FCMDevice.objects.asend_bulk_personalized_messages(
+                title_template="Hello {name}",
+                body_template="You have {count} updates",
+                message_data={device.registration_id: {"name": "Alice"}},
+            )
+        )
+
+        message = mock_firebase_send_each_async.call_args.args[0][0]
         assert message.notification.title == "Hello Alice"
         assert message.notification.body == "You have {count} updates"
 

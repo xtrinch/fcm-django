@@ -336,6 +336,30 @@ title or body while still being sent in Firebase batches.
 ``message_data`` is keyed by registration ID. Missing template variables are left
 unchanged in the rendered message.
 
+Async queryset batch sending
+----------------------------
+
+If you are calling fcm-django from an async Django view or other async context,
+use the queryset batch APIs with their async counterparts:
+
+.. code-block:: python
+
+    from firebase_admin.messaging import Message, Notification
+    from fcm_django.models import FCMDevice
+
+    await FCMDevice.objects.filter(user=request.user).asend_message(
+        Message(notification=Notification(title="Hi", body="Async batch send")),
+    )
+
+    await FCMDevice.objects.asend_bulk_personalized_messages(
+        title_template="Hello {name}",
+        body_template="You have {count} updates",
+        message_data={"token-1": {"name": "Alice", "count": 3}},
+    )
+
+These methods mirror ``send_message`` and ``send_bulk_personalized_messages`` on
+``FCMDeviceQuerySet`` and are intended for batch queryset operations.
+
 Subscribing or Unsubscribing Users to topic
 -------------------------------------------
 
