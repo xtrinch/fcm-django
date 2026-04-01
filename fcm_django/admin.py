@@ -5,6 +5,7 @@ from django.apps import apps
 from django.contrib import admin, messages
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
+from firebase_admin.exceptions import FirebaseError
 from firebase_admin.messaging import (
     ErrorInfo,
     Message,
@@ -135,31 +136,36 @@ class DeviceAdmin(admin.ModelAdmin):
         total_failure = 0
         single_responses: list[tuple[SendResponse, str]] = []
 
-        for device in queryset:
-            device: "FCMDevice"
-            if bulk:
-                response = queryset.send_message(
-                    Message(
-                        notification=Notification(
-                            title="Test notification", body="Test bulk notification"
+        try:
+            for device in queryset:
+                device: "FCMDevice"
+                if bulk:
+                    response = queryset.send_message(
+                        Message(
+                            notification=Notification(
+                                title="Test notification", body="Test bulk notification"
+                            )
                         )
                     )
-                )
-                total_failure = len(response.deactivated_registration_ids)
-                return self._send_deactivated_message(
-                    request, response, total_failure, False
-                )
-            else:
-                response = device.send_message(
-                    Message(
-                        notification=Notification(
-                            title="Test notification", body="Test single notification"
+                    total_failure = len(response.deactivated_registration_ids)
+                    return self._send_deactivated_message(
+                        request, response, total_failure, False
+                    )
+                else:
+                    response = device.send_message(
+                        Message(
+                            notification=Notification(
+                                title="Test notification",
+                                body="Test single notification",
+                            )
                         )
                     )
-                )
-                single_responses.append((response, device.registration_id))
-                if type(response) != SendResponse:
-                    total_failure += 1
+                    single_responses.append((response, device.registration_id))
+                    if type(response) != SendResponse:
+                        total_failure += 1
+        except FirebaseError as exc:
+            self.message_user(request, str(exc), level=messages.ERROR)
+            return
 
         self._send_deactivated_message(request, single_responses, total_failure, False)
 
@@ -236,14 +242,17 @@ class DeviceAdmin(admin.ModelAdmin):
     bulk_unsubscribe_to_topic.short_description = _("Unsubscribe to test topic in bulk")
 
     def handle_send_topic_message(self, request, queryset):
-        FCMDevice.send_topic_message(
-            Message(
-                notification=Notification(
-                    title="Test notification", body="Test single notification"
-                )
-            ),
-            "test-topic",
-        )
+        try:
+            FCMDevice.send_topic_message(
+                Message(
+                    notification=Notification(
+                        title="Test notification", body="Test single notification"
+                    )
+                ),
+                "test-topic",
+            )
+        except FirebaseError as exc:
+            self.message_user(request, str(exc), level=messages.ERROR)
 
     def send_topic_message(self, request, queryset):
         self.handle_send_topic_message(request, queryset)
