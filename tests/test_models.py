@@ -5,6 +5,7 @@ from uuid import UUID
 import pytest
 import swapper
 from django.conf import settings
+from django.test import override_settings
 from django.utils import timezone
 from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
 from firebase_admin.messaging import Message, SendResponse
@@ -160,6 +161,27 @@ class TestFCMDeviceSendMessage:
             firebase_message_id_send,
             app=custom_firebase_app,
             send_message_kwargs=send_message_kwargs,
+        )
+
+    def test_uses_overridden_default_firebase_app(
+        self,
+        fcm_device: FCMDevice,
+        message: Message,
+        mock_firebase_send: MagicMock,
+        firebase_message_id_send: str,
+    ):
+        with override_settings(
+            FCM_DJANGO_SETTINGS={"DEFAULT_FIREBASE_APP": sentinel.DEFAULT_APP}
+        ):
+            result = fcm_device.send_message(message)
+
+        self.assert_sent_successfully(
+            result,
+            fcm_device,
+            message,
+            mock_firebase_send,
+            firebase_message_id_send,
+            app=sentinel.DEFAULT_APP,
         )
 
     def test_firebase_error(
@@ -409,3 +431,22 @@ def test_queryset_send_message_invalid_argument_error_does_not_deactivate_device
     assert result.deactivated_registration_ids == []
     fcm_device.refresh_from_db()
     assert fcm_device.active
+
+
+@pytest.mark.django_db
+def test_queryset_send_message_delete_inactive_devices_follows_override_settings(
+    fcm_device: FCMDevice,
+    message: Message,
+    mocker,
+    mock_firebase_send_each: MagicMock,
+):
+    failed_response = mocker.Mock(spec=SendResponse)
+    failed_response.exception = InvalidArgumentError(
+        message="Error", cause="Invalid registration"
+    )
+    mock_firebase_send_each.return_value.responses = [failed_response]
+
+    with override_settings(FCM_DJANGO_SETTINGS={"DELETE_INACTIVE_DEVICES": True}):
+        FCMDevice.objects.filter(pk=fcm_device.pk).send_message(message)
+
+    assert not FCMDevice.objects.filter(pk=fcm_device.pk).exists()

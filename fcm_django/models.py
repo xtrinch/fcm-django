@@ -215,7 +215,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         message: messaging.Message,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Sequence[str] = None,
-        app: "firebase_admin.App" = SETTINGS["DEFAULT_FIREBASE_APP"],
+        app: Optional["firebase_admin.App"] = None,
         **more_send_message_kwargs,
     ) -> FirebaseResponseDict:
         """
@@ -242,6 +242,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             skip_registration_id_lookup,
             additional_registration_ids,
         )
+        app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
         if not registration_ids:
             return self.get_default_send_message_response()
         responses: list[messaging.SendResponse] = []
@@ -271,7 +272,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         data_fields: Optional[dict[str, Any]] = None,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Sequence[str] = None,
-        app: "firebase_admin.App" = SETTINGS["DEFAULT_FIREBASE_APP"],
+        app: Optional["firebase_admin.App"] = None,
         **more_send_message_kwargs,
     ) -> FirebaseResponseDict:
         """
@@ -299,6 +300,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             skip_registration_id_lookup,
             additional_registration_ids,
         )
+        app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
         if not registration_ids:
             return self.get_default_send_message_response()
 
@@ -379,7 +381,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         topic: str,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Sequence[str] = None,
-        app: "firebase_admin.App" = SETTINGS["DEFAULT_FIREBASE_APP"],
+        app: Optional["firebase_admin.App"] = None,
         **more_subscribe_kwargs,
     ) -> FirebaseResponseDict:
         """
@@ -407,6 +409,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             skip_registration_id_lookup,
             additional_registration_ids,
         )
+        app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
         if not registration_ids:
             return self.get_default_topic_response()
         responses: list[messaging.SendResponse] = []
@@ -462,7 +465,7 @@ class AbstractFCMDevice(Device):
     def send_message(
         self,
         message: messaging.Message,
-        app: "firebase_admin.App" = SETTINGS["DEFAULT_FIREBASE_APP"],
+        app: Optional["firebase_admin.App"] = None,
         **more_send_message_kwargs,
     ) -> messaging.SendResponse:
         """
@@ -485,6 +488,7 @@ class AbstractFCMDevice(Device):
                 None,
                 None,
             )
+        app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
         message.token = self.registration_id
         try:
             return messaging.SendResponse(
@@ -499,7 +503,7 @@ class AbstractFCMDevice(Device):
         self,
         should_subscribe: bool,
         topic: str,
-        app: "firebase_admin.App" = SETTINGS["DEFAULT_FIREBASE_APP"],
+        app: Optional["firebase_admin.App"] = None,
         **more_subscribe_kwargs,
     ) -> FirebaseResponseDict:
         """
@@ -517,6 +521,7 @@ class AbstractFCMDevice(Device):
         :raises FirebaseError
         :returns FirebaseResponseDict
         """
+        app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
         _r_ids = [self.registration_id]
         response = (
             messaging.subscribe_to_topic
@@ -543,9 +548,10 @@ class AbstractFCMDevice(Device):
     def send_topic_message(
         message: messaging.Message,
         topic_name: str,
-        app: "firebase_admin.App" = SETTINGS["DEFAULT_FIREBASE_APP"],
+        app: Optional["firebase_admin.App"] = None,
         **more_send_message_kwargs,
     ) -> messaging.SendResponse:
+        app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
         message.topic = topic_name
 
         return messaging.SendResponse(
