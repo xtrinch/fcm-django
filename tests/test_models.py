@@ -9,7 +9,7 @@ from django.utils import timezone
 from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
 from firebase_admin.messaging import Message, SendResponse
 
-from fcm_django.models import DeviceType
+from fcm_django.models import DeviceType, FirebaseResponseDict
 
 FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
 
@@ -41,6 +41,55 @@ def test_fields_on_the_device_can_be_added_by_swapped_model(fcm_device: FCMDevic
         before_update = timezone.now()
         fcm_device.save()
         assert before_update < fcm_device.updated_at < timezone.now()
+
+
+def test_firebase_response_dict_summary_for_batch_response(mocker):
+    ok_response = mocker.Mock(spec=SendResponse)
+    ok_response.exception = None
+    failed_exception = FirebaseError(code="unknown", message="firebase failed")
+    failed_response = mocker.Mock(spec=SendResponse)
+    failed_response.exception = failed_exception
+    batch_response = mocker.Mock()
+    batch_response.responses = [ok_response, failed_response]
+    batch_response.success_count = 1
+    batch_response.failure_count = 1
+
+    result = FirebaseResponseDict(
+        response=batch_response,
+        registration_ids_sent=["token-1", "token-2"],
+        deactivated_registration_ids=[],
+    )
+
+    assert result.success_count == 1
+    assert result.failure_count == 1
+    assert result.has_failures is True
+    assert result.all_failed is False
+    assert result.failed_registration_ids == ["token-2"]
+    assert result.failed_exceptions == [failed_exception]
+    assert result.summary["failed_registration_ids"] == ["token-2"]
+
+
+def test_firebase_response_dict_summary_for_topic_response(mocker):
+    failed_error = mocker.Mock()
+    failed_error.index = 1
+    failed_error.reason = "messaging/mismatched-credential"
+    topic_response = mocker.Mock()
+    topic_response.errors = [failed_error]
+    topic_response.success_count = 1
+    topic_response.failure_count = 1
+
+    result = FirebaseResponseDict(
+        response=topic_response,
+        registration_ids_sent=["token-1", "token-2"],
+        deactivated_registration_ids=[],
+    )
+
+    assert result.success_count == 1
+    assert result.failure_count == 1
+    assert result.has_failures is True
+    assert result.all_failed is False
+    assert result.failed_registration_ids == ["token-2"]
+    assert result.failed_exceptions == ["messaging/mismatched-credential"]
 
 
 @pytest.mark.django_db
