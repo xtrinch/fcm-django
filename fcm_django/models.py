@@ -372,39 +372,24 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         if not results:
             return []
         if isinstance(results[0], messaging.SendResponse):
-            deactivated_ids = [
+            deactivation_candidates = [
                 token
                 for item, token in zip(results, registration_ids)
                 if _validate_exception_for_deactivation(item.exception)
             ]
         else:
-            deactivated_ids = [
+            deactivation_candidates = [
                 registration_ids[x.index]
                 for x in results
                 if _validate_exception_for_deactivation(x.reason)
             ]
-        deactivated_ids = self.filter(registration_id__in=deactivated_ids).deactivate(
+        failed_exceptions = self._get_failed_exception_codes(results)
+        deactivated_ids = self.filter(
+            registration_id__in=deactivation_candidates
+        ).deactivate(
             reason="firebase_error",
             source="send_message",
-            metadata={
-                "failed_exceptions": [
-                    (
-                        item.exception.code
-                        if isinstance(item, messaging.SendResponse) and item.exception
-                        else item.reason
-                    )
-                    for item in results
-                    if (
-                        isinstance(item, messaging.SendResponse)
-                        and item.exception
-                        and _validate_exception_for_deactivation(item.exception)
-                    )
-                    or (
-                        not isinstance(item, messaging.SendResponse)
-                        and _validate_exception_for_deactivation(item.reason)
-                    )
-                ]
-            },
+            metadata={"failed_exceptions": failed_exceptions},
         )
         self._delete_inactive_devices_if_requested(deactivated_ids)
         return deactivated_ids
@@ -412,6 +397,23 @@ class FCMDeviceQuerySet(models.query.QuerySet):
     def _delete_inactive_devices_if_requested(self, registration_ids: list[str]):
         if SETTINGS["DELETE_INACTIVE_DEVICES"]:
             self.filter(registration_id__in=registration_ids).delete()
+
+    @staticmethod
+    def _get_failed_exception_codes(
+        results: list[Union[messaging.SendResponse, messaging.ErrorInfo]],
+    ) -> list[str]:
+        failed_exceptions = []
+
+        for item in results:
+            if isinstance(item, messaging.SendResponse):
+                if item.exception and _validate_exception_for_deactivation(
+                    item.exception
+                ):
+                    failed_exceptions.append(item.exception.code)
+            elif _validate_exception_for_deactivation(item.reason):
+                failed_exceptions.append(item.reason)
+
+        return failed_exceptions
 
     def _emit_device_deactivated_signal(
         self,
