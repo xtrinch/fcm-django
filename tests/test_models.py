@@ -238,3 +238,87 @@ class TestFCMDeviceSendTopicMessage:
 
         with pytest.raises(FirebaseError, match=str(firebase_error)):
             FCMDevice.send_topic_message(message, "example")
+
+
+@pytest.mark.django_db
+class TestFCMDeviceQuerySetSendBulkPersonalizedMessages:
+    def test_ok(
+        self,
+        mocker,
+        mock_firebase_send_each: MagicMock,
+    ):
+        first_device = FCMDevice.objects.create(
+            registration_id="token-1", type=DeviceType.WEB
+        )
+        second_device = FCMDevice.objects.create(
+            registration_id="token-2", type=DeviceType.WEB
+        )
+        first_response = mocker.Mock(spec=SendResponse)
+        second_response = mocker.Mock(spec=SendResponse)
+        mock_firebase_send_each.return_value.responses = [
+            first_response,
+            second_response,
+        ]
+
+        result = FCMDevice.objects.send_bulk_personalized_messages(
+            title_template="Hello {name}",
+            body_template="You have {count} updates",
+            message_data={
+                first_device.registration_id: {"name": "Alice", "count": 3},
+                second_device.registration_id: {"name": "Bob", "count": 7},
+            },
+            data_fields={"kind": "digest"},
+            dry_run=True,
+        )
+
+        assert sorted(result.registration_ids_sent) == sorted(
+            [
+                first_device.registration_id,
+                second_device.registration_id,
+            ]
+        )
+        assert result.deactivated_registration_ids == []
+        mock_firebase_send_each.assert_called_once()
+        messages = mock_firebase_send_each.call_args.args[0]
+        messages_by_token = {message.token: message for message in messages}
+        assert set(messages_by_token) == {
+            first_device.registration_id,
+            second_device.registration_id,
+        }
+        assert (
+            messages_by_token[first_device.registration_id].notification.title
+            == "Hello Alice"
+        )
+        assert (
+            messages_by_token[second_device.registration_id].notification.title
+            == "Hello Bob"
+        )
+        assert (
+            messages_by_token[first_device.registration_id].notification.body
+            == "You have 3 updates"
+        )
+        assert (
+            messages_by_token[second_device.registration_id].notification.body
+            == "You have 7 updates"
+        )
+        assert all(message.data == {"kind": "digest"} for message in messages)
+        assert mock_firebase_send_each.call_args.kwargs["app"] is None
+        assert mock_firebase_send_each.call_args.kwargs["dry_run"] is True
+
+    def test_missing_template_values_are_left_unchanged(
+        self,
+        mock_firebase_send_each: MagicMock,
+    ):
+        device = FCMDevice.objects.create(
+            registration_id="token-1", type=DeviceType.WEB
+        )
+
+        FCMDevice.objects.send_bulk_personalized_messages(
+            title_template="Hello {name}",
+            body_template="You have {count} updates",
+            message_data={device.registration_id: {"name": "Alice"}},
+        )
+
+        message = mock_firebase_send_each.call_args.args[0][0]
+        assert message.notification.title == "Hello Alice"
+        assert message.notification.body == "You have {count} updates"

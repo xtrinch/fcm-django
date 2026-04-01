@@ -209,6 +209,29 @@ they are caught and dealt with in your application code:
 
 For more info, see https://firebase.google.com/docs/reference/admin/python/firebase_admin.messaging#firebase_admin.messaging.BatchResponse
 
+Sending personalized messages in bulk
+-------------------------------------
+
+Use ``send_bulk_personalized_messages`` when each device should receive a different
+title or body while still being sent in Firebase batches.
+
+.. code-block:: python
+
+    from fcm_django.models import FCMDevice
+
+    FCMDevice.objects.send_bulk_personalized_messages(
+        title_template="Hello {name}",
+        body_template="You have {count} new messages",
+        message_data={
+            "token-1": {"name": "Alice", "count": 3},
+            "token-2": {"name": "Bob", "count": 7},
+        },
+        data_fields={"kind": "digest"},
+    )
+
+``message_data`` is keyed by registration ID. Missing template variables are left
+unchanged in the rendered message.
+
 Subscribing or Unsubscribing Users to topic
 -------------------------------------------
 

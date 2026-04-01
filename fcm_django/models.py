@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from copy import copy
-from typing import NamedTuple, Union
+from typing import Any, NamedTuple, Optional, Union
 
 import swapper
 from django.db import models
@@ -86,6 +86,11 @@ class FirebaseResponseDict(NamedTuple):
     deactivated_registration_ids: list[str]
 
 
+class _MissingFormatDict(dict[str, Any]):
+    def __missing__(self, key: str) -> str:
+        return f"{{{key}}}"
+
+
 class FCMDeviceQuerySet(models.query.QuerySet):
     @staticmethod
     def _prepare_message(message: messaging.Message, token: str):
@@ -99,6 +104,14 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             registration_ids_sent=[],
             deactivated_registration_ids=[],
         )
+
+    @staticmethod
+    def _render_message_template(
+        template: str, template_data: Optional[dict[str, Any]] = None
+    ) -> str:
+        if not template_data:
+            return template
+        return template.format_map(_MissingFormatDict(template_data))
 
     def get_registration_ids(
         self,
@@ -168,6 +181,81 @@ class FCMDeviceQuerySet(models.query.QuerySet):
                     messages, app=app, **more_send_message_kwargs
                 ).responses
             )
+        return FirebaseResponseDict(
+            response=messaging.BatchResponse(responses),
+            registration_ids_sent=registration_ids,
+            deactivated_registration_ids=self.deactivate_devices_with_error_results(
+                registration_ids, responses
+            ),
+        )
+
+    def send_bulk_personalized_messages(
+        self,
+        title_template: str,
+        body_template: str,
+        message_data: Optional[dict[str, dict[str, Any]]] = None,
+        data_fields: Optional[dict[str, Any]] = None,
+        skip_registration_id_lookup: bool = False,
+        additional_registration_ids: Sequence[str] = None,
+        app: "firebase_admin.App" = SETTINGS["DEFAULT_FIREBASE_APP"],
+        **more_send_message_kwargs,
+    ) -> FirebaseResponseDict:
+        """
+        Send a personalized notification to each active device in the queryset.
+
+        Templates are rendered with per-device data from ``message_data`` keyed by
+        registration ID. Missing template variables are left unchanged.
+
+        :param title_template: Notification title template.
+        :param body_template: Notification body template.
+        :param message_data: Mapping of registration IDs to template data.
+        :param data_fields: Optional data payload added to every message.
+        :param skip_registration_id_lookup: skips the QuerySet lookup and solely uses
+        the list of IDs from additional_registration_ids
+        :param additional_registration_ids: specific registration_ids to add to the
+        QuerySet lookup
+        :param app: firebase_admin.App. Specify a specific app to use
+        :param more_send_message_kwargs: Parameters for firebase.messaging.send_each()
+        - dry_run: bool. Whether to actually send the notification to the device
+
+        :raises FirebaseError
+        :returns FirebaseResponseDict
+        """
+        registration_ids = self.get_registration_ids(
+            skip_registration_id_lookup,
+            additional_registration_ids,
+        )
+        if not registration_ids:
+            return self.get_default_send_message_response()
+
+        responses: list[messaging.SendResponse] = []
+        for i in range(0, len(registration_ids), MAX_MESSAGES_PER_BATCH):
+            batch_ids = registration_ids[i : i + MAX_MESSAGES_PER_BATCH]
+            messages = []
+            for token in batch_ids:
+                template_data = message_data.get(token) if message_data else None
+                message_kwargs: dict[str, Any] = {
+                    "notification": messaging.Notification(
+                        title=self._render_message_template(
+                            title_template, template_data
+                        ),
+                        body=self._render_message_template(
+                            body_template, template_data
+                        ),
+                    ),
+                    "token": token,
+                }
+                if data_fields:
+                    message_kwargs["data"] = {
+                        str(key): str(value) for key, value in data_fields.items()
+                    }
+                messages.append(messaging.Message(**message_kwargs))
+            responses.extend(
+                messaging.send_each(
+                    messages, app=app, **more_send_message_kwargs
+                ).responses
+            )
+
         return FirebaseResponseDict(
             response=messaging.BatchResponse(responses),
             registration_ids_sent=registration_ids,

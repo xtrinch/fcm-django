@@ -62,3 +62,11 @@ def mock_firebase_send(mocker: MockerFixture, firebase_message_id_send):
     mock = mocker.patch("fcm_django.models.messaging.send")
     mock.return_value = firebase_message_id_send
     return mock
+
+
+@pytest.fixture
+def mock_firebase_send_each(mocker: MockerFixture):
+    mock = mocker.patch("fcm_django.models.messaging.send_each")
+    mock.return_value = sentinel.FIREBASE_SEND_EACH_RESPONSE
+    mock.return_value.responses = []
+    return mock
