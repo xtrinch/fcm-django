@@ -86,9 +86,7 @@ def test_authorized_drf_endpoint_delete_device_with_explicit_as_view_route(
 
 
 @pytest.mark.django_db
-def test_drf_endpoint_emits_signal_for_one_device_per_user(
-    client, user, mocker
-):
+def test_drf_endpoint_emits_signal_for_one_device_per_user(client, user, mocker):
     old_device = FCMDevice.objects.create(
         registration_id="old-token",
         type=DeviceType.WEB,
@@ -101,7 +99,10 @@ def test_drf_endpoint_emits_signal_for_one_device_per_user(
 
     try:
         with override_settings(
-            FCM_DJANGO_SETTINGS={"EMIT_DEVICE_DEACTIVATED_SIGNAL": True, "ONE_DEVICE_PER_USER": True}
+            FCM_DJANGO_SETTINGS={
+                "EMIT_DEVICE_DEACTIVATED_SIGNAL": True,
+                "ONE_DEVICE_PER_USER": True,
+            }
         ):
             response = client.post(
                 "/drf/devices/",
@@ -125,4 +126,3 @@ def test_drf_endpoint_emits_signal_for_one_device_per_user(
     assert kwargs["reason"] == "one_device_per_user"
     assert kwargs["source"] == "perform_create"
     assert kwargs["metadata"] == {"user_id": user.id}
-

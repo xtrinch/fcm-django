@@ -383,16 +383,16 @@ class FCMDeviceQuerySet(models.query.QuerySet):
                 for x in results
                 if _validate_exception_for_deactivation(x.reason)
             ]
-        deactivated_ids = self.filter(
-            registration_id__in=deactivated_ids
-        ).deactivate(
+        deactivated_ids = self.filter(registration_id__in=deactivated_ids).deactivate(
             reason="firebase_error",
             source="send_message",
             metadata={
                 "failed_exceptions": [
-                    item.exception.code
-                    if isinstance(item, messaging.SendResponse) and item.exception
-                    else item.reason
+                    (
+                        item.exception.code
+                        if isinstance(item, messaging.SendResponse) and item.exception
+                        else item.reason
+                    )
                     for item in results
                     if (
                         isinstance(item, messaging.SendResponse)
@@ -428,11 +428,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             sender=self.model,
             registration_ids=[registration_id for registration_id, _, _ in device_rows],
             device_ids=[device_id for _, device_id, _ in device_rows],
-            user_ids=[
-                user_id
-                for _, _, user_id in device_rows
-                if user_id is not None
-            ],
+            user_ids=[user_id for _, _, user_id in device_rows if user_id is not None],
             reason=reason,
             source=source,
             metadata=metadata or {},
