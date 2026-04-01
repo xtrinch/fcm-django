@@ -14,8 +14,9 @@ from firebase_admin.messaging import (
     TopicManagementResponse,
 )
 
-from fcm_django.models import FirebaseResponseDict, fcm_error_list
+from fcm_django.models import fcm_error_list
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
+from fcm_django.types import FirebaseResponseDict
 
 User = apps.get_model(*SETTINGS["USER_MODEL"].split("."))
 
@@ -265,7 +266,11 @@ class DeviceAdmin(admin.ModelAdmin):
     enable.short_description = _("Enable selected devices")
 
     def disable(self, request, queryset):
-        queryset.update(active=False)
+        queryset.deactivate(
+            reason="manual_disable",
+            source="admin_action",
+            metadata={},
+        )
 
     disable.short_description = _("Disable selected devices")
 

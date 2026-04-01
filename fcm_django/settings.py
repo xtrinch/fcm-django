@@ -9,6 +9,7 @@ DEFAULT_SETTINGS = {
     "APP_VERBOSE_NAME": _("FCM Django"),
     "ONE_DEVICE_PER_USER": False,
     "DELETE_INACTIVE_DEVICES": False,
+    "EMIT_DEVICE_DEACTIVATED_SIGNAL": False,
     "UPDATE_ON_DUPLICATE_REG_ID": True,
     "ERRORS": {
         "invalid_registration": "InvalidRegistration",

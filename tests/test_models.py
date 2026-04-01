@@ -5,12 +5,15 @@ from uuid import UUID
 import pytest
 import swapper
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.test import override_settings
 from django.utils import timezone
 from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
 from firebase_admin.messaging import Message, SendResponse
 
-from fcm_django.models import DeviceType, FirebaseResponseDict
+from fcm_django.models import DeviceType
+from fcm_django.signals import device_deactivated
+from fcm_django.types import FirebaseResponseDict
 
 FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
 
@@ -450,3 +453,101 @@ def test_queryset_send_message_delete_inactive_devices_follows_override_settings
         FCMDevice.objects.filter(pk=fcm_device.pk).send_message(message)
 
     assert not FCMDevice.objects.filter(pk=fcm_device.pk).exists()
+
+
+@pytest.mark.django_db
+def test_device_deactivated_signal_not_emitted_by_default(mocker):
+    device = FCMDevice.objects.create(registration_id="token-1", type=DeviceType.WEB)
+    response = mocker.Mock(spec=SendResponse)
+    response.exception = InvalidArgumentError(
+        message="Error", cause="Invalid registration"
+    )
+    receiver = mocker.Mock()
+    device_deactivated.connect(receiver)
+
+    try:
+        deactivated_ids = FCMDevice.objects.deactivate_devices_with_error_results(
+            [device.registration_id], [response]
+        )
+    finally:
+        device_deactivated.disconnect(receiver)
+
+    assert deactivated_ids == [device.registration_id]
+    receiver.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_device_deactivated_signal_emitted_when_enabled(mocker):
+    user = get_user_model().objects.create(username="signal-user")
+    device = FCMDevice.objects.create(
+        registration_id="token-1",
+        type=DeviceType.WEB,
+        user=user,
+    )
+    response = mocker.Mock(spec=SendResponse)
+    response.exception = InvalidArgumentError(
+        message="Error", cause="Invalid registration"
+    )
+    receiver = mocker.Mock()
+    device_deactivated.connect(receiver)
+
+    try:
+        with override_settings(
+            FCM_DJANGO_SETTINGS={"EMIT_DEVICE_DEACTIVATED_SIGNAL": True}
+        ):
+            deactivated_ids = FCMDevice.objects.deactivate_devices_with_error_results(
+                [device.registration_id], [response]
+            )
+    finally:
+        device_deactivated.disconnect(receiver)
+
+    assert deactivated_ids == [device.registration_id]
+    receiver.assert_called_once()
+    _, kwargs = receiver.call_args
+    assert kwargs["sender"] is FCMDevice
+    assert kwargs["registration_ids"] == [device.registration_id]
+    assert kwargs["device_ids"] == [device.id]
+    assert kwargs["user_ids"] == [user.id]
+    assert kwargs["reason"] == "firebase_error"
+    assert kwargs["source"] == "send_message"
+    assert kwargs["metadata"] == {"failed_exceptions": ["INVALID_ARGUMENT"]}
+
+
+@pytest.mark.django_db
+def test_deactivate_emits_signal_with_explicit_reason_and_source(mocker):
+    user = get_user_model().objects.create(username="duplicate-user")
+    device = FCMDevice.objects.create(
+        registration_id="shared-token",
+        type=DeviceType.WEB,
+        user=user,
+    )
+    receiver = mocker.Mock()
+    device_deactivated.connect(receiver)
+
+    try:
+        with override_settings(
+            FCM_DJANGO_SETTINGS={"EMIT_DEVICE_DEACTIVATED_SIGNAL": True}
+        ):
+            deactivated_ids = FCMDevice.objects.filter(pk=device.pk).deactivate(
+                reason="duplicate_registration_id",
+                source="serializer_create",
+                metadata={
+                    "request_method": "create",
+                    "target_user_id": 999,
+                },
+            )
+    finally:
+        device_deactivated.disconnect(receiver)
+
+    assert deactivated_ids == [device.registration_id]
+    receiver.assert_called_once()
+    _, kwargs = receiver.call_args
+    assert kwargs["registration_ids"] == [device.registration_id]
+    assert kwargs["device_ids"] == [device.id]
+    assert kwargs["user_ids"] == [user.id]
+    assert kwargs["reason"] == "duplicate_registration_id"
+    assert kwargs["source"] == "serializer_create"
+    assert kwargs["metadata"] == {
+        "request_method": "create",
+        "target_user_id": 999,
+    }

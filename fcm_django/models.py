@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from copy import copy
-from typing import Any, NamedTuple, Optional, Union
+from typing import Any, Optional, Union
 
 import swapper
 from django.db import models
@@ -9,6 +9,8 @@ from firebase_admin import messaging
 from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
 
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
+from fcm_django.signals import device_deactivated
+from fcm_django.types import DeviceDeactivationData, FirebaseResponseDict
 
 # Set by Firebase. Adjust when they adjust; developers can override too if we don't
 # upgrade package in time via a monkeypatch.
@@ -78,86 +80,6 @@ def _validate_exception_for_deactivation(exc: Union[FirebaseError]) -> bool:
     return (
         exc_type == InvalidArgumentError and exc.cause == "Invalid registration"
     ) or (exc_type in fcm_error_list)
-
-
-class FirebaseResponseDict(NamedTuple):
-    # All errors are stored rather than raised in BatchResponse.exceptions
-    # or TopicManagementResponse.errors
-    response: Union[messaging.BatchResponse, messaging.TopicManagementResponse]
-    registration_ids_sent: list[str]
-    deactivated_registration_ids: list[str]
-
-    @property
-    def success_count(self) -> int:
-        return getattr(
-            self.response,
-            "success_count",
-            len(self.registration_ids_sent) - self.failure_count,
-        )
-
-    @property
-    def failure_count(self) -> int:
-        return getattr(
-            self.response, "failure_count", len(self.failed_registration_ids)
-        )
-
-    @property
-    def has_failures(self) -> bool:
-        return self.failure_count > 0
-
-    @property
-    def all_failed(self) -> bool:
-        return bool(self.registration_ids_sent) and (
-            self.failure_count == len(self.registration_ids_sent)
-        )
-
-    @property
-    def failed_registration_ids(self) -> list[str]:
-        responses = getattr(self.response, "responses", None)
-        if isinstance(responses, list):
-            return [
-                registration_id
-                for send_response, registration_id in zip(
-                    responses,
-                    self.registration_ids_sent,
-                )
-                if send_response.exception
-            ]
-        errors = getattr(self.response, "errors", None)
-        if isinstance(errors, list):
-            return [
-                self.registration_ids_sent[error.index]
-                for error in errors
-                if error.index < len(self.registration_ids_sent)
-            ]
-        return []
-
-    @property
-    def failed_exceptions(self) -> list[Union[FirebaseError, str]]:
-        responses = getattr(self.response, "responses", None)
-        if isinstance(responses, list):
-            return [
-                send_response.exception
-                for send_response in responses
-                if send_response.exception
-            ]
-        errors = getattr(self.response, "errors", None)
-        if isinstance(errors, list):
-            return [error.reason for error in errors]
-        return []
-
-    @property
-    def summary(self) -> dict[str, Any]:
-        return {
-            "success_count": self.success_count,
-            "failure_count": self.failure_count,
-            "has_failures": self.has_failures,
-            "all_failed": self.all_failed,
-            "registration_ids_sent": self.registration_ids_sent,
-            "failed_registration_ids": self.failed_registration_ids,
-            "deactivated_registration_ids": self.deactivated_registration_ids,
-            "failed_exceptions": self.failed_exceptions,
-        }
 
 
 class _MissingFormatDict(dict[str, Any]):
@@ -340,6 +262,30 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             ),
         )
 
+    def deactivate(
+        self,
+        *,
+        reason: str,
+        source: str,
+        metadata: Optional[dict[str, Any]] = None,
+    ) -> list[str]:
+        active_devices = self.filter(active=True)
+        device_rows = [
+            DeviceDeactivationData(*row)
+            for row in active_devices.values_list("registration_id", "id", "user_id")
+        ]
+        if not device_rows:
+            return []
+
+        active_devices.update(active=False)
+        self._emit_device_deactivated_signal(
+            device_rows=device_rows,
+            reason=reason,
+            source=source,
+            metadata=metadata,
+        )
+        return [device_row.registration_id for device_row in device_rows]
+
     def deactivate_devices_with_error_results(
         self,
         registration_ids: list[str],
@@ -348,24 +294,73 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         if not results:
             return []
         if isinstance(results[0], messaging.SendResponse):
-            deactivated_ids = [
+            deactivation_candidates = [
                 token
                 for item, token in zip(results, registration_ids)
                 if _validate_exception_for_deactivation(item.exception)
             ]
         else:
-            deactivated_ids = [
+            deactivation_candidates = [
                 registration_ids[x.index]
                 for x in results
                 if _validate_exception_for_deactivation(x.reason)
             ]
-        self.filter(registration_id__in=deactivated_ids).update(active=False)
+        failed_exceptions = self._get_failed_exception_codes(results)
+        deactivated_ids = self.filter(
+            registration_id__in=deactivation_candidates
+        ).deactivate(
+            reason="firebase_error",
+            source="send_message",
+            metadata={"failed_exceptions": failed_exceptions},
+        )
         self._delete_inactive_devices_if_requested(deactivated_ids)
         return deactivated_ids
 
     def _delete_inactive_devices_if_requested(self, registration_ids: list[str]):
         if SETTINGS["DELETE_INACTIVE_DEVICES"]:
             self.filter(registration_id__in=registration_ids).delete()
+
+    @staticmethod
+    def _get_failed_exception_codes(
+        results: list[Union[messaging.SendResponse, messaging.ErrorInfo]],
+    ) -> list[str]:
+        failed_exceptions = []
+
+        for item in results:
+            if isinstance(item, messaging.SendResponse):
+                if item.exception and _validate_exception_for_deactivation(
+                    item.exception
+                ):
+                    failed_exceptions.append(item.exception.code)
+            elif _validate_exception_for_deactivation(item.reason):
+                failed_exceptions.append(item.reason)
+
+        return failed_exceptions
+
+    def _emit_device_deactivated_signal(
+        self,
+        *,
+        device_rows: list[DeviceDeactivationData],
+        reason: str,
+        source: str,
+        metadata: Optional[dict[str, Any]] = None,
+    ) -> None:
+        if not device_rows or not SETTINGS["EMIT_DEVICE_DEACTIVATED_SIGNAL"]:
+            return
+
+        device_deactivated.send(
+            sender=self.model,
+            registration_ids=[device_row.registration_id for device_row in device_rows],
+            device_ids=[device_row.device_id for device_row in device_rows],
+            user_ids=[
+                device_row.user_id
+                for device_row in device_rows
+                if device_row.user_id is not None
+            ],
+            reason=reason,
+            source=source,
+            metadata=metadata or {},
+        )
 
     @staticmethod
     def get_default_topic_response() -> FirebaseResponseDict:
