@@ -10,6 +10,7 @@ from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
 
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
 from fcm_django.signals import device_deactivated
+from fcm_django.types import DeviceDeactivationData
 
 # Set by Firebase. Adjust when they adjust; developers can override too if we don't
 # upgrade package in time via a monkeypatch.
@@ -159,12 +160,6 @@ class FirebaseResponseDict(NamedTuple):
             "deactivated_registration_ids": self.deactivated_registration_ids,
             "failed_exceptions": self.failed_exceptions,
         }
-
-
-class DeviceDeactivationData(NamedTuple):
-    registration_id: str
-    device_id: Any
-    user_id: Any
 
 
 class _MissingFormatDict(dict[str, Any]):
