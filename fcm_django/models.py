@@ -61,7 +61,6 @@ class _FCMDeviceManager(models.Manager):
 fcm_error_list = [
     messaging.UnregisteredError,
     messaging.SenderIdMismatchError,
-    InvalidArgumentError,
 ]
 
 fcm_error_list_str = [x.code for x in fcm_error_list]
@@ -73,6 +72,9 @@ def _validate_exception_for_deactivation(exc: Union[FirebaseError]) -> bool:
     exc_type = type(exc)
     if exc_type == str:
         return exc in fcm_error_list_str
+    # INVALID_ARGUMENT is broader than token invalidation. Only deactivate for the
+    # explicit invalid-registration cause; other causes such as invalid TTL or
+    # malformed payload parameters should leave the device active.
     return (
         exc_type == InvalidArgumentError and exc.cause == "Invalid registration"
     ) or (exc_type in fcm_error_list)

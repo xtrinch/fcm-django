@@ -204,6 +204,23 @@ class TestFCMDeviceSendMessage:
         # ensure that device deactivated
         assert not fcm_device.active
 
+    def test_firebase_invalid_argument_error_does_not_deactivate_device(
+        self,
+        fcm_device: FCMDevice,
+        message: Message,
+        mock_firebase_send: MagicMock,
+    ):
+        firebase_invalid_argument_error = InvalidArgumentError(
+            message="Error", cause="Invalid TTL"
+        )
+        mock_firebase_send.side_effect = firebase_invalid_argument_error
+
+        with pytest.raises(FirebaseError, match=str(firebase_invalid_argument_error)):
+            fcm_device.send_message(message)
+
+        fcm_device.refresh_from_db()
+        assert fcm_device.active
+
 
 class TestFCMDeviceSendTopicMessage:
     def assert_sent_successfully(
@@ -371,3 +388,24 @@ class TestFCMDeviceQuerySetSendBulkPersonalizedMessages:
         message = mock_firebase_send_each.call_args.args[0][0]
         assert message.notification.title == "Hello Alice"
         assert message.notification.body == "You have {count} updates"
+
+
+@pytest.mark.django_db
+def test_queryset_send_message_invalid_argument_error_does_not_deactivate_device(
+    fcm_device: FCMDevice,
+    message: Message,
+    mocker,
+    mock_firebase_send_each: MagicMock,
+):
+    failed_response = mocker.Mock(spec=SendResponse)
+    failed_response.exception = InvalidArgumentError(
+        message="Error", cause="Invalid TTL"
+    )
+    mock_firebase_send_each.return_value.responses = [failed_response]
+
+    result = FCMDevice.objects.filter(pk=fcm_device.pk).send_message(message)
+
+    assert result.failed_exceptions == [failed_response.exception]
+    assert result.deactivated_registration_ids == []
+    fcm_device.refresh_from_db()
+    assert fcm_device.active
