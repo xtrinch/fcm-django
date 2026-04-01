@@ -161,6 +161,12 @@ class FirebaseResponseDict(NamedTuple):
         }
 
 
+class DeviceDeactivationData(NamedTuple):
+    registration_id: str
+    device_id: Any
+    user_id: Any
+
+
 class _MissingFormatDict(dict[str, Any]):
     def __missing__(self, key: str) -> str:
         return f"{{{key}}}"
@@ -349,9 +355,10 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         metadata: Optional[dict[str, Any]] = None,
     ) -> list[str]:
         active_devices = self.filter(active=True)
-        device_rows = list(
-            active_devices.values_list("registration_id", "id", "user_id")
-        )
+        device_rows = [
+            DeviceDeactivationData(*row)
+            for row in active_devices.values_list("registration_id", "id", "user_id")
+        ]
         if not device_rows:
             return []
 
@@ -362,7 +369,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             source=source,
             metadata=metadata,
         )
-        return [registration_id for registration_id, _, _ in device_rows]
+        return [device_row.registration_id for device_row in device_rows]
 
     def deactivate_devices_with_error_results(
         self,
@@ -418,7 +425,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
     def _emit_device_deactivated_signal(
         self,
         *,
-        device_rows: list[tuple[str, Any, Any]],
+        device_rows: list[DeviceDeactivationData],
         reason: str,
         source: str,
         metadata: Optional[dict[str, Any]] = None,
@@ -428,9 +435,13 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 
         device_deactivated.send(
             sender=self.model,
-            registration_ids=[registration_id for registration_id, _, _ in device_rows],
-            device_ids=[device_id for _, device_id, _ in device_rows],
-            user_ids=[user_id for _, _, user_id in device_rows if user_id is not None],
+            registration_ids=[device_row.registration_id for device_row in device_rows],
+            device_ids=[device_row.device_id for device_row in device_rows],
+            user_ids=[
+                device_row.user_id
+                for device_row in device_rows
+                if device_row.user_id is not None
+            ],
             reason=reason,
             source=source,
             metadata=metadata or {},
