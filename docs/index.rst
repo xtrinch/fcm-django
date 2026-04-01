@@ -209,6 +209,37 @@ they are caught and dealt with in your application code:
 
 For more info, see https://firebase.google.com/docs/reference/admin/python/firebase_admin.messaging#firebase_admin.messaging.BatchResponse
 
+Inspecting batch send failures
+------------------------------
+
+``send_message()`` returns a ``FirebaseResponseDict`` wrapper around Firebase's
+``BatchResponse``. For batch sends, Firebase may return per-device failures in the
+response instead of raising an exception for the whole call.
+
+Useful fields on the returned object include:
+
+- ``response.success_count``
+- ``response.failure_count``
+- ``response.has_failures``
+- ``response.all_failed``
+- ``response.failed_registration_ids``
+- ``response.failed_exceptions``
+- ``response.summary``
+
+Example:
+
+.. code-block:: python
+
+    response = FCMDevice.objects.send_message(Message(...))
+
+    if response.has_failures:
+        print(response.failure_count)
+        print(response.failed_registration_ids)
+        print(response.failed_exceptions)
+
+This is especially useful for configuration-related failures such as APNS or
+credential issues, where devices may fail without being deactivated.
+
 Sending personalized messages in bulk
 -------------------------------------
 
