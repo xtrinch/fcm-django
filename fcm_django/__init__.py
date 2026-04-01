@@ -1,6 +1,6 @@
 __author__ = "xTrinch"
 __email__ = "mojca.rojko@gmail.com"
-__version__ = "3.0.0"
+__version__ = "3.1.0"
 
 
 class NotificationError(Exception):
