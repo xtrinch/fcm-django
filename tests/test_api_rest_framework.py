@@ -64,3 +64,20 @@ def test_drf_endpoint_add_device_with_existed_token_will_override_device_owner(
     assert response.status_code == 200
     fcm_device.refresh_from_db()
     assert fcm_device.user == user
+
+
+@pytest.mark.django_db
+def test_authorized_drf_endpoint_delete_device_with_explicit_as_view_route(
+    client, user, registration_id
+):
+    device = FCMDevice.objects.create(
+        registration_id=registration_id,
+        type=DeviceType.WEB,
+        user=user,
+    )
+    client.force_login(user)
+
+    response = client.delete(f"/drf-authorized/devices/{registration_id}")
+
+    assert response.status_code == 204
+    assert not FCMDevice.objects.filter(pk=device.pk).exists()

@@ -422,6 +422,12 @@ Routes can be added one of two ways:
     urlpatterns = [
         # Only allow creation of devices by authenticated users
         path('devices', FCMDeviceAuthorizedViewSet.as_view({'post': 'create'}), name='create_fcm_device'),
+        # Detail routes must include the lookup field used by the viewset
+        path(
+            'devices/<str:registration_id>',
+            FCMDeviceAuthorizedViewSet.as_view({'delete': 'destroy'}),
+            name='delete_fcm_device',
+        ),
         # ...
     ]
 
