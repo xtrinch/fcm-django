@@ -265,7 +265,11 @@ class DeviceAdmin(admin.ModelAdmin):
     enable.short_description = _("Enable selected devices")
 
     def disable(self, request, queryset):
-        queryset.update(active=False)
+        queryset.deactivate(
+            reason="manual_disable",
+            source="admin_action",
+            metadata={},
+        )
 
     disable.short_description = _("Disable selected devices")
 

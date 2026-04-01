@@ -9,6 +9,7 @@ from firebase_admin import messaging
 from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
 
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
+from fcm_django.signals import device_deactivated
 
 # Set by Firebase. Adjust when they adjust; developers can override too if we don't
 # upgrade package in time via a monkeypatch.
@@ -340,6 +341,29 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             ),
         )
 
+    def deactivate(
+        self,
+        *,
+        reason: str,
+        source: str,
+        metadata: Optional[dict[str, Any]] = None,
+    ) -> list[str]:
+        active_devices = self.filter(active=True)
+        device_rows = list(
+            active_devices.values_list("registration_id", "id", "user_id")
+        )
+        if not device_rows:
+            return []
+
+        active_devices.update(active=False)
+        self._emit_device_deactivated_signal(
+            device_rows=device_rows,
+            reason=reason,
+            source=source,
+            metadata=metadata,
+        )
+        return [registration_id for registration_id, _, _ in device_rows]
+
     def deactivate_devices_with_error_results(
         self,
         registration_ids: list[str],
@@ -359,13 +383,60 @@ class FCMDeviceQuerySet(models.query.QuerySet):
                 for x in results
                 if _validate_exception_for_deactivation(x.reason)
             ]
-        self.filter(registration_id__in=deactivated_ids).update(active=False)
+        deactivated_ids = self.filter(
+            registration_id__in=deactivated_ids
+        ).deactivate(
+            reason="firebase_error",
+            source="send_message",
+            metadata={
+                "failed_exceptions": [
+                    item.exception.code
+                    if isinstance(item, messaging.SendResponse) and item.exception
+                    else item.reason
+                    for item in results
+                    if (
+                        isinstance(item, messaging.SendResponse)
+                        and item.exception
+                        and _validate_exception_for_deactivation(item.exception)
+                    )
+                    or (
+                        not isinstance(item, messaging.SendResponse)
+                        and _validate_exception_for_deactivation(item.reason)
+                    )
+                ]
+            },
+        )
         self._delete_inactive_devices_if_requested(deactivated_ids)
         return deactivated_ids
 
     def _delete_inactive_devices_if_requested(self, registration_ids: list[str]):
         if SETTINGS["DELETE_INACTIVE_DEVICES"]:
             self.filter(registration_id__in=registration_ids).delete()
+
+    def _emit_device_deactivated_signal(
+        self,
+        *,
+        device_rows: list[tuple[str, Any, Any]],
+        reason: str,
+        source: str,
+        metadata: Optional[dict[str, Any]] = None,
+    ) -> None:
+        if not device_rows or not SETTINGS["EMIT_DEVICE_DEACTIVATED_SIGNAL"]:
+            return
+
+        device_deactivated.send(
+            sender=self.model,
+            registration_ids=[registration_id for registration_id, _, _ in device_rows],
+            device_ids=[device_id for _, device_id, _ in device_rows],
+            user_ids=[
+                user_id
+                for _, _, user_id in device_rows
+                if user_id is not None
+            ],
+            reason=reason,
+            source=source,
+            metadata=metadata or {},
+        )
 
     @staticmethod
     def get_default_topic_response() -> FirebaseResponseDict:

@@ -128,6 +128,9 @@ Edit your settings.py file:
          # are deleted upon receiving error response from FCM
          # default: False
         "DELETE_INACTIVE_DEVICES": True/False,
+         # emit the ``device_deactivated`` signal when this library deactivates devices
+         # default: False
+        "EMIT_DEVICE_DEACTIVATED_SIGNAL": True/False,
     }
 
 Native Django migrations are in use. ``manage.py migrate`` will install and migrate all models.
@@ -239,6 +242,69 @@ Example:
 
 This is especially useful for configuration-related failures such as APNS or
 credential issues, where devices may fail without being deactivated.
+
+Device deactivation signal
+--------------------------
+
+If you want an explicit hook when ``fcm-django`` deactivates devices, enable the
+setting below:
+
+.. code-block:: python
+
+    FCM_DJANGO_SETTINGS = {
+        "EMIT_DEVICE_DEACTIVATED_SIGNAL": True,
+    }
+
+Then subscribe to ``device_deactivated``:
+
+.. code-block:: python
+
+    from fcm_django.signals import device_deactivated
+
+    def on_device_deactivated(
+        sender,
+        registration_ids,
+        device_ids,
+        user_ids,
+        reason,
+        source,
+        metadata,
+        **kwargs,
+    ):
+        print(registration_ids)
+        print(device_ids)
+        print(user_ids)
+        print(reason)
+        print(source)
+        print(metadata)
+
+    device_deactivated.connect(on_device_deactivated)
+
+The signal is disabled by default and is emitted for library-managed device
+deactivations. Its payload includes:
+
+- ``registration_ids``: registration tokens that were deactivated
+- ``device_ids``: matching device primary keys
+- ``user_ids``: matching user primary keys, excluding devices without a user
+- ``reason``: the deactivation reason
+- ``source``: the library call site that triggered it
+- ``metadata``: extra context such as ``failed_exceptions``
+
+Current ``reason`` values include:
+
+- ``firebase_error``
+- ``one_device_per_user``
+- ``duplicate_registration_id``
+- ``manual_disable``
+
+Current ``source`` values include:
+
+- ``send_message``
+- ``perform_create``
+- ``perform_update``
+- ``serializer_create``
+- ``serializer_update``
+- ``admin_action``
 
 Sending personalized messages in bulk
 -------------------------------------

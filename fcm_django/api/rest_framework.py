@@ -60,7 +60,14 @@ class UniqueRegistrationSerializerMixin(Serializer):
                         registration_id=registration_id
                     ).exclude(id=primary_key)
                     if attrs.get("active", False):
-                        devices.filter(~Q(user=user)).update(active=False)
+                        devices.filter(~Q(user=user)).deactivate(
+                            reason="duplicate_registration_id",
+                            source="serializer_update",
+                            metadata={
+                                "request_method": request_method,
+                                "target_user_id": user.id,
+                            },
+                        )
                     devices = devices.filter(user=user)
                 else:
                     devices = Device.objects.filter(
@@ -69,7 +76,14 @@ class UniqueRegistrationSerializerMixin(Serializer):
         elif request_method == "create":
             if user is not None and user.is_authenticated:
                 devices = Device.objects.filter(registration_id=registration_id)
-                devices.filter(~Q(user=user)).update(active=False)
+                devices.filter(~Q(user=user)).deactivate(
+                    reason="duplicate_registration_id",
+                    source="serializer_create",
+                    metadata={
+                        "request_method": request_method,
+                        "target_user_id": user.id,
+                    },
+                )
                 devices = devices.filter(user=user, active=True)
             else:
                 devices = Device.objects.filter(registration_id=registration_id)
@@ -130,7 +144,11 @@ class DeviceViewSetMixin:
             if SETTINGS["ONE_DEVICE_PER_USER"] and self.request.data.get(
                 "active", True
             ):
-                FCMDevice.objects.filter(user=self.request.user).update(active=False)
+                FCMDevice.objects.filter(user=self.request.user).deactivate(
+                    reason="one_device_per_user",
+                    source="perform_create",
+                    metadata={"user_id": self.request.user.id},
+                )
             return serializer.save(user=self.request.user)
         return serializer.save()
 
@@ -139,7 +157,11 @@ class DeviceViewSetMixin:
             if SETTINGS["ONE_DEVICE_PER_USER"] and self.request.data.get(
                 "active", False
             ):
-                FCMDevice.objects.filter(user=self.request.user).update(active=False)
+                FCMDevice.objects.filter(user=self.request.user).deactivate(
+                    reason="one_device_per_user",
+                    source="perform_update",
+                    metadata={"user_id": self.request.user.id},
+                )
 
             return serializer.save(user=self.request.user)
         return serializer.save()
