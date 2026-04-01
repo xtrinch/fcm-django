@@ -189,6 +189,7 @@ section for more information.
     device = FCMDevice.objects.all().first()
     # send_message parameters include: message, dry_run, app
     device.send_message(Message(data={...}))
+    device.send_message(Message(data={...}), dry_run=True)
 
 Sending messages in bulk
 ------------------------
@@ -201,9 +202,15 @@ Sending messages in bulk
     # You can still use .filter() or any methods that return QuerySet (from the chain)
     devices = FCMDevice.objects.all()
     devices.send_message(Message(data={...}))
+    devices.send_message(Message(data={...}), dry_run=True)
     # Or (send_message parameters include: messages, dry_run, app)
     FCMDevice.objects.send_message(Message(...))
-    
+
+Use ``dry_run=True`` to validate the payload with Firebase without actually
+delivering a notification. This is useful during development and integration
+testing when you want to verify message construction without sending a real
+push notification to devices.
+
 Sending messages raises all the errors that ``firebase-admin`` raises, so make sure
 they are caught and dealt with in your application code:
 
