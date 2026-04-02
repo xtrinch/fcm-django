@@ -17,7 +17,6 @@ from fcm_django.models import _get_fcm_error_list
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
 from fcm_django.types import FirebaseResponseDict
 
-
 User = apps.get_model(*SETTINGS["USER_MODEL"].split("."))
 
 FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
@@ -60,11 +59,11 @@ class DeviceAdmin(admin.ModelAdmin):
     def _send_deactivated_message(
         self,
         request,
-        response: Union[
-            FirebaseResponseDict,
-            list[FirebaseResponseDict],
-            list[tuple[SendResponse, str]],
-        ],
+        response: (
+            FirebaseResponseDict
+            | list[FirebaseResponseDict]
+            | list[tuple[SendResponse, str]]
+        ),
         total_failure: int,
         is_topic: bool,
     ):
@@ -197,7 +196,7 @@ class DeviceAdmin(admin.ModelAdmin):
         single_responses = []
 
         for device in queryset:
-            device: "FCMDevice"
+            device: FCMDevice
             if bulk:
                 response: FirebaseResponseDict = queryset.handle_topic_subscription(
                     should_subscribe,

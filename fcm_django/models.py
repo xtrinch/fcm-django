@@ -84,7 +84,7 @@ def _get_fcm_error_list_str():
     return [x.code for x in _get_fcm_error_list()]
 
 
-def _validate_exception_for_deactivation(exc: Union[FirebaseError]) -> bool:
+def _validate_exception_for_deactivation(exc: FirebaseError) -> bool:
     InvalidArgumentError = invalid_argument_error_type()
 
     if not exc:
@@ -123,7 +123,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 
     @staticmethod
     def _render_message_template(
-        template: str, template_data: Optional[dict[str, Any]] = None
+        template: str, template_data: dict[str, Any] | None = None
     ) -> str:
         if not template_data:
             return template
@@ -312,11 +312,11 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         self,
         title_template: str,
         body_template: str,
-        message_data: Optional[dict[str, dict[str, Any]]] = None,
-        data_fields: Optional[dict[str, Any]] = None,
+        message_data: dict[str, dict[str, Any]] | None = None,
+        data_fields: dict[str, Any] | None = None,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Sequence[str] = None,
-        app: Optional[firebase_admin.App] = None,
+        app: firebase_admin.App | None = None,
         **more_send_message_kwargs,
     ) -> FirebaseResponseDict:
         """
@@ -414,7 +414,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         *,
         reason: str,
         source: str,
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> list[str]:
         active_devices = self.filter(active=True)
         device_rows = [
@@ -462,7 +462,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
     def deactivate_devices_with_error_results(
         self,
         registration_ids: list[str],
-        results: list[Union[messaging.SendResponse, messaging.ErrorInfo]],
+        results: list[messaging.SendResponse | messaging.ErrorInfo],
     ) -> list[str]:
         deactivation_candidates = self._get_deactivation_candidates(
             registration_ids, results
@@ -511,7 +511,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 
     @staticmethod
     def _get_failed_exception_codes(
-        results: list[Union[messaging.SendResponse, messaging.ErrorInfo]],
+        results: list[messaging.SendResponse | messaging.ErrorInfo],
     ) -> list[str]:
         messaging = firebase_messaging()
 
@@ -534,7 +534,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         device_rows: list[DeviceDeactivationData],
         reason: str,
         source: str,
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         if not device_rows or not SETTINGS["EMIT_DEVICE_DEACTIVATED_SIGNAL"]:
             return
@@ -643,7 +643,7 @@ class AbstractFCMDevice(Device):
         unique=not SETTINGS["MYSQL_COMPATIBILITY"],
     )
     type = models.CharField(choices=DeviceType.choices, max_length=10)
-    objects: "FCMDeviceQuerySet" = FCMDeviceManager()
+    objects: FCMDeviceQuerySet = FCMDeviceManager()
 
     class Meta:
         abstract = True
