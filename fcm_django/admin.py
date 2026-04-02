@@ -12,11 +12,10 @@ from django.contrib import admin, messages
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
 
+from fcm_django.firebase import firebase_error_type, firebase_messaging
 from fcm_django.models import _get_fcm_error_list
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
 from fcm_django.types import FirebaseResponseDict
-
-# firebase_admin imports moved to where they're used to avoid eager loading
 
 
 User = apps.get_model(*SETTINGS["USER_MODEL"].split("."))
@@ -93,7 +92,7 @@ class DeviceAdmin(admin.ModelAdmin):
         )
 
         def _get_to_str_obj(obj):
-            from firebase_admin import messaging
+            messaging = firebase_messaging()
 
             if isinstance(obj, messaging.SendResponse):
                 return obj.exception
@@ -102,7 +101,7 @@ class DeviceAdmin(admin.ModelAdmin):
             return obj
 
         def _print_responses(_response):
-            from firebase_admin import messaging
+            messaging = firebase_messaging()
 
             __error_list = _get_fcm_error_list() + [messaging.ErrorInfo]
             # TODO Aggregate error response text. Each firebase error
@@ -142,10 +141,8 @@ class DeviceAdmin(admin.ModelAdmin):
         total_failure = 0
         single_responses: list[tuple["SendResponse", str]] = []
 
-        from firebase_admin import messaging
-        from firebase_admin.exceptions import FirebaseError
-
         try:
+            messaging = firebase_messaging()
             for device in queryset:
                 device: "FCMDevice"
                 if bulk:
@@ -172,9 +169,11 @@ class DeviceAdmin(admin.ModelAdmin):
                     single_responses.append((response, device.registration_id))
                     if type(response) != messaging.SendResponse:
                         total_failure += 1
-        except FirebaseError as exc:
-            self.message_user(request, str(exc), level=messages.ERROR)
-            return
+        except Exception as exc:
+            if isinstance(exc, firebase_error_type()):
+                self.message_user(request, str(exc), level=messages.ERROR)
+                return
+            raise
 
         self._send_deactivated_message(request, single_responses, total_failure, False)
 
@@ -251,10 +250,8 @@ class DeviceAdmin(admin.ModelAdmin):
     bulk_unsubscribe_to_topic.short_description = _("Unsubscribe to test topic in bulk")
 
     def handle_send_topic_message(self, request, queryset):
-        from firebase_admin import messaging
-        from firebase_admin.exceptions import FirebaseError
-
         try:
+            messaging = firebase_messaging()
             FCMDevice.send_topic_message(
                 messaging.Message(
                     notification=messaging.Notification(
@@ -263,8 +260,11 @@ class DeviceAdmin(admin.ModelAdmin):
                 ),
                 "test-topic",
             )
-        except FirebaseError as exc:
-            self.message_user(request, str(exc), level=messages.ERROR)
+        except Exception as exc:
+            if isinstance(exc, firebase_error_type()):
+                self.message_user(request, str(exc), level=messages.ERROR)
+                return
+            raise
 
     def send_topic_message(self, request, queryset):
         self.handle_send_topic_message(request, queryset)
