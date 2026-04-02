@@ -63,7 +63,7 @@ class DeviceAdmin(admin.ModelAdmin):
         response: Union[
             FirebaseResponseDict,
             list[FirebaseResponseDict],
-            list[tuple["SendResponse", str]],
+            list[tuple[SendResponse, str]],
         ],
         total_failure: int,
         is_topic: bool,
@@ -139,12 +139,11 @@ class DeviceAdmin(admin.ModelAdmin):
         send_bulk_message methods.
         """
         total_failure = 0
-        single_responses: list[tuple["SendResponse", str]] = []
-
+        single_responses: list[tuple[SendResponse, str]] = []
         try:
             messaging = firebase_messaging()
             for device in queryset:
-                device: "FCMDevice"
+                device: FCMDevice
                 if bulk:
                     response = queryset.send_message(
                         messaging.Message(
@@ -200,7 +199,7 @@ class DeviceAdmin(admin.ModelAdmin):
         for device in queryset:
             device: "FCMDevice"
             if bulk:
-                response: "FirebaseResponseDict" = queryset.handle_topic_subscription(
+                response: FirebaseResponseDict = queryset.handle_topic_subscription(
                     should_subscribe,
                     "test-topic",
                 )

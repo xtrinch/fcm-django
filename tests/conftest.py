@@ -13,8 +13,6 @@ from fcm_django.models import DeviceType
 
 FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
 
-# firebase_admin imports moved to where they're used to avoid eager loading
-
 
 @pytest.fixture
 def username() -> str:
