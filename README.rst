@@ -555,7 +555,7 @@ If you don't want default table appears in the DB then you should remove ``fcm_d
 
 After setup your own ``Model`` don't forget to create ``migrations`` for your app and call ``migrate`` command.
 
-After removing ``"fcm_django"`` out of ``INSTALLED_APPS``. You will need to re-register the Device in order to see it in the admin panel. 
+After removing ``"fcm_django"`` out of ``INSTALLED_APPS``. You will need to re-register the Device in order to see it in the admin panel.
 This can be accomplished as follows at ``your_app/admin.py``:
 
 .. code-block:: python
@@ -575,17 +575,17 @@ If you choose to move forward with swapped models then:
 1. On existed project you have to keep in mind there are required manual work to move data from one table to anther.
 2. If there's any tables with FK to swapped model then you have to deal with them on your own.
 
-Note: This functionality based on `Swapper <https://pypi.org/project/swapper/>`_ that based on functionality 
+Note: This functionality based on `Swapper <https://pypi.org/project/swapper/>`_ that based on functionality
 that allow to use a `custom User model <https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#substituting-a-custom-user-model>`_.
-So this functionality have the same limitations. 
-The most is important limitation it is that is difficult to start out with a default (non-swapped) model 
+So this functionality have the same limitations.
+The most is important limitation it is that is difficult to start out with a default (non-swapped) model
 and then later to switch to a swapped implementation without doing some migration hacking.
 
 Python 3 support
 ----------------
 - ``fcm-django`` is fully compatible with Python 3.9+
 - for Python 3.6, use ``fcm-django < 2.0.0`` , because `firebase-admin with version 6 drop support of Python 3.6 <https://firebase.google.com/support/release-notes/admin/python#version_600_-_06_october_2022>`_
-- for Python 3.7 + 3.8, use ``fcm-django <= 2.2.1`` 
+- for Python 3.7 + 3.8, use ``fcm-django <= 2.2.1``
 
 Django version compatibility
 ----------------------------
@@ -609,7 +609,7 @@ Contributing
 
 To setup the development environment:
   - create virtual environment with `python3 -m venv env`
-  - activate virtual environment with `source env/bin/activate` or `.\env\Scripts\activate.ps1` for Windows' Powershell  
+  - activate virtual environment with `source env/bin/activate` or `.\env\Scripts\activate.ps1` for Windows' Powershell
   - run ``pip install -r requirements_dev.txt``
 
 To manually run the pre-commit hook, run `pre-commit run --all-files`.
@@ -619,12 +619,12 @@ Because there's possibility to use swapped models therefore tests contains two c
 1. with default settings and non swapped models ``settings/default.py``
 2. and with overwritten settings only that required by swapper - ``settings/swap.py``
 
-To run tests locally you could use ``pytest``, and if you need to check migrations on different DB then you have to specify environment variable ``DATABASE_URL`` ie 
+To run tests locally you could use ``pytest``, and if you need to check migrations on different DB then you have to specify environment variable ``DATABASE_URL`` ie
 
 .. code-block:: console
 
     export DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/postgres
-    export DJANGO_SETTINGS_MODULE=tests.settings.default 
+    export DJANGO_SETTINGS_MODULE=tests.settings.default
     # or export DJANGO_SETTINGS_MODULE=tests.settings.swap
     pytest
 
@@ -632,5 +632,5 @@ Packaging for PyPi
 
 - run `source env/bin/activate`
 - run `rm -rf dist/`
-- run `python3 setup.py sdist`
+- run `python3 -m build`
 - run `twine upload dist/*`
