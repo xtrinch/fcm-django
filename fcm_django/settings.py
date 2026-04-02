@@ -1,4 +1,5 @@
 from collections.abc import Mapping
+from copy import deepcopy
 from typing import Any
 
 from django.conf import settings
@@ -22,14 +23,22 @@ DEFAULT_SETTINGS = {
 
 
 class FCMSettings(Mapping[str, Any]):
+    def __init__(self) -> None:
+        self._resolved: dict[str, Any] | None = None
+        self._settings_source: object | None = None
+
     def _resolve(self) -> dict[str, Any]:
-        user_settings = getattr(settings, "FCM_DJANGO_SETTINGS", {}) or {}
-        resolved = dict(DEFAULT_SETTINGS)
-        resolved["USER_MODEL"] = settings.AUTH_USER_MODEL
-        resolved.update(user_settings)
-        if resolved.get("APP_VERBOSE_NAME") is None:
-            resolved["APP_VERBOSE_NAME"] = DEFAULT_SETTINGS["APP_VERBOSE_NAME"]
-        return resolved
+        settings_source = settings._wrapped
+        if self._resolved is None or self._settings_source is not settings_source:
+            user_settings = getattr(settings, "FCM_DJANGO_SETTINGS", {}) or {}
+            resolved = deepcopy(DEFAULT_SETTINGS)
+            resolved["USER_MODEL"] = settings.AUTH_USER_MODEL
+            resolved.update(user_settings)
+            if resolved.get("APP_VERBOSE_NAME") is None:
+                resolved["APP_VERBOSE_NAME"] = DEFAULT_SETTINGS["APP_VERBOSE_NAME"]
+            self._resolved = resolved
+            self._settings_source = settings_source
+        return self._resolved
 
     def __getitem__(self, key: str) -> Any:
         return self._resolve()[key]

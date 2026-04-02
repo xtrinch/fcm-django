@@ -34,3 +34,17 @@ def test_runtime_settings_follow_override_settings():
         assert FCM_DJANGO_SETTINGS["DEFAULT_FIREBASE_APP"] == "test-app"
         assert FCM_DJANGO_SETTINGS["DELETE_INACTIVE_DEVICES"] is True
         assert FCM_DJANGO_SETTINGS["EMIT_DEVICE_DEACTIVATED_SIGNAL"] is True
+
+    assert FCM_DJANGO_SETTINGS["DEFAULT_FIREBASE_APP"] is None
+    assert FCM_DJANGO_SETTINGS["DELETE_INACTIVE_DEVICES"] is False
+    assert FCM_DJANGO_SETTINGS["EMIT_DEVICE_DEACTIVATED_SIGNAL"] is False
+
+
+def test_runtime_settings_do_not_share_nested_defaults():
+    from fcm_django.settings import DEFAULT_SETTINGS, FCM_DJANGO_SETTINGS
+
+    with override_settings(FCM_DJANGO_SETTINGS={}):
+        errors = FCM_DJANGO_SETTINGS["ERRORS"]
+        errors["temporary"] = "TemporaryError"
+
+    assert "temporary" not in DEFAULT_SETTINGS["ERRORS"]
