@@ -3,6 +3,7 @@ from copy import deepcopy
 from typing import Any
 
 from django.conf import settings
+from django.utils.functional import LazyObject, empty
 from django.utils.translation import gettext_lazy as _
 
 DEFAULT_SETTINGS = {
@@ -22,10 +23,11 @@ DEFAULT_SETTINGS = {
 }
 
 
-class FCMSettings(Mapping[str, Any]):
+class FCMSettings(LazyObject, Mapping[str, Any]):
     def __init__(self) -> None:
-        self._resolved: dict[str, Any] | None = None
-        self._settings_source: object | None = None
+        super().__init__()
+        self.__dict__["_resolved"] = None
+        self.__dict__["_settings_source"] = None
 
     def _resolve(self) -> dict[str, Any]:
         settings_source = settings._wrapped
@@ -36,21 +38,29 @@ class FCMSettings(Mapping[str, Any]):
             resolved.update(user_settings)
             if resolved.get("APP_VERBOSE_NAME") is None:
                 resolved["APP_VERBOSE_NAME"] = DEFAULT_SETTINGS["APP_VERBOSE_NAME"]
-            self._resolved = resolved
-            self._settings_source = settings_source
+            self.__dict__["_resolved"] = resolved
+            self.__dict__["_settings_source"] = settings_source
         return self._resolved
 
+    def _setup(self) -> None:
+        self._wrapped = self._resolve()
+
+    def _ensure_current(self) -> dict[str, Any]:
+        if self._wrapped is empty or self._settings_source is not settings._wrapped:
+            self._wrapped = self._resolve()
+        return self._wrapped
+
     def __getitem__(self, key: str) -> Any:
-        return self._resolve()[key]
+        return self._ensure_current()[key]
 
     def __iter__(self):
-        return iter(self._resolve())
+        return iter(self._ensure_current())
 
     def __len__(self) -> int:
-        return len(self._resolve())
+        return len(self._ensure_current())
 
     def get(self, key: str, default: Any = None) -> Any:
-        return self._resolve().get(key, default)
+        return self._ensure_current().get(key, default)
 
 
 FCM_DJANGO_SETTINGS = FCMSettings()
