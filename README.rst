@@ -125,7 +125,7 @@ Edit your settings.py file:
          # a callable that initializes and returns a firebase_admin.App
          # called lazily on first FCM operation; result is cached
          # default: None
-        "INITIALIZE_APP_CALLABLE": None,
+        "FIREBASE_APP_INITIALIZER": None,
          # default: _('FCM Django')
         "APP_VERBOSE_NAME": "[string for AppConfig's verbose_name]",
          # true if you want to have only one active device per registered user at a time
@@ -478,7 +478,7 @@ Lazy Firebase app initialization
 --------------------------------
 
 If you need to defer Firebase initialization until the first FCM operation (e.g., when
-credentials aren't available at import time), use the ``INITIALIZE_APP_CALLABLE`` setting
+credentials aren't available at import time), use the ``FIREBASE_APP_INITIALIZER`` setting
 instead of calling ``initialize_app()`` at the top of your settings file.
 
 In your ``settings.py``:
@@ -494,7 +494,7 @@ In your ``settings.py``:
         return initialize_app(cred)
 
     FCM_DJANGO_SETTINGS = {
-        "INITIALIZE_APP_CALLABLE": initialize_firebase,
+        "FIREBASE_APP_INITIALIZER": initialize_firebase,
         # [...] your other settings
     }
 
@@ -529,7 +529,7 @@ This also works with custom credentials classes:
         return initialize_app(custom_credentials, name='messaging')
 
     FCM_DJANGO_SETTINGS = {
-        "INITIALIZE_APP_CALLABLE": initialize_firebase,
+        "FIREBASE_APP_INITIALIZER": initialize_firebase,
         # [...] your other settings
     }
 
@@ -539,7 +539,7 @@ Your callable must either:
 - Call ``initialize_app()`` (the default app will be retrieved automatically)
 
 The returned app is cached and used as the default for all subsequent fcm-django operations.
-Because of this, you should use either ``DEFAULT_FIREBASE_APP`` or ``INITIALIZE_APP_CALLABLE``,
+Because of this, you should use either ``DEFAULT_FIREBASE_APP`` or ``FIREBASE_APP_INITIALIZER``,
 but not both. If both are set, ``DEFAULT_FIREBASE_APP`` takes priority and the callable is
 never invoked.
 

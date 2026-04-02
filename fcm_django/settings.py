@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 DEFAULT_SETTINGS = {
     "DEFAULT_FIREBASE_APP": None,
-    "INITIALIZE_APP_CALLABLE": None,
+    "FIREBASE_APP_INITIALIZER": None,
     "APP_VERBOSE_NAME": _("FCM Django"),
     "ONE_DEVICE_PER_USER": False,
     "DELETE_INACTIVE_DEVICES": False,

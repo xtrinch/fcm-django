@@ -49,7 +49,7 @@ def get_app(app: "firebase_admin.App" = None):
     except ValueError:
         pass
 
-    init_callable = SETTINGS.get("INITIALIZE_APP_CALLABLE")
+    init_callable = SETTINGS.get("FIREBASE_APP_INITIALIZER")
     if not init_callable:
         return None
 
@@ -63,5 +63,5 @@ def get_app(app: "firebase_admin.App" = None):
         return _cached_app
     except ValueError:
         raise ValueError(
-            "INITIALIZE_APP_CALLABLE must return an App or call initialize_app()"
+            "FIREBASE_APP_INITIALIZER must return an App or call initialize_app()"
         )
