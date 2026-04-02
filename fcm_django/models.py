@@ -3,8 +3,8 @@ from copy import copy
 from typing import Any, Optional, Union
 
 import swapper
-from django.utils import timezone
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from firebase_admin import messaging
 from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
