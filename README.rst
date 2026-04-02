@@ -12,6 +12,7 @@ Supports Firebase Cloud Messaging HTTP v1 API. If you're looking for the legacy 
 
 FCMDevice model fields
  - *registration_id* (required - is FCM token)
+ - *token_updated_at* (set when the current token is first stored and whenever that token value changes)
  - *name* (optional)
  - *active* (default: true)
  - *user* (optional)
@@ -134,6 +135,10 @@ Edit your settings.py file:
     }
 
 Native Django migrations are in use. ``manage.py migrate`` will install and migrate all models.
+
+``token_updated_at`` tracks when the current ``registration_id`` became active for a device row.
+It is initialized on create and updated only when the stored registration token changes. It is
+not a generic "last activity" or "last seen" timestamp.
 
 Messages
 --------

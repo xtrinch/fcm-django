@@ -18,12 +18,13 @@ class DeviceSerializerMixin(ModelSerializer):
             "id",
             "name",
             "registration_id",
+            "token_updated_at",
             "device_id",
             "active",
             "date_created",
             "type",
         )
-        read_only_fields = ("date_created",)
+        read_only_fields = ("date_created", "token_updated_at")
 
         extra_kwargs = {"active": {"default": True}}
 
