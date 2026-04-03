@@ -158,7 +158,7 @@ Sending messages in bulk
     devices = FCMDevice.objects.all()
     devices.send_message(Message(data={...}))
     devices.send_message(Message(data={...}), dry_run=True)
-    # Or (send_message parameters include: messages, dry_run, app)
+    # Or (send_message parameters include: message, dry_run, app)
     FCMDevice.objects.send_message(Message(...))
 
 Use ``dry_run=True`` to validate the payload with Firebase without actually

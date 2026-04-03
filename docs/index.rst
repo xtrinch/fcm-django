@@ -159,7 +159,7 @@ Sending messages in bulk
     # You can still use .filter() or any methods that return QuerySet (from the chain)
     devices = FCMDevice.objects.all()
     devices.send_message(Message(data={...}))
-    # Or (send_message parameters include: messages, dry_run, app)
+    # Or (send_message parameters include: message, dry_run, app)
     FCMDevice.objects.send_message(Message(...))
 
     Sending messages raises all the errors that ``firebase-admin`` raises, so make sure
