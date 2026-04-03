@@ -510,13 +510,6 @@ Compatible with Django versions 4.2+.
 For Django version 2.2, use version ``fcm-django < 1.0.13``.
 For lower django versions, use version ``fcm-django < 1.0.0``.
 
-Acknowledgements
-----------------
-Library relies on firebase-admin-sdk for sending notifications, for more info about all the possible fields, see:
-https://github.com/firebase/firebase-admin-python
-
-Migration from v0 to v1 was done by `Andrew-Chen-Wang <https://github.com/Andrew-Chen-Wang>`_
-
 Need help, have any questions, suggestions?
 -------------------------------------------
 Submit an issue/PR on this project. Please do not send me emails, as then the community has no chance to see your questions / provide answers.
@@ -551,3 +544,10 @@ Packaging for PyPi
 - run `rm -rf dist/`
 - run `python3 -m build`
 - run `twine upload dist/*`
+
+Acknowledgements
+----------------
+Library relies on firebase-admin-sdk for sending notifications, for more info about all the possible fields, see:
+https://github.com/firebase/firebase-admin-python
+
+Migration from v0 to v1 was done by `Andrew-Chen-Wang <https://github.com/Andrew-Chen-Wang>`_
