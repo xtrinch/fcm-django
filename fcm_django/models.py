@@ -29,6 +29,7 @@ from fcm_django.types import DeviceDeactivationData, FirebaseResponseDict
 MAX_MESSAGES_PER_BATCH = 500
 MAX_DEVICES_PER_SUBSCRIBE_REQUEST = 1000
 
+
 class Device(models.Model):
     id = models.AutoField(
         verbose_name="ID",
@@ -134,9 +135,9 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         registration_ids: list[str],
         title_template: str,
         body_template: str,
-        message_data: Optional[dict[str, dict[str, Any]]] = None,
-        data_fields: Optional[dict[str, Any]] = None,
-    ) -> list["messaging.Message"]:
+        message_data: dict[str, dict[str, Any]] | None = None,
+        data_fields: dict[str, Any] | None = None,
+    ) -> list[messaging.Message]:
         from firebase_admin import messaging
 
         messages = []
@@ -159,7 +160,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
     @staticmethod
     def _get_deactivation_candidates(
         registration_ids: list[str],
-        results: list[Union["messaging.SendResponse", "messaging.ErrorInfo"]],
+        results: list[messaging.SendResponse | messaging.ErrorInfo],
     ) -> list[str]:
         if not results:
             return []
@@ -275,10 +276,10 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 
     async def asend_message(
         self,
-        message: "messaging.Message",
+        message: messaging.Message,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Sequence[str] = None,
-        app: Optional["firebase_admin.App"] = None,
+        app: firebase_admin.App | None = None,
         **more_send_message_kwargs,
     ) -> FirebaseResponseDict:
         registration_ids = await self.aget_registration_ids(
@@ -374,11 +375,11 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         self,
         title_template: str,
         body_template: str,
-        message_data: Optional[dict[str, dict[str, Any]]] = None,
-        data_fields: Optional[dict[str, Any]] = None,
+        message_data: dict[str, dict[str, Any]] | None = None,
+        data_fields: dict[str, Any] | None = None,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Sequence[str] = None,
-        app: Optional["firebase_admin.App"] = None,
+        app: firebase_admin.App | None = None,
         **more_send_message_kwargs,
     ) -> FirebaseResponseDict:
         registration_ids = await self.aget_registration_ids(
@@ -438,7 +439,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         *,
         reason: str,
         source: str,
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> list[str]:
         active_devices = self.filter(active=True)
         device_rows = [
@@ -483,7 +484,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
     async def adeactivate_devices_with_error_results(
         self,
         registration_ids: list[str],
-        results: list[Union["messaging.SendResponse", "messaging.ErrorInfo"]],
+        results: list[messaging.SendResponse | messaging.ErrorInfo],
     ) -> list[str]:
         deactivation_candidates = self._get_deactivation_candidates(
             registration_ids, results

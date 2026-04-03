@@ -110,11 +110,11 @@ class TestFCMDeviceSendMessage:
         self,
         result: Any,
         fcm_device: FCMDevice,
-        message: "Message",
+        message: Message,
         mock_firebase_send: MagicMock,
         message_id: str,
         app: Any = None,
-        send_message_kwargs: Optional[dict] = None,
+        send_message_kwargs: dict | None = None,
     ):
         send_message_kwargs = send_message_kwargs or {}
 
@@ -135,7 +135,7 @@ class TestFCMDeviceSendMessage:
     def test_ok(
         self,
         fcm_device: FCMDevice,
-        message: "Message",
+        message: Message,
         mock_firebase_send: MagicMock,
         firebase_message_id_send: str,
     ):
@@ -151,7 +151,7 @@ class TestFCMDeviceSendMessage:
     def test_custom_params(
         self,
         fcm_device: FCMDevice,
-        message: "Message",
+        message: Message,
         mock_firebase_send: MagicMock,
         firebase_message_id_send: str,
     ):
@@ -200,9 +200,9 @@ class TestFCMDeviceSendMessage:
     def test_firebase_error(
         self,
         fcm_device: FCMDevice,
-        message: "Message",
+        message: Message,
         mock_firebase_send: MagicMock,
-        firebase_error: "FirebaseError",
+        firebase_error: FirebaseError,
     ):
         """
         Ensure when happened unknown firebase error device is still active and raised the FirebaseError
@@ -221,7 +221,7 @@ class TestFCMDeviceSendMessage:
     def test_firebase_invalid_registration_error(
         self,
         fcm_device: FCMDevice,
-        message: "Message",
+        message: Message,
         mock_firebase_send: MagicMock,
     ):
         """
@@ -265,12 +265,12 @@ class TestFCMDeviceSendTopicMessage:
     def assert_sent_successfully(
         self,
         result: Any,
-        message: "Message",
+        message: Message,
         topic: str,
         mock_firebase_send: MagicMock,
         message_id: str,
         app: Any = None,
-        send_message_kwargs: Optional[dict] = None,
+        send_message_kwargs: dict | None = None,
     ):
         send_message_kwargs = send_message_kwargs or {}
 
@@ -289,7 +289,7 @@ class TestFCMDeviceSendTopicMessage:
 
     def test_ok(
         self,
-        message: "Message",
+        message: Message,
         mock_firebase_send: MagicMock,
         firebase_message_id_send: str,
     ):
@@ -306,7 +306,7 @@ class TestFCMDeviceSendTopicMessage:
 
     def test_custom_params(
         self,
-        message: "Message",
+        message: Message,
         mock_firebase_send: MagicMock,
         firebase_message_id_send: str,
     ):
@@ -334,9 +334,9 @@ class TestFCMDeviceSendTopicMessage:
 
     def test_firebase_error(
         self,
-        message: "Message",
+        message: Message,
         mock_firebase_send: MagicMock,
-        firebase_error: "FirebaseError",
+        firebase_error: FirebaseError,
     ):
         """
         Ensure we raise an error in case firebase_admin.messaging.send throws one

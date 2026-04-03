@@ -51,6 +51,7 @@ def test_runtime_settings_do_not_share_nested_defaults():
 
     assert "temporary" not in DEFAULT_SETTINGS["ERRORS"]
 
+
 def test_importing_models_and_admin_does_not_eager_load_firebase_admin():
     env = {
         **os.environ,
