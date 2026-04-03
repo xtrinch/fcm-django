@@ -31,19 +31,9 @@ methods. Instead, everything is under a single method: ``send_message``
     device = FCMDevice.objects.first()
     device.send_message(Message(...))
 
-Additionally, we've added Firebase's new Topic API, allowing for easier sending
-of bulk messages.
-
-.. code-block:: python
-
-    from firebase_admin.messaging import Message, Notification
-    topic = "A topic"
-    FCMDevice.objects.handle_subscription(True, topic)
-    FCMDevice.send_topic_message(Message(data={...}), "TOPIC NAME")
-
-There are two additional parameters to both methods:
-``skip_registration_id_lookup`` and ``additional_registration_ids``.
-Visit `Sending Messages <https://github.com/xtrinch/fcm-django#sending-messages>`_ to learn more.
+For topic subscriptions, topic sends, and the additional sending parameters
+``skip_registration_id_lookup`` and ``additional_registration_ids``, see
+`Sending Messages <https://github.com/xtrinch/fcm-django#sending-messages>`_.
 
 Note: ``registration_ids`` is actually incorrect terminology as it
 should actually be called ``registration tokens``. However, to be
