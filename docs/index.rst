@@ -498,7 +498,8 @@ should be sufficient and you can make it unique and index it even with MySQL:
 
 Python 3 support
 ----------------
-- ``fcm-django`` is fully compatible with Python 3.9+
+- ``fcm-django`` is fully compatible with Python 3.10+
+- Python 3.9 support was dropped because Python 3.9 reached end-of-life.
 - for Python 3.6, use ``fcm-django < 2.0.0`` , because `firebase-admin with version 6 drop support of Python 3.6 <https://firebase.google.com/support/release-notes/admin/python#version_600_-_06_october_2022>`_
 - for Python 3.7 + 3.8, use ``fcm-django <= 2.2.1`` 
 
