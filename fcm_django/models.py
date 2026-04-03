@@ -1,4 +1,3 @@
-import asyncio
 from collections.abc import Sequence
 from copy import copy
 from typing import Any, Optional, Union
@@ -157,14 +156,8 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         app: Optional["firebase_admin.App"] = None,
         **more_send_message_kwargs,
     ) -> messaging.BatchResponse:
-        send_each_async = getattr(messaging, "send_each_async", None)
-        if callable(send_each_async):
-            return await send_each_async(messages, app=app, **more_send_message_kwargs)
-        return await asyncio.to_thread(
-            messaging.send_each,
-            messages,
-            app=app,
-            **more_send_message_kwargs,
+        return await messaging.send_each_async(
+            messages, app=app, **more_send_message_kwargs
         )
 
     def send_message(

@@ -13,7 +13,7 @@ authors = [
     { name = "xTrinch", email = "mojca.rojko@gmail.com" },
 ]
 dependencies = [
-    "firebase-admin>=6.2,<8",
+    "firebase-admin>=6.9,<8",
     "Django>=4.2",
     "swapper",
 ]

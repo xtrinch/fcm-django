@@ -10,6 +10,9 @@ Django app for Firebase Cloud Messaging. Used as an unified platform for sending
 
 Supports Firebase Cloud Messaging HTTP v1 API. If you're looking for the legacy API, use ``fcm-django<1``!
 
+Async queryset send APIs require ``firebase-admin>=6.9`` because they use
+``firebase_admin.messaging.send_each_async`` directly.
+
 FCMDevice model fields
  - *registration_id* (required - is FCM token)
  - *name* (optional)
