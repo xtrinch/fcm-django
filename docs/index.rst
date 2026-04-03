@@ -34,7 +34,7 @@ https://github.com/xtrinch/fcm-django-web-demo
 Upgrading from pre-1.0
 ----------------------
 If you're still migrating from the old ``pyfcm``-based releases, see
-:doc:`the v1.0 migration guide <migrating_to_v1>`.
+:doc:`the v1.0 migration guide <pages/migrating_to_v1>`.
 
 Additional documentation
 ------------------------
@@ -42,7 +42,7 @@ Additional documentation
 .. toctree::
     :maxdepth: 1
 
-    migrating_to_v1
+    pages/migrating_to_v1
 
 Setup
 -----
