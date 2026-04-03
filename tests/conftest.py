@@ -1,4 +1,4 @@
-from unittest.mock import sentinel
+from unittest.mock import AsyncMock, sentinel
 
 import pytest
 import swapper
@@ -68,5 +68,15 @@ def mock_firebase_send(mocker: MockerFixture, firebase_message_id_send):
 def mock_firebase_send_each(mocker: MockerFixture):
     mock = mocker.patch("fcm_django.models.messaging.send_each")
     mock.return_value = sentinel.FIREBASE_SEND_EACH_RESPONSE
+    mock.return_value.responses = []
+    return mock
+
+
+@pytest.fixture
+def mock_firebase_send_each_async(mocker: MockerFixture):
+    mock = mocker.patch(
+        "fcm_django.models.messaging.send_each_async", new_callable=AsyncMock
+    )
+    mock.return_value = sentinel.FIREBASE_SEND_EACH_ASYNC_RESPONSE
     mock.return_value.responses = []
     return mock
