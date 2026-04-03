@@ -1,14 +1,25 @@
+from __future__ import annotations
+
 from collections.abc import Sequence
 from copy import copy
-from typing import Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import swapper
 from asgiref.sync import sync_to_async
+
+if TYPE_CHECKING:
+    import firebase_admin
+    from firebase_admin import messaging
+    from firebase_admin.exceptions import FirebaseError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from firebase_admin import messaging
-from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
 
+from fcm_django.firebase import (
+    firebase_error_type,
+    firebase_messaging,
+    get_app,
+    invalid_argument_error_type,
+)
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
 from fcm_django.signals import device_deactivated
 from fcm_django.types import DeviceDeactivationData, FirebaseResponseDict
@@ -61,26 +72,33 @@ class _FCMDeviceManager(models.Manager):
 
 
 # Error codes: https://firebase.google.com/docs/reference/fcm/rest/v1/ErrorCode
-fcm_error_list = [
-    messaging.UnregisteredError,
-    messaging.SenderIdMismatchError,
-]
+def _get_fcm_error_list():
+    messaging = firebase_messaging()
 
-fcm_error_list_str = [x.code for x in fcm_error_list]
+    return [
+        messaging.UnregisteredError,
+        messaging.SenderIdMismatchError,
+    ]
 
 
-def _validate_exception_for_deactivation(exc: Union[FirebaseError]) -> bool:
+def _get_fcm_error_list_str():
+    return [x.code for x in _get_fcm_error_list()]
+
+
+def _validate_exception_for_deactivation(exc: FirebaseError) -> bool:
+    InvalidArgumentError = invalid_argument_error_type()
+
     if not exc:
         return False
     exc_type = type(exc)
     if exc_type == str:
-        return exc in fcm_error_list_str
+        return exc in _get_fcm_error_list_str()
     # INVALID_ARGUMENT is broader than token invalidation. Only deactivate for the
     # explicit invalid-registration cause; other causes such as invalid TTL or
     # malformed payload parameters should leave the device active.
     return (
         exc_type == InvalidArgumentError and exc.cause == "Invalid registration"
-    ) or (exc_type in fcm_error_list)
+    ) or (exc_type in _get_fcm_error_list())
 
 
 class _MissingFormatDict(dict[str, Any]):
@@ -96,6 +114,8 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 
     @staticmethod
     def get_default_send_message_response() -> FirebaseResponseDict:
+        messaging = firebase_messaging()
+
         return FirebaseResponseDict(
             response=messaging.BatchResponse([]),
             registration_ids_sent=[],
@@ -104,7 +124,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 
     @staticmethod
     def _render_message_template(
-        template: str, template_data: Optional[dict[str, Any]] = None
+        template: str, template_data: dict[str, Any] | None = None
     ) -> str:
         if not template_data:
             return template
@@ -115,9 +135,11 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         registration_ids: list[str],
         title_template: str,
         body_template: str,
-        message_data: Optional[dict[str, dict[str, Any]]] = None,
-        data_fields: Optional[dict[str, Any]] = None,
+        message_data: dict[str, dict[str, Any]] | None = None,
+        data_fields: dict[str, Any] | None = None,
     ) -> list[messaging.Message]:
+        from firebase_admin import messaging
+
         messages = []
         for token in registration_ids:
             template_data = message_data.get(token) if message_data else None
@@ -138,10 +160,12 @@ class FCMDeviceQuerySet(models.query.QuerySet):
     @staticmethod
     def _get_deactivation_candidates(
         registration_ids: list[str],
-        results: list[Union[messaging.SendResponse, messaging.ErrorInfo]],
+        results: list[messaging.SendResponse | messaging.ErrorInfo],
     ) -> list[str]:
         if not results:
             return []
+        from firebase_admin import messaging
+
         if isinstance(results[0], messaging.SendResponse):
             return [
                 token
@@ -199,7 +223,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         message: messaging.Message,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Sequence[str] = None,
-        app: Optional["firebase_admin.App"] = None,
+        app: firebase_admin.App = None,
         **more_send_message_kwargs,
     ) -> FirebaseResponseDict:
         """
@@ -222,6 +246,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         :raises FirebaseError
         :returns FirebaseResponseDict
         """
+        app = get_app(app)
         registration_ids = self.get_registration_ids(
             skip_registration_id_lookup,
             additional_registration_ids,
@@ -229,6 +254,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
         if not registration_ids:
             return self.get_default_send_message_response()
+        messaging = firebase_messaging()
         responses: list[messaging.SendResponse] = []
         for i in range(0, len(registration_ids), MAX_MESSAGES_PER_BATCH):
             messages = [
@@ -253,7 +279,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         message: messaging.Message,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Sequence[str] = None,
-        app: Optional["firebase_admin.App"] = None,
+        app: firebase_admin.App | None = None,
         **more_send_message_kwargs,
     ) -> FirebaseResponseDict:
         registration_ids = await self.aget_registration_ids(
@@ -263,6 +289,8 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
         if not registration_ids:
             return self.get_default_send_message_response()
+        from firebase_admin import messaging
+
         responses: list[messaging.SendResponse] = []
         for i in range(0, len(registration_ids), MAX_MESSAGES_PER_BATCH):
             messages = [
@@ -285,11 +313,11 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         self,
         title_template: str,
         body_template: str,
-        message_data: Optional[dict[str, dict[str, Any]]] = None,
-        data_fields: Optional[dict[str, Any]] = None,
+        message_data: dict[str, dict[str, Any]] | None = None,
+        data_fields: dict[str, Any] | None = None,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Sequence[str] = None,
-        app: Optional["firebase_admin.App"] = None,
+        app: firebase_admin.App | None = None,
         **more_send_message_kwargs,
     ) -> FirebaseResponseDict:
         """
@@ -318,8 +346,10 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             additional_registration_ids,
         )
         app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
+        app = get_app(app)
         if not registration_ids:
             return self.get_default_send_message_response()
+        messaging = firebase_messaging()
 
         responses: list[messaging.SendResponse] = []
         for i in range(0, len(registration_ids), MAX_MESSAGES_PER_BATCH):
@@ -345,11 +375,11 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         self,
         title_template: str,
         body_template: str,
-        message_data: Optional[dict[str, dict[str, Any]]] = None,
-        data_fields: Optional[dict[str, Any]] = None,
+        message_data: dict[str, dict[str, Any]] | None = None,
+        data_fields: dict[str, Any] | None = None,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Sequence[str] = None,
-        app: Optional["firebase_admin.App"] = None,
+        app: firebase_admin.App | None = None,
         **more_send_message_kwargs,
     ) -> FirebaseResponseDict:
         registration_ids = await self.aget_registration_ids(
@@ -359,6 +389,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
         if not registration_ids:
             return self.get_default_send_message_response()
+        from firebase_admin import messaging
 
         responses: list[messaging.SendResponse] = []
         for i in range(0, len(registration_ids), MAX_MESSAGES_PER_BATCH):
@@ -384,7 +415,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         *,
         reason: str,
         source: str,
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> list[str]:
         active_devices = self.filter(active=True)
         device_rows = [
@@ -408,7 +439,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         *,
         reason: str,
         source: str,
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> list[str]:
         active_devices = self.filter(active=True)
         device_rows = [
@@ -432,7 +463,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
     def deactivate_devices_with_error_results(
         self,
         registration_ids: list[str],
-        results: list[Union[messaging.SendResponse, messaging.ErrorInfo]],
+        results: list[messaging.SendResponse | messaging.ErrorInfo],
     ) -> list[str]:
         deactivation_candidates = self._get_deactivation_candidates(
             registration_ids, results
@@ -453,7 +484,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
     async def adeactivate_devices_with_error_results(
         self,
         registration_ids: list[str],
-        results: list[Union[messaging.SendResponse, messaging.ErrorInfo]],
+        results: list[messaging.SendResponse | messaging.ErrorInfo],
     ) -> list[str]:
         deactivation_candidates = self._get_deactivation_candidates(
             registration_ids, results
@@ -481,8 +512,10 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 
     @staticmethod
     def _get_failed_exception_codes(
-        results: list[Union[messaging.SendResponse, messaging.ErrorInfo]],
+        results: list[messaging.SendResponse | messaging.ErrorInfo],
     ) -> list[str]:
+        messaging = firebase_messaging()
+
         failed_exceptions = []
 
         for item in results:
@@ -502,7 +535,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         device_rows: list[DeviceDeactivationData],
         reason: str,
         source: str,
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         if not device_rows or not SETTINGS["EMIT_DEVICE_DEACTIVATED_SIGNAL"]:
             return
@@ -523,6 +556,8 @@ class FCMDeviceQuerySet(models.query.QuerySet):
 
     @staticmethod
     def get_default_topic_response() -> FirebaseResponseDict:
+        messaging = firebase_messaging()
+
         return FirebaseResponseDict(
             response=messaging.TopicManagementResponse({"results": []}),
             registration_ids_sent=[],
@@ -535,7 +570,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         topic: str,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Sequence[str] = None,
-        app: Optional["firebase_admin.App"] = None,
+        app: firebase_admin.App = None,
         **more_subscribe_kwargs,
     ) -> FirebaseResponseDict:
         """
@@ -559,6 +594,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         :raises FirebaseError
         :returns FirebaseResponseDict
         """
+        app = get_app(app)
         registration_ids = self.get_registration_ids(
             skip_registration_id_lookup,
             additional_registration_ids,
@@ -566,6 +602,8 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
         if not registration_ids:
             return self.get_default_topic_response()
+        messaging = firebase_messaging()
+
         responses: list[messaging.SendResponse] = []
         for i in range(0, len(registration_ids), MAX_DEVICES_PER_SUBSCRIBE_REQUEST):
             batch_ids = registration_ids[i : i + MAX_DEVICES_PER_SUBSCRIBE_REQUEST]
@@ -574,7 +612,6 @@ class FCMDeviceQuerySet(models.query.QuerySet):
                 if should_subscribe
                 else messaging.unsubscribe_from_topic
             )(batch_ids, topic, app=app, **more_subscribe_kwargs)
-
         return FirebaseResponseDict(
             response=messaging.BatchResponse(responses),
             registration_ids_sent=registration_ids,
@@ -607,7 +644,7 @@ class AbstractFCMDevice(Device):
         unique=not SETTINGS["MYSQL_COMPATIBILITY"],
     )
     type = models.CharField(choices=DeviceType.choices, max_length=10)
-    objects: "FCMDeviceQuerySet" = FCMDeviceManager()
+    objects: FCMDeviceQuerySet = FCMDeviceManager()
 
     class Meta:
         abstract = True
@@ -619,7 +656,7 @@ class AbstractFCMDevice(Device):
     def send_message(
         self,
         message: messaging.Message,
-        app: Optional["firebase_admin.App"] = None,
+        app: firebase_admin.App = None,
         **more_send_message_kwargs,
     ) -> messaging.SendResponse:
         """
@@ -637,6 +674,9 @@ class AbstractFCMDevice(Device):
         :returns messaging.SendResponse or FirebaseError if the device was
         deactivated due to an error.
         """
+        messaging = firebase_messaging()
+        app = get_app(app)
+
         if not self.active:
             return messaging.SendResponse(
                 None,
@@ -649,15 +689,16 @@ class AbstractFCMDevice(Device):
                 {"name": messaging.send(message, app=app, **more_send_message_kwargs)},
                 None,
             )
-        except FirebaseError as e:
-            self.deactivate_devices_with_error_result(self.registration_id, e)
+        except Exception as e:
+            if isinstance(e, firebase_error_type()):
+                self.deactivate_devices_with_error_result(self.registration_id, e)
             raise
 
     def handle_topic_subscription(
         self,
         should_subscribe: bool,
         topic: str,
-        app: Optional["firebase_admin.App"] = None,
+        app: firebase_admin.App = None,
         **more_subscribe_kwargs,
     ) -> FirebaseResponseDict:
         """
@@ -675,8 +716,10 @@ class AbstractFCMDevice(Device):
         :raises FirebaseError
         :returns FirebaseResponseDict
         """
-        app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
+        messaging = firebase_messaging()
+        app = get_app(app)
         _r_ids = [self.registration_id]
+
         response = (
             messaging.subscribe_to_topic
             if should_subscribe
@@ -694,6 +737,8 @@ class AbstractFCMDevice(Device):
     def deactivate_devices_with_error_result(
         cls, registration_id, firebase_exc, name=None
     ) -> list[str]:
+        messaging = firebase_messaging()
+
         return cls.objects.deactivate_devices_with_error_results(
             [registration_id], [messaging.SendResponse({"name": name}, firebase_exc)]
         )
@@ -702,10 +747,11 @@ class AbstractFCMDevice(Device):
     def send_topic_message(
         message: messaging.Message,
         topic_name: str,
-        app: Optional["firebase_admin.App"] = None,
+        app: firebase_admin.App = None,
         **more_send_message_kwargs,
     ) -> messaging.SendResponse:
-        app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
+        messaging = firebase_messaging()
+        app = get_app(app)
         message.topic = topic_name
 
         return messaging.SendResponse(

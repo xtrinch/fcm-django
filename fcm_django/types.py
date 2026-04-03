@@ -1,7 +1,10 @@
-from typing import Any, NamedTuple
+from __future__ import annotations
 
-from firebase_admin import messaging
-from firebase_admin.exceptions import FirebaseError
+from typing import TYPE_CHECKING, Any, NamedTuple
+
+if TYPE_CHECKING:
+    from firebase_admin import messaging
+    from firebase_admin.exceptions import FirebaseError
 
 
 class FirebaseResponseDict(NamedTuple):

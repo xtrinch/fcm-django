@@ -1,4 +1,6 @@
 import importlib
+import os
+import subprocess
 
 from django.test import override_settings
 from django.utils.functional import Promise
@@ -48,3 +50,26 @@ def test_runtime_settings_do_not_share_nested_defaults():
         errors["temporary"] = "TemporaryError"
 
     assert "temporary" not in DEFAULT_SETTINGS["ERRORS"]
+
+
+def test_importing_models_and_admin_does_not_eager_load_firebase_admin():
+    env = {
+        **os.environ,
+        "DJANGO_SETTINGS_MODULE": "tests.settings.default",
+    }
+    script = """
+import sys
+import django
+
+sys.modules.pop("firebase_admin", None)
+sys.modules.pop("firebase_admin.messaging", None)
+
+django.setup()
+
+import fcm_django.models
+import fcm_django.admin
+
+assert "firebase_admin" not in sys.modules
+assert "firebase_admin.messaging" not in sys.modules
+"""
+    subprocess.run(["python", "-c", script], env=env, check=True)
