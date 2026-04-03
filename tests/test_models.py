@@ -485,6 +485,42 @@ class TestFCMDeviceQuerySetAsyncSendMessage:
 
         assert not FCMDevice.objects.filter(pk=fcm_device.pk).exists()
 
+    def test_invalid_registration_emits_device_deactivated_signal_when_enabled(
+        self,
+        fcm_device: FCMDevice,
+        message: Message,
+        mock_firebase_send_each_async: MagicMock,
+        mocker,
+    ):
+        failed_response = mocker.Mock(spec=SendResponse)
+        failed_response.exception = InvalidArgumentError(
+            message="Error", cause="Invalid registration"
+        )
+        mock_firebase_send_each_async.return_value.responses = [failed_response]
+        receiver = mocker.Mock()
+        device_deactivated.connect(receiver)
+
+        try:
+            with override_settings(
+                FCM_DJANGO_SETTINGS={"EMIT_DEVICE_DEACTIVATED_SIGNAL": True}
+            ):
+                result = asyncio.run(
+                    FCMDevice.objects.filter(pk=fcm_device.pk).asend_message(message)
+                )
+        finally:
+            device_deactivated.disconnect(receiver)
+
+        assert result.deactivated_registration_ids == [fcm_device.registration_id]
+        receiver.assert_called_once()
+        _, kwargs = receiver.call_args
+        assert kwargs["sender"] is FCMDevice
+        assert kwargs["registration_ids"] == [fcm_device.registration_id]
+        assert kwargs["device_ids"] == [fcm_device.id]
+        assert kwargs["user_ids"] == []
+        assert kwargs["reason"] == "firebase_error"
+        assert kwargs["source"] == "send_message"
+        assert kwargs["metadata"] == {"failed_exceptions": ["INVALID_ARGUMENT"]}
+
 
 @pytest.mark.django_db(transaction=True)
 class TestFCMDeviceQuerySetAsyncSendBulkPersonalizedMessages:
