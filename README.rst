@@ -632,5 +632,5 @@ Packaging for PyPi
 
 - run `source env/bin/activate`
 - run `rm -rf dist/`
-- run `python3 setup.py sdist`
+- run `python3 -m build`
 - run `twine upload dist/*`
