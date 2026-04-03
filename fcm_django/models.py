@@ -123,9 +123,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             template_data = message_data.get(token) if message_data else None
             message_kwargs: dict[str, Any] = {
                 "notification": messaging.Notification(
-                    title=self._render_message_template(
-                        title_template, template_data
-                    ),
+                    title=self._render_message_template(title_template, template_data),
                     body=self._render_message_template(body_template, template_data),
                 ),
                 "token": token,
