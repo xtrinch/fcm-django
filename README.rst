@@ -506,7 +506,7 @@ Python 3 support
 
 Django version compatibility
 ----------------------------
-Compatible with Django versions 3.0+.
+Compatible with Django versions 4.2+.
 For Django version 2.2, use version ``fcm-django < 1.0.13``.
 For lower django versions, use version ``fcm-django < 1.0.0``.
 
