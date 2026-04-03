@@ -196,16 +196,6 @@ class FCMDeviceQuerySet(models.query.QuerySet):
                 registration_ids.append(registration_id)
         return registration_ids
 
-    @staticmethod
-    async def _send_each_async(
-        messages: list[messaging.Message],
-        app: Optional["firebase_admin.App"] = None,
-        **more_send_message_kwargs,
-    ) -> messaging.BatchResponse:
-        return await messaging.send_each_async(
-            messages, app=app, **more_send_message_kwargs
-        )
-
     def send_message(
         self,
         message: messaging.Message,
@@ -281,7 +271,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
                 self._prepare_message(message, token)
                 for token in registration_ids[i : i + MAX_MESSAGES_PER_BATCH]
             ]
-            batch_response = await self._send_each_async(
+            batch_response = await messaging.send_each_async(
                 messages, app=app, **more_send_message_kwargs
             )
             responses.extend(batch_response.responses)
@@ -378,7 +368,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             messages = self._build_bulk_personalized_messages(
                 batch_ids, title_template, body_template, message_data, data_fields
             )
-            batch_response = await self._send_each_async(
+            batch_response = await messaging.send_each_async(
                 messages, app=app, **more_send_message_kwargs
             )
             responses.extend(batch_response.responses)
