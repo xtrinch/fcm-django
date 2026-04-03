@@ -110,6 +110,52 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             return template
         return template.format_map(_MissingFormatDict(template_data))
 
+    def _build_bulk_personalized_messages(
+        self,
+        registration_ids: list[str],
+        title_template: str,
+        body_template: str,
+        message_data: Optional[dict[str, dict[str, Any]]] = None,
+        data_fields: Optional[dict[str, Any]] = None,
+    ) -> list[messaging.Message]:
+        messages = []
+        for token in registration_ids:
+            template_data = message_data.get(token) if message_data else None
+            message_kwargs: dict[str, Any] = {
+                "notification": messaging.Notification(
+                    title=self._render_message_template(
+                        title_template, template_data
+                    ),
+                    body=self._render_message_template(body_template, template_data),
+                ),
+                "token": token,
+            }
+            if data_fields:
+                message_kwargs["data"] = {
+                    str(key): str(value) for key, value in data_fields.items()
+                }
+            messages.append(messaging.Message(**message_kwargs))
+        return messages
+
+    @staticmethod
+    def _get_deactivation_candidates(
+        registration_ids: list[str],
+        results: list[Union[messaging.SendResponse, messaging.ErrorInfo]],
+    ) -> list[str]:
+        if not results:
+            return []
+        if isinstance(results[0], messaging.SendResponse):
+            return [
+                token
+                for item, token in zip(results, registration_ids)
+                if _validate_exception_for_deactivation(item.exception)
+            ]
+        return [
+            registration_ids[item.index]
+            for item in results
+            if _validate_exception_for_deactivation(item.reason)
+        ]
+
     def get_registration_ids(
         self,
         skip_registration_id_lookup: bool = False,
@@ -290,25 +336,9 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         responses: list[messaging.SendResponse] = []
         for i in range(0, len(registration_ids), MAX_MESSAGES_PER_BATCH):
             batch_ids = registration_ids[i : i + MAX_MESSAGES_PER_BATCH]
-            messages = []
-            for token in batch_ids:
-                template_data = message_data.get(token) if message_data else None
-                message_kwargs: dict[str, Any] = {
-                    "notification": messaging.Notification(
-                        title=self._render_message_template(
-                            title_template, template_data
-                        ),
-                        body=self._render_message_template(
-                            body_template, template_data
-                        ),
-                    ),
-                    "token": token,
-                }
-                if data_fields:
-                    message_kwargs["data"] = {
-                        str(key): str(value) for key, value in data_fields.items()
-                    }
-                messages.append(messaging.Message(**message_kwargs))
+            messages = self._build_bulk_personalized_messages(
+                batch_ids, title_template, body_template, message_data, data_fields
+            )
             responses.extend(
                 messaging.send_each(
                     messages, app=app, **more_send_message_kwargs
@@ -345,25 +375,9 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         responses: list[messaging.SendResponse] = []
         for i in range(0, len(registration_ids), MAX_MESSAGES_PER_BATCH):
             batch_ids = registration_ids[i : i + MAX_MESSAGES_PER_BATCH]
-            messages = []
-            for token in batch_ids:
-                template_data = message_data.get(token) if message_data else None
-                message_kwargs: dict[str, Any] = {
-                    "notification": messaging.Notification(
-                        title=self._render_message_template(
-                            title_template, template_data
-                        ),
-                        body=self._render_message_template(
-                            body_template, template_data
-                        ),
-                    ),
-                    "token": token,
-                }
-                if data_fields:
-                    message_kwargs["data"] = {
-                        str(key): str(value) for key, value in data_fields.items()
-                    }
-                messages.append(messaging.Message(**message_kwargs))
+            messages = self._build_bulk_personalized_messages(
+                batch_ids, title_template, body_template, message_data, data_fields
+            )
             batch_response = await self._send_each_async(
                 messages, app=app, **more_send_message_kwargs
             )
@@ -432,21 +446,12 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         registration_ids: list[str],
         results: list[Union[messaging.SendResponse, messaging.ErrorInfo]],
     ) -> list[str]:
-        if not results:
-            return []
-        if isinstance(results[0], messaging.SendResponse):
-            deactivation_candidates = [
-                token
-                for item, token in zip(results, registration_ids)
-                if _validate_exception_for_deactivation(item.exception)
-            ]
-        else:
-            deactivation_candidates = [
-                registration_ids[x.index]
-                for x in results
-                if _validate_exception_for_deactivation(x.reason)
-            ]
+        deactivation_candidates = self._get_deactivation_candidates(
+            registration_ids, results
+        )
         failed_exceptions = self._get_failed_exception_codes(results)
+        if not deactivation_candidates:
+            return []
         deactivated_ids = self.filter(
             registration_id__in=deactivation_candidates
         ).deactivate(
@@ -462,21 +467,12 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         registration_ids: list[str],
         results: list[Union[messaging.SendResponse, messaging.ErrorInfo]],
     ) -> list[str]:
-        if not results:
-            return []
-        if isinstance(results[0], messaging.SendResponse):
-            deactivation_candidates = [
-                token
-                for item, token in zip(results, registration_ids)
-                if _validate_exception_for_deactivation(item.exception)
-            ]
-        else:
-            deactivation_candidates = [
-                registration_ids[x.index]
-                for x in results
-                if _validate_exception_for_deactivation(x.reason)
-            ]
+        deactivation_candidates = self._get_deactivation_candidates(
+            registration_ids, results
+        )
         failed_exceptions = self._get_failed_exception_codes(results)
+        if not deactivation_candidates:
+            return []
         deactivated_ids = await self.filter(
             registration_id__in=deactivation_candidates
         ).adeactivate(
