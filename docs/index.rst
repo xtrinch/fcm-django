@@ -31,58 +31,19 @@ Demo javascript client project
 Unsure how to use this project? Check out the demo at:
 https://github.com/xtrinch/fcm-django-web-demo
 
-Migration to v1.0
------------------
+Upgrading from pre-1.0
+----------------------
+If you're still migrating from the old ``pyfcm``-based releases, see
+:doc:`the v1.0 migration guide <pages/migrating_to_v1>`.
 
-We've replaced Python package ``pyfcm`` for Firebase's own package ``firebase-admin``.
-Thus, we no longer use an API key. Instead, you'll need an environment variable
-``GOOGLE_APPLICATION_CREDENTIALS`` which is a path pointing to your JSON-file stored
-credentials. To learn more or view other options to input credentials, visit the
-`Google Cloud docs <https://cloud.google.com/docs/authentication/getting-started>`_.
+Additional documentation
+------------------------
 
-Finally, in your ``settings.py`` (or whatever imported file), add:
+.. toctree::
+    :maxdepth: 1
 
-.. code-block:: python
-
-    from firebase_admin import initialize_app
-    FIREBASE_APP = initialize_app()
-    # Or just
-    initialize_app()
-
-The API for sending messages is now under the ``firebase-admin`` package; hence,
-we removed the methods ``send_data_message`` from the QuerySet and class instance
-methods. Instead, everything is under a single method: ``send_message``
-
-.. code-block:: python
-
-    from firebase_admin.messaging import Message, Notification
-    FCMDevice.objects.send_message(Message(data=dict()))
-    # Note: You can also combine the data and notification kwarg
-    FCMDevice.objects.send_message(
-        Message(notification=Notification(title="title", body="body", image="image_url"))
-    )
-    device = FCMDevice.objects.first()
-    device.send_message(Message(...))
-
-Additionally, we've added Firebase's new Topic API, allowing for easier sending
-of bulk messages.
-
-.. code-block:: python
-
-    from firebase_admin.messaging import Message, Notification
-    topic = "A topic"
-    FCMDevice.objects.handle_subscription(True, topic)
-    FCMDevice.send_topic_message(Message(data={...}), "TOPIC NAME")
-
-There are two additional parameters to both methods:
-``skip_registration_id_lookup`` and ``additional_registration_ids``.
-Visit `Sending Messages <https://github.com/xtrinch/fcm-django#sending-messages>`_ to learn more.
-
-Note: ``registration_ids`` is actually incorrect terminology as it
-should actually be called ``registration tokens``. However, to be
-consistent with ``django-push-notifications``, we've refrained from
-switching to stay backwards compatible in the docs and with the
-sister package.
+    pages/migrating_to_v1
+    pages/custom_fcmdevice_model
 
 Setup
 -----
@@ -198,7 +159,7 @@ Sending messages in bulk
     # You can still use .filter() or any methods that return QuerySet (from the chain)
     devices = FCMDevice.objects.all()
     devices.send_message(Message(data={...}))
-    # Or (send_message parameters include: messages, dry_run, app)
+    # Or (send_message parameters include: message, dry_run, app)
     FCMDevice.objects.send_message(Message(...))
 
     Sending messages raises all the errors that ``firebase-admin`` raises, so make sure
@@ -271,9 +232,9 @@ Subscribing or Unsubscribing Users to topic
     from fcm_django.models import FCMDevice
 
     # Subscribing
-    FCMDevice.objects.all().handle_topic_subscription(True, topic="TOPIC NAME"))
+    FCMDevice.objects.all().handle_topic_subscription(True, topic="TOPIC NAME")
     device = FCMDevice.objects.all().first()
-    device.handle_topic_subscription(True, topic="TOPIC NAME"))
+    device.handle_topic_subscription(True, topic="TOPIC NAME")
 
     # Finally you can send a message to that topic
     from firebase_admin.messaging import Message
@@ -282,9 +243,9 @@ Subscribing or Unsubscribing Users to topic
     FCMDevice.objects.send_message(message)
 
     # Unsubscribing
-    FCMDevice.objects.all().handle_topic_subscription(False, topic="TOPIC NAME"))
+    FCMDevice.objects.all().handle_topic_subscription(False, topic="TOPIC NAME")
     device = FCMDevice.objects.all().first()
-    device.handle_topic_subscription(False, topic="TOPIC NAME"))
+    device.handle_topic_subscription(False, topic="TOPIC NAME")
 
 Sending messages to topic
 -------------------------
@@ -321,12 +282,16 @@ This default can be overridden by specifying an app when calling send_message. T
 
 .. code-block:: python
 
-    from firebase_app import App
-    from firebase_app.messaging import Notification
+    from firebase_admin import initialize_app
+    from firebase_admin.messaging import Message, Notification
     from fcm_django.models import FCMDevice
 
+    secondary_app = initialize_app(..., name="messaging")
     device = FCMDevice.objects.all().first()
-    device.send_message(notification=Notification(...), app=App(...))
+    device.send_message(
+        Message(notification=Notification(title="Hi", body="Secondary app")),
+        app=secondary_app,
+    )
 
 Setting a default Firebase app for FCM
 --------------------------------------
@@ -378,7 +343,7 @@ Viewsets come in two different varieties:
 
 - ``FCMDeviceViewSet``
 
-    - Permissions as specified in settings (``AllowAny`` by default, which is not recommended)
+    - Permissions follow your Django REST Framework configuration
     - A device may be registered without associating it with a user
     - Will not allow duplicate registration_id's
 
@@ -436,71 +401,8 @@ If done manually, you are responsible for deleting the old device entry.
 
 Using custom FCMDevice model
 ----------------------------
-
-If there's a need to store additional information or change type of fields in the FCMDevice model.
-You could simple override this model. To do this, inherit your model from the AbstractFCMDevice class.
-
-In your ``your_app/models.py``:
-
-.. code-block:: python
-
-    import uuid
-    from django.db import models
-    from fcm_django.models import AbstractFCMDevice
-
-
-    class CustomDevice(AbstractFCMDevice):
-        # fields could be overwritten
-        id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-        # could be added new fields
-        updated_at = models.DateTimeField(auto_now=True)
-
-In your ``settings.py``:
-
-.. code-block:: python
-
-    FCM_DJANGO_FCMDEVICE_MODEL = "your_app.CustomDevice"
-
-
-In the DB will be two tables one that was created by this package and other your own. New data will appears only in your own table.
-If you don't want default table appears in the DB then you should remove ``fcm_django`` out of ``INSTALLED_APPS`` at  ``settings.py``:
-
-.. code-block:: python
-
-    INSTALLED_APPS = (
-        ...
-        # "fcm_django", - remove this line
-        "your_app", # your app should appears
-        ...
-    )
-
-After setup your own ``Model`` don't forget to create ``migrations`` for your app and call ``migrate`` command.
-
-After removing ``"fcm_django"`` out of ``INSTALLED_APPS``. You will need to re-register the Device in order to see it in the admin panel.
-This can be accomplished as follows at ``your_app/admin.py``:
-
-.. code-block:: python
-
-    from django.contrib import admin
-
-    from fcm_django.admin import DeviceAdmin
-    from your_app.models import CustomDevice
-
-
-    admin.site.unregister(CustomDevice)
-    admin.site.register(CustomDevice, DeviceAdmin)
-
-
-If you choose to move forward with swapped models then:
-
-1. On existed project you have to keep in mind there are required manual work to move data from one table to anther.
-2. If there's any tables with FK to swapped model then you have to deal with them on your own.
-
-Note: This functionality based on `Swapper <https://pypi.org/project/swapper/>`_ that based on functionality
-that allow to use a `custom User model <https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#substituting-a-custom-user-model>`_.
-So this functionality have the same limitations.
-The most is important limitation it is that is difficult to start out with a default (non-swapped) model
-and then later to switch to a swapped implementation without doing some migration hacking.
+If you need to customize the device model, see
+:doc:`Using custom FCMDevice model <pages/custom_fcmdevice_model>`.
 
 MySQL compatibility
 -------------------
@@ -538,22 +440,16 @@ should be sufficient and you can make it unique and index it even with MySQL:
 
 Python 3 support
 ----------------
-- ``fcm-django`` is fully compatible with Python 3.9+
+- ``fcm-django`` is fully compatible with Python 3.10+
+- Python 3.9 support was dropped because Python 3.9 reached end-of-life.
 - for Python 3.6, use ``fcm-django < 2.0.0`` , because `firebase-admin with version 6 drop support of Python 3.6 <https://firebase.google.com/support/release-notes/admin/python#version_600_-_06_october_2022>`_
 - for Python 3.7 + 3.8, use ``fcm-django <= 2.2.1`` 
 
 Django version compatibility
 ----------------------------
-Compatible with Django versions 3.0+.
+Compatible with Django versions 4.2+.
 For Django version 2.2, use version ``fcm-django < 1.0.13``.
 For lower django versions, use version ``fcm-django < 1.0.0``.
-
-Acknowledgements
-----------------
-Library relies on firebase-admin-sdk for sending notifications, for more info about all the possible fields, see:
-https://github.com/firebase/firebase-admin-python
-
-Migration from v0 to v1 was done by `Andrew-Chen-Wang <https://github.com/Andrew-Chen-Wang>`_
 
 Need help, have any questions, suggestions?
 -------------------------------------------
@@ -578,3 +474,10 @@ To run tests locally you could use ``pytest``, and if you need to check migratio
     export DJANGO_SETTINGS_MODULE=tests.settings.default
     # or export DJANGO_SETTINGS_MODULE=tests.settings.swap
     pytest
+
+Acknowledgements
+----------------
+Library relies on firebase-admin-sdk for sending notifications, for more info about all the possible fields, see:
+https://github.com/firebase/firebase-admin-python
+
+Migration from v0 to v1 was done by `Andrew-Chen-Wang <https://github.com/Andrew-Chen-Wang>`_
