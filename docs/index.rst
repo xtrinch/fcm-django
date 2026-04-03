@@ -232,9 +232,9 @@ Subscribing or Unsubscribing Users to topic
     from fcm_django.models import FCMDevice
 
     # Subscribing
-    FCMDevice.objects.all().handle_topic_subscription(True, topic="TOPIC NAME"))
+    FCMDevice.objects.all().handle_topic_subscription(True, topic="TOPIC NAME")
     device = FCMDevice.objects.all().first()
-    device.handle_topic_subscription(True, topic="TOPIC NAME"))
+    device.handle_topic_subscription(True, topic="TOPIC NAME")
 
     # Finally you can send a message to that topic
     from firebase_admin.messaging import Message
@@ -243,9 +243,9 @@ Subscribing or Unsubscribing Users to topic
     FCMDevice.objects.send_message(message)
 
     # Unsubscribing
-    FCMDevice.objects.all().handle_topic_subscription(False, topic="TOPIC NAME"))
+    FCMDevice.objects.all().handle_topic_subscription(False, topic="TOPIC NAME")
     device = FCMDevice.objects.all().first()
-    device.handle_topic_subscription(False, topic="TOPIC NAME"))
+    device.handle_topic_subscription(False, topic="TOPIC NAME")
 
 Sending messages to topic
 -------------------------
@@ -282,12 +282,16 @@ This default can be overridden by specifying an app when calling send_message. T
 
 .. code-block:: python
 
-    from firebase_app import App
-    from firebase_app.messaging import Notification
+    from firebase_admin import initialize_app
+    from firebase_admin.messaging import Message, Notification
     from fcm_django.models import FCMDevice
 
+    secondary_app = initialize_app(..., name="messaging")
     device = FCMDevice.objects.all().first()
-    device.send_message(notification=Notification(...), app=App(...))
+    device.send_message(
+        Message(notification=Notification(title="Hi", body="Secondary app")),
+        app=secondary_app,
+    )
 
 Setting a default Firebase app for FCM
 --------------------------------------
@@ -339,7 +343,7 @@ Viewsets come in two different varieties:
 
 - ``FCMDeviceViewSet``
 
-    - Permissions as specified in settings (``AllowAny`` by default, which is not recommended)
+    - Permissions follow your Django REST Framework configuration
     - A device may be registered without associating it with a user
     - Will not allow duplicate registration_id's
 
