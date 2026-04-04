@@ -5,6 +5,7 @@
 import uuid
 
 import django.db.models.deletion
+import django.utils.timezone
 from django.conf import settings
 from django.db import migrations, models
 
@@ -72,6 +73,17 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("registration_id", models.CharField(max_length=515, unique=True)),
+                (
+                    "token_updated_at",
+                    models.DateTimeField(
+                        default=django.utils.timezone.now,
+                        help_text=(
+                            "Set when the current registration token is first "
+                            "stored and whenever it changes."
+                        ),
+                        verbose_name="Token update date",
+                    ),
+                ),
                 ("more_data", models.TextField()),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 (
