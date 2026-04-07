@@ -12,8 +12,7 @@ from django.utils import timezone
 from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
 from firebase_admin.messaging import Message, SendResponse
 
-from fcm_django.models import DeviceType
-from fcm_django.models import FCMDeviceTopic
+from fcm_django.models import DeviceType, FCMDeviceTopic
 from fcm_django.signals import device_deactivated
 from fcm_django.types import FirebaseResponseDict
 

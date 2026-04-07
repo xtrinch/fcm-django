@@ -107,9 +107,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         )
 
     def subscribed_to_topic(self, topic: str):
-        return self.filter(
-            topic_subscriptions__topic=self.normalize_topic_name(topic)
-        )
+        return self.filter(topic_subscriptions__topic=self.normalize_topic_name(topic))
 
     def sync_topic_subscriptions(
         self,
