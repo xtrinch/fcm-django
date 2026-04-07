@@ -247,6 +247,23 @@ Subscribing or Unsubscribing Users to topic
     device = FCMDevice.objects.all().first()
     device.handle_topic_subscription(False, topic="TOPIC NAME")
 
+If you enable ``FCM_DJANGO_SETTINGS["TRACK_TOPIC_SUBSCRIPTIONS"]``, successful
+subscribe and unsubscribe calls made through ``fcm-django`` are also persisted in
+the local ``FCMDeviceTopic`` model. This makes it possible to query topic
+membership from Django:
+
+.. code-block:: python
+
+    from fcm_django.models import FCMDevice, FCMDeviceTopic
+
+    FCMDevice.objects.filter(user=request.user).subscribed_to_topic("news")
+    device = FCMDevice.objects.get(registration_id="...")
+    topics = list(device.subscribed_topics)
+
+Important: Firebase does not expose an API to list all topic subscriptions for a
+registration token. Local topic tracking only reflects topic changes performed
+through ``fcm-django`` while that setting is enabled.
+
 Sending messages to topic
 -------------------------
 
