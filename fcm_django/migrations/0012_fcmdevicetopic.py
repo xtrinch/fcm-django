@@ -27,6 +27,7 @@ class Migration(migrations.Migration):
                 (
                     "device",
                     models.ForeignKey(
+                        db_constraint=False,
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="topic_subscriptions",
                         to=swapper.get_model_name("fcm_django", "fcmdevice"),

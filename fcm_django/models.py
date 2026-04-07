@@ -809,6 +809,7 @@ class FCMDeviceTopic(models.Model):
         swapper.get_model_name("fcm_django", "fcmdevice"),
         on_delete=models.CASCADE,
         related_name="topic_subscriptions",
+        db_constraint=False,
     )
     topic = models.CharField(max_length=900, db_index=True)
     date_subscribed = models.DateTimeField(auto_now_add=True)
