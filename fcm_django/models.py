@@ -83,6 +83,15 @@ def _validate_exception_for_deactivation(exc: Union[FirebaseError]) -> bool:
     ) or (exc_type in fcm_error_list)
 
 
+def _validate_message_for_device_send(message: messaging.Message) -> None:
+    if message.topic or message.condition:
+        raise ValueError(
+            "FCMDevice.send_message() only supports device-targeted messages. "
+            "Use FCMDevice.send_topic_message() for topic sends, or "
+            "firebase_admin.messaging.send() directly for condition sends."
+        )
+
+
 class _MissingFormatDict(dict[str, Any]):
     def __missing__(self, key: str) -> str:
         return f"{{{key}}}"
@@ -222,6 +231,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         :raises FirebaseError
         :returns FirebaseResponseDict
         """
+        _validate_message_for_device_send(message)
         registration_ids = self.get_registration_ids(
             skip_registration_id_lookup,
             additional_registration_ids,
@@ -256,6 +266,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         app: Optional["firebase_admin.App"] = None,
         **more_send_message_kwargs,
     ) -> FirebaseResponseDict:
+        _validate_message_for_device_send(message)
         registration_ids = await self.aget_registration_ids(
             skip_registration_id_lookup,
             additional_registration_ids,
@@ -641,6 +652,7 @@ class AbstractFCMDevice(Device):
         :returns messaging.SendResponse or FirebaseError if the device was
         deactivated due to an error.
         """
+        _validate_message_for_device_send(message)
         if not self.active:
             return messaging.SendResponse(
                 None,

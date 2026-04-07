@@ -293,6 +293,16 @@ class TestFCMDeviceSendMessage:
         fcm_device.refresh_from_db()
         assert fcm_device.active
 
+    def test_rejects_topic_target(
+        self,
+        fcm_device: FCMDevice,
+        mock_firebase_send: MagicMock,
+    ):
+        with pytest.raises(ValueError, match="only supports device-targeted messages"):
+            fcm_device.send_message(Message(topic="topic-name"))
+
+        mock_firebase_send.assert_not_called()
+
 
 class TestFCMDeviceSendTopicMessage:
     def assert_sent_successfully(
@@ -675,6 +685,19 @@ def test_queryset_send_message_invalid_argument_error_does_not_deactivate_device
     assert result.deactivated_registration_ids == []
     fcm_device.refresh_from_db()
     assert fcm_device.active
+
+
+@pytest.mark.django_db
+def test_queryset_send_message_rejects_topic_target(
+    fcm_device: FCMDevice,
+    mock_firebase_send_each: MagicMock,
+):
+    with pytest.raises(ValueError, match="only supports device-targeted messages"):
+        FCMDevice.objects.filter(pk=fcm_device.pk).send_message(
+            Message(topic="topic-name")
+        )
+
+    mock_firebase_send_each.assert_not_called()
 
 
 @pytest.mark.django_db
