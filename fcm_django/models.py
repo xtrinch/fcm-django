@@ -4,7 +4,6 @@ from typing import Any, Optional, Union
 
 import swapper
 from asgiref.sync import sync_to_async
-from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from firebase_admin import messaging
@@ -18,7 +17,6 @@ from fcm_django.types import DeviceDeactivationData, FirebaseResponseDict
 # upgrade package in time via a monkeypatch.
 MAX_MESSAGES_PER_BATCH = 500
 MAX_DEVICES_PER_SUBSCRIBE_REQUEST = 1000
-FCM_DJANGO_APP_INSTALLED = "fcm_django" in settings.INSTALLED_APPS
 
 
 class Device(models.Model):
@@ -817,7 +815,6 @@ class FCMDeviceTopic(models.Model):
 
     class Meta:
         app_label = "fcm_django"
-        abstract = not FCM_DJANGO_APP_INSTALLED
         constraints = [
             models.UniqueConstraint(
                 fields=["device", "topic"],
