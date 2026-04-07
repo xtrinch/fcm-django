@@ -802,6 +802,11 @@ class FCMDevice(AbstractFCMDevice):
 
 
 class FCMDeviceTopic(models.Model):
+    id = models.AutoField(
+        verbose_name="ID",
+        primary_key=True,
+        auto_created=True,
+    )
     device = models.ForeignKey(
         swapper.get_model_name("fcm_django", "fcmdevice"),
         on_delete=models.CASCADE,
