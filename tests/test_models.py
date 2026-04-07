@@ -13,6 +13,7 @@ from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
 from firebase_admin.messaging import Message, SendResponse
 
 from fcm_django.models import DeviceType
+from fcm_django.models import FCMDeviceTopic
 from fcm_django.signals import device_deactivated
 from fcm_django.types import FirebaseResponseDict
 
@@ -141,6 +142,56 @@ def test_queryset_handle_topic_subscription_aggregates_topic_errors(mocker):
     assert response.failure_count == 2
     assert response.failed_registration_ids == ["token-2", "token-3"]
     assert [error.index for error in response.response.errors] == [1, 2]
+
+
+@pytest.mark.django_db
+def test_queryset_handle_topic_subscription_tracks_successful_subscriptions(mocker):
+    first_device = FCMDevice.objects.create(
+        registration_id="token-1", type=DeviceType.WEB
+    )
+    FCMDevice.objects.create(registration_id="token-2", type=DeviceType.WEB)
+
+    mock_subscribe = mocker.patch("fcm_django.models.messaging.subscribe_to_topic")
+    mock_subscribe.return_value = mocker.Mock(
+        spec=["errors"],
+        errors=[mocker.Mock(index=1, reason="messaging/mismatched-credential")],
+    )
+
+    with override_settings(FCM_DJANGO_SETTINGS={"TRACK_TOPIC_SUBSCRIPTIONS": True}):
+        response = FCMDevice.objects.filter(
+            registration_id__in=["token-1", "token-2"]
+        ).handle_topic_subscription(True, topic="/topics/news")
+
+    assert response.failed_registration_ids == ["token-2"]
+    assert list(first_device.subscribed_topics) == ["news"]
+    assert list(
+        FCMDevice.objects.subscribed_to_topic("news").values_list(
+            "registration_id", flat=True
+        )
+    ) == ["token-1"]
+
+
+@pytest.mark.django_db
+def test_device_handle_topic_subscription_removes_tracked_subscription(mocker):
+    device = FCMDevice.objects.create(registration_id="token-1", type=DeviceType.WEB)
+    FCMDeviceTopic.objects.create(device=device, topic="news")
+
+    mock_unsubscribe = mocker.patch(
+        "fcm_django.models.messaging.unsubscribe_from_topic"
+    )
+    mock_unsubscribe.return_value = mocker.Mock(spec=["errors"], errors=[])
+
+    with override_settings(FCM_DJANGO_SETTINGS={"TRACK_TOPIC_SUBSCRIPTIONS": True}):
+        device.handle_topic_subscription(False, topic="news")
+
+    assert not device.topic_subscriptions.exists()
+
+
+@pytest.mark.django_db
+def test_topic_subscriptions_follow_swapped_device_model(fcm_device: FCMDevice):
+    FCMDeviceTopic.objects.create(device=fcm_device, topic="news")
+
+    assert list(fcm_device.subscribed_topics) == ["news"]
 
 
 @pytest.mark.django_db

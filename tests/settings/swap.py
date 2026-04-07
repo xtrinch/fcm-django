@@ -1,6 +1,7 @@
 from .base import *
 
 INSTALLED_APPS += [
+    "fcm_django",
     "tests.swapped_models",
 ]
 
