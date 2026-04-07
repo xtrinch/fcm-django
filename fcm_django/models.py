@@ -570,10 +570,12 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         for i in range(0, len(registration_ids), MAX_DEVICES_PER_SUBSCRIBE_REQUEST):
             batch_ids = registration_ids[i : i + MAX_DEVICES_PER_SUBSCRIBE_REQUEST]
             responses.extend(
-                messaging.subscribe_to_topic
-                if should_subscribe
-                else messaging.unsubscribe_from_topic
-            )(batch_ids, topic, app=app, **more_subscribe_kwargs)
+                (
+                    messaging.subscribe_to_topic
+                    if should_subscribe
+                    else messaging.unsubscribe_from_topic
+                )(batch_ids, topic, app=app, **more_subscribe_kwargs)
+            )
 
         return FirebaseResponseDict(
             response=messaging.BatchResponse(responses),
