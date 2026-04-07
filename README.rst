@@ -329,9 +329,7 @@ Subscribing or Unsubscribing Users to topic
 
     # Finally you can send a message to that topic
     from firebase_admin.messaging import Message
-    message = Message(..., topic="A topic")
-    # You can still use .filter() or any methods that return QuerySet (from the chain)
-    FCMDevice.objects.send_message(message)
+    FCMDevice.send_topic_message(Message(...), "TOPIC NAME")
 
     # Unsubscribing
     FCMDevice.objects.all().handle_topic_subscription(False, topic="TOPIC NAME")
@@ -343,6 +341,7 @@ Sending messages to topic
 
 .. code-block:: python
 
+    from firebase_admin.messaging import Message
     from fcm_django.models import FCMDevice
 
     FCMDevice.send_topic_message(Message(data={...}), "TOPIC NAME")
