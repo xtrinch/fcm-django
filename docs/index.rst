@@ -89,9 +89,38 @@ Edit your settings.py file:
          # are deleted upon receiving error response from FCM
          # default: False
         "DELETE_INACTIVE_DEVICES": True/False,
+         # persist topic subscriptions locally for successful subscribe/unsubscribe
+         # calls made through fcm-django
+         # default: False
+        "TRACK_TOPIC_SUBSCRIPTIONS": True/False,
+         # emit the ``device_deactivated`` signal when this library deactivates devices
+         # default: False
+        "EMIT_DEVICE_DEACTIVATED_SIGNAL": True/False,
     }
 
 Native Django migrations are in use. ``manage.py migrate`` will install and migrate all models.
+
+Recommended settings for new installs
+-------------------------------------
+
+Several settings default to conservative values for backward compatibility. For a
+new project, a reasonable starting point is:
+
+.. code-block:: python
+
+    FCM_DJANGO_SETTINGS = {
+        "DELETE_INACTIVE_DEVICES": True,
+    }
+
+Then consider these based on your application model:
+
+- Enable ``EMIT_DEVICE_DEACTIVATED_SIGNAL`` if you want an explicit hook when devices are deactivated.
+- Enable ``ONE_DEVICE_PER_USER`` if your app should keep only one active token per user.
+- Enable ``TRACK_TOPIC_SUBSCRIPTIONS`` if you need to query topic membership from Django.
+- Leave ``MYSQL_COMPATIBILITY`` disabled unless you specifically need the MySQL-safe fallback behavior.
+
+``DELETE_INACTIVE_DEVICES`` is usually the right choice for new installs so invalid
+or unregistered tokens stop being retried.
 
 Messages
 --------
@@ -246,6 +275,23 @@ Subscribing or Unsubscribing Users to topic
     FCMDevice.objects.all().handle_topic_subscription(False, topic="TOPIC NAME")
     device = FCMDevice.objects.all().first()
     device.handle_topic_subscription(False, topic="TOPIC NAME")
+
+If you enable ``FCM_DJANGO_SETTINGS["TRACK_TOPIC_SUBSCRIPTIONS"]``, successful
+subscribe and unsubscribe calls made through ``fcm-django`` are also persisted in
+the local ``FCMDeviceTopic`` model. This makes it possible to query topic
+membership from Django:
+
+.. code-block:: python
+
+    from fcm_django.models import FCMDevice, FCMDeviceTopic
+
+    FCMDevice.objects.filter(user=request.user).subscribed_to_topic("news")
+    device = FCMDevice.objects.get(registration_id="...")
+    topics = list(device.subscribed_topics)
+
+Important: Firebase does not expose an API to list all topic subscriptions for a
+registration token. Local topic tracking only reflects topic changes performed
+through ``fcm-django`` while that setting is enabled.
 
 Sending messages to topic
 -------------------------

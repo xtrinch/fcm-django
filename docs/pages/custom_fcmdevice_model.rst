@@ -26,33 +26,22 @@ In your ``settings.py``:
     FCM_DJANGO_FCMDEVICE_MODEL = "your_app.CustomDevice"
 
 
-In the DB will be two tables one that was created by this package and other your own. New data will appears only in your own table.
-If you don't want default table appears in the DB then you should remove ``fcm_django`` out of ``INSTALLED_APPS`` at  ``settings.py``:
+Keep ``fcm_django`` in ``INSTALLED_APPS`` so the package migrations continue to run.
+That is especially important for any additional tables owned by this package, such as topic tracking.
+
+In the DB there will be two tables: the historical default table created by this package and your custom table.
+New device data will be written only to your custom table.
 
 .. code-block:: python
 
     INSTALLED_APPS = (
         ...
-        # "fcm_django", - remove this line
+        "fcm_django",
         "your_app", # your app should appears
         ...
     )
 
 After setup your own ``Model`` don't forget to create ``migrations`` for your app and call ``migrate`` command.
-
-After removing ``"fcm_django"`` out of ``INSTALLED_APPS``. You will need to re-register the Device in order to see it in the admin panel.
-This can be accomplished as follows at ``your_app/admin.py``:
-
-.. code-block:: python
-
-    from django.contrib import admin
-
-    from fcm_django.admin import DeviceAdmin
-    from your_app.models import CustomDevice
-
-
-    admin.site.unregister(CustomDevice)
-    admin.site.register(CustomDevice, DeviceAdmin)
 
 
 If you choose to move forward with swapped models then:

@@ -95,12 +95,62 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         return copy(message)
 
     @staticmethod
+    def normalize_topic_name(topic: str) -> str:
+        return topic.removeprefix("/topics/")
+
+    @staticmethod
     def get_default_send_message_response() -> FirebaseResponseDict:
         return FirebaseResponseDict(
             response=messaging.BatchResponse([]),
             registration_ids_sent=[],
             deactivated_registration_ids=[],
         )
+
+    def subscribed_to_topic(self, topic: str):
+        return self.filter(topic_subscriptions__topic=self.normalize_topic_name(topic))
+
+    def sync_topic_subscriptions(
+        self,
+        registration_ids: list[str],
+        failed_registration_ids: list[str],
+        topic: str,
+        should_subscribe: bool,
+    ) -> None:
+        if not SETTINGS["TRACK_TOPIC_SUBSCRIPTIONS"]:
+            return
+
+        failed_registration_id_set = set(failed_registration_ids)
+        successful_registration_ids = [
+            registration_id
+            for registration_id in registration_ids
+            if registration_id not in failed_registration_id_set
+        ]
+        if not successful_registration_ids:
+            return
+
+        normalized_topic = self.normalize_topic_name(topic)
+        device_ids = list(
+            self.model.objects.filter(
+                registration_id__in=successful_registration_ids
+            ).values_list("pk", flat=True)
+        )
+        if not device_ids:
+            return
+
+        if should_subscribe:
+            FCMDeviceTopic.objects.bulk_create(
+                [
+                    FCMDeviceTopic(device_id=device_id, topic=normalized_topic)
+                    for device_id in device_ids
+                ],
+                ignore_conflicts=True,
+            )
+            return
+
+        FCMDeviceTopic.objects.filter(
+            device_id__in=device_ids,
+            topic=normalized_topic,
+        ).delete()
 
     @staticmethod
     def _render_message_template(
@@ -578,14 +628,20 @@ class FCMDeviceQuerySet(models.query.QuerySet):
                 topic_results[i + error.index] = {"error": error.reason}
 
         response = messaging.TopicManagementResponse({"results": topic_results})
-
-        return FirebaseResponseDict(
+        result = FirebaseResponseDict(
             response=response,
             registration_ids_sent=registration_ids,
             deactivated_registration_ids=self.deactivate_devices_with_error_results(
                 registration_ids, response.errors
             ),
         )
+        self.sync_topic_subscriptions(
+            registration_ids=result.registration_ids_sent,
+            failed_registration_ids=result.failed_registration_ids,
+            topic=topic,
+            should_subscribe=should_subscribe,
+        )
+        return result
 
 
 FCMDeviceManager = _FCMDeviceManager.from_queryset(FCMDeviceQuerySet)
@@ -619,6 +675,10 @@ class AbstractFCMDevice(Device):
         indexes = [
             models.Index(fields=["registration_id", "user"]),
         ]
+
+    @property
+    def subscribed_topics(self):
+        return self.topic_subscriptions.values_list("topic", flat=True)
 
     def send_message(
         self,
@@ -686,13 +746,20 @@ class AbstractFCMDevice(Device):
             if should_subscribe
             else messaging.unsubscribe_from_topic
         )(_r_ids, topic, app=app, **more_subscribe_kwargs)
-        return FirebaseResponseDict(
+        result = FirebaseResponseDict(
             response=response,
             registration_ids_sent=_r_ids,
             deactivated_registration_ids=type(
                 self
             ).objects.deactivate_devices_with_error_results(_r_ids, response.errors),
         )
+        type(self).objects.sync_topic_subscriptions(
+            registration_ids=result.registration_ids_sent,
+            failed_registration_ids=result.failed_registration_ids,
+            topic=topic,
+            should_subscribe=should_subscribe,
+        )
+        return result
 
     @classmethod
     def deactivate_devices_with_error_result(
@@ -730,3 +797,28 @@ class FCMDevice(AbstractFCMDevice):
 
         app_label = "fcm_django"
         swappable = swapper.swappable_setting("fcm_django", "fcmdevice")
+
+
+class FCMDeviceTopic(models.Model):
+    id = models.AutoField(
+        verbose_name="ID",
+        primary_key=True,
+        auto_created=True,
+    )
+    device = models.ForeignKey(
+        swapper.get_model_name("fcm_django", "fcmdevice"),
+        on_delete=models.CASCADE,
+        related_name="topic_subscriptions",
+        db_constraint=False,
+    )
+    topic = models.CharField(max_length=900, db_index=True)
+    date_subscribed = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = "fcm_django"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["device", "topic"],
+                name="fcm_django_unique_device_topic",
+            )
+        ]

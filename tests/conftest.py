@@ -2,6 +2,8 @@ from unittest.mock import AsyncMock, sentinel
 
 import pytest
 import swapper
+from django.conf import settings
+from django.db.backends.base.introspection import BaseDatabaseIntrospection
 from firebase_admin.exceptions import FirebaseError
 from firebase_admin.messaging import Message
 from pytest_mock import MockerFixture
@@ -9,6 +11,36 @@ from pytest_mock import MockerFixture
 from fcm_django.models import DeviceType
 
 FCMDevice = swapper.load_model("fcm_django", "fcmdevice")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def include_legacy_swapped_device_table_in_flush():
+    if not getattr(settings, "IS_SWAP", False):
+        yield
+        return
+
+    original = BaseDatabaseIntrospection.django_table_names
+
+    def django_table_names(self, only_existing=False, include_views=True):
+        tables = original(
+            self, only_existing=only_existing, include_views=include_views
+        )
+        legacy_table = "fcm_django_fcmdevice"
+        if legacy_table in tables:
+            return tables
+        if not only_existing:
+            return [*tables, legacy_table]
+
+        existing_tables = set(self.table_names(include_views=include_views))
+        if self.identifier_converter(legacy_table) in existing_tables:
+            return [*tables, legacy_table]
+        return tables
+
+    BaseDatabaseIntrospection.django_table_names = django_table_names
+    try:
+        yield
+    finally:
+        BaseDatabaseIntrospection.django_table_names = original
 
 
 @pytest.fixture
