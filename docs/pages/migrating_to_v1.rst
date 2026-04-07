@@ -31,6 +31,33 @@ methods. Instead, everything is under a single method: ``send_message``
     device = FCMDevice.objects.first()
     device.send_message(Message(...))
 
+Legacy helper mapping
+---------------------
+
+If you are upgrading from ``fcm-django<1`` and still import helpers from
+``fcm_django.fcm``, those helpers are gone in the ``firebase-admin`` based
+releases.
+
+- ``fcm_send_bulk_message(...)`` becomes ``FCMDevice.objects.send_message(Message(...))``
+- ``fcm_send_message(...)`` becomes ``device.send_message(Message(...))``
+- ``send_data_message(...)`` is folded into ``send_message(...)`` by passing
+  a ``Message(data=...)`` payload
+
+The old ``title=...`` / ``body=...`` kwargs are now expressed via
+``firebase_admin.messaging.Notification``:
+
+.. code-block:: python
+
+    from firebase_admin.messaging import Message, Notification
+    from fcm_django.models import FCMDevice
+
+    FCMDevice.objects.send_message(
+        Message(
+            notification=Notification(title="title", body="body"),
+            data={"key": "value"},
+        )
+    )
+
 For topic subscriptions, topic sends, and the additional sending parameters
 ``skip_registration_id_lookup`` and ``additional_registration_ids``, see
 `Sending Messages <https://github.com/xtrinch/fcm-django#sending-messages>`_.
