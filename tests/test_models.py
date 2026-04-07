@@ -98,6 +98,52 @@ def test_firebase_response_dict_summary_for_topic_response(mocker):
 
 
 @pytest.mark.django_db
+def test_queryset_handle_topic_subscription_aggregates_topic_errors(mocker):
+    registration_ids = ["token-1", "token-2", "token-3"]
+
+    mock_subscribe = mocker.patch("fcm_django.models.messaging.subscribe_to_topic")
+    mock_subscribe.side_effect = [
+        mocker.Mock(
+            spec=["errors"],
+            errors=[mocker.Mock(index=1, reason="messaging/mismatched-credential")],
+        ),
+        mocker.Mock(
+            spec=["errors"],
+            errors=[
+                mocker.Mock(
+                    index=0,
+                    reason="messaging/registration-token-not-registered",
+                )
+            ],
+        ),
+    ]
+    mocker.patch("fcm_django.models.MAX_DEVICES_PER_SUBSCRIBE_REQUEST", 2)
+
+    response = FCMDevice.objects.none().handle_topic_subscription(
+        True,
+        topic="topic-name",
+        skip_registration_id_lookup=True,
+        additional_registration_ids=registration_ids,
+    )
+
+    assert mock_subscribe.call_args_list == [
+        mocker.call(
+            ["token-1", "token-2"],
+            "topic-name",
+            app=None,
+        ),
+        mocker.call(
+            ["token-3"],
+            "topic-name",
+            app=None,
+        ),
+    ]
+    assert response.failure_count == 2
+    assert response.failed_registration_ids == ["token-2", "token-3"]
+    assert [error.index for error in response.response.errors] == [1, 2]
+
+
+@pytest.mark.django_db
 class TestFCMDeviceSendMessage:
     def assert_sent_successfully(
         self,
