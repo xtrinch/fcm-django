@@ -48,6 +48,41 @@ def test_fields_on_the_device_can_be_added_by_swapped_model(fcm_device: FCMDevic
         assert before_update < fcm_device.updated_at < timezone.now()
 
 
+@pytest.mark.django_db
+def test_token_updated_at_is_set_on_create():
+    before_create = timezone.now()
+    device = FCMDevice.objects.create(
+        registration_id="token-created",
+        type=DeviceType.WEB,
+    )
+
+    assert before_create <= device.token_updated_at <= timezone.now()
+
+
+@pytest.mark.django_db
+def test_token_updated_at_changes_when_registration_id_changes(fcm_device: FCMDevice):
+    before_update = fcm_device.token_updated_at
+
+    fcm_device.registration_id = "token-updated"
+    fcm_device.save()
+    fcm_device.refresh_from_db()
+
+    assert before_update < fcm_device.token_updated_at <= timezone.now()
+
+
+@pytest.mark.django_db
+def test_token_updated_at_does_not_change_when_registration_id_is_unchanged(
+    fcm_device: FCMDevice,
+):
+    before_update = fcm_device.token_updated_at
+
+    fcm_device.name = "renamed device"
+    fcm_device.save()
+    fcm_device.refresh_from_db()
+
+    assert fcm_device.token_updated_at == before_update
+
+
 def test_firebase_response_dict_summary_for_batch_response(mocker):
     ok_response = mocker.Mock(spec=SendResponse)
     ok_response.exception = None

@@ -5,6 +5,7 @@ from typing import Any, Optional, Union
 import swapper
 from asgiref.sync import sync_to_async
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from firebase_admin import messaging
 from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
@@ -610,6 +611,13 @@ class AbstractFCMDevice(Device):
         verbose_name=_("Registration token"),
         unique=not SETTINGS["MYSQL_COMPATIBILITY"],
     )
+    token_updated_at = models.DateTimeField(
+        verbose_name=_("Token update date"),
+        default=timezone.now,
+        help_text=_(
+            "Set when the current registration token is first stored and whenever it changes."
+        ),
+    )
     type = models.CharField(choices=DeviceType.choices, max_length=10)
     objects: "FCMDeviceQuerySet" = FCMDeviceManager()
 
@@ -619,6 +627,30 @@ class AbstractFCMDevice(Device):
         indexes = [
             models.Index(fields=["registration_id", "user"]),
         ]
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get("update_fields")
+        previous_registration_id = None
+
+        if not self._state.adding and self.pk:
+            previous_registration_id = (
+                type(self)
+                .objects.filter(pk=self.pk)
+                .values_list("registration_id", flat=True)
+                .first()
+            )
+
+        if self._state.adding:
+            self.token_updated_at = self.token_updated_at or timezone.now()
+        elif (
+            previous_registration_id is not None
+            and previous_registration_id != self.registration_id
+        ):
+            self.token_updated_at = timezone.now()
+            if update_fields is not None:
+                kwargs["update_fields"] = set(update_fields) | {"token_updated_at"}
+
+        return super().save(*args, **kwargs)
 
     def send_message(
         self,
