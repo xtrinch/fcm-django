@@ -150,7 +150,6 @@ def test_queryset_handle_topic_subscription_aggregates_topic_errors(mocker):
     assert [error.index for error in response.response.errors] == [1, 2]
 
 
-@pytest.mark.skipif(settings.IS_SWAP, reason="topic tracking model is not installed")
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     ("error_code", "deactivated"),
@@ -204,7 +203,6 @@ def test_queryset_handle_topic_subscription_tracks_successful_subscriptions(mock
     ) == ["token-1"]
 
 
-@pytest.mark.skipif(settings.IS_SWAP, reason="topic tracking model is not installed")
 @pytest.mark.django_db
 def test_device_handle_topic_subscription_removes_tracked_subscription(mocker):
     device = FCMDevice.objects.create(registration_id="token-1", type=DeviceType.WEB)
