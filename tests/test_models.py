@@ -293,6 +293,7 @@ class TestFCMDeviceSendMessage:
         fcm_device.refresh_from_db()
         assert fcm_device.active
 
+
 class TestFCMDeviceSendTopicMessage:
     def assert_sent_successfully(
         self,
