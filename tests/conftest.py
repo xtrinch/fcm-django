@@ -1,10 +1,13 @@
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, sentinel
 
 import pytest
 import swapper
-from firebase_admin.exceptions import FirebaseError
-from firebase_admin.messaging import Message
 from pytest_mock import MockerFixture
+
+if TYPE_CHECKING:
+    from firebase_admin.messaging import Message
+    from firebase_admin.exceptions import FirebaseError
 
 from fcm_django.models import DeviceType
 
@@ -40,12 +43,16 @@ def fcm_device(registration_id: str):
 
 
 @pytest.fixture
-def message() -> Message:
+def message() -> "Message":
+    from firebase_admin.messaging import Message
+
     return Message(data={"foo": "bar"})
 
 
 @pytest.fixture
-def firebase_error() -> FirebaseError:
+def firebase_error() -> "FirebaseError":
+    from firebase_admin.exceptions import FirebaseError
+
     return FirebaseError(code=500, message="message")
 
 
@@ -59,14 +66,14 @@ def firebase_message_id_send():
 
 @pytest.fixture(autouse=True)
 def mock_firebase_send(mocker: MockerFixture, firebase_message_id_send):
-    mock = mocker.patch("fcm_django.models.messaging.send")
+    mock = mocker.patch("firebase_admin.messaging.send")
     mock.return_value = firebase_message_id_send
     return mock
 
 
 @pytest.fixture
 def mock_firebase_send_each(mocker: MockerFixture):
-    mock = mocker.patch("fcm_django.models.messaging.send_each")
+    mock = mocker.patch("firebase_admin.messaging.send_each")
     mock.return_value = sentinel.FIREBASE_SEND_EACH_RESPONSE
     mock.return_value.responses = []
     return mock
@@ -75,7 +82,7 @@ def mock_firebase_send_each(mocker: MockerFixture):
 @pytest.fixture
 def mock_firebase_send_each_async(mocker: MockerFixture):
     mock = mocker.patch(
-        "fcm_django.models.messaging.send_each_async", new_callable=AsyncMock
+        "firebase_admin.messaging.send_each_async", new_callable=AsyncMock
     )
     mock.return_value = sentinel.FIREBASE_SEND_EACH_ASYNC_RESPONSE
     mock.return_value.responses = []

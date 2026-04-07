@@ -37,7 +37,7 @@ def test_send_message_action_handles_firebase_error(
     client, base_admin_url, fcm_device, mocker
 ):
     mocker.patch(
-        "fcm_django.models.messaging.send",
+        "firebase_admin.messaging.send",
         side_effect=FirebaseError(code="unknown", message="firebase failed"),
     )
 
@@ -60,7 +60,7 @@ def test_send_topic_message_action_handles_firebase_error(
     client, base_admin_url, fcm_device, mocker
 ):
     mocker.patch(
-        "fcm_django.models.messaging.send",
+        "firebase_admin.messaging.send",
         side_effect=FirebaseError(code="unknown", message="firebase failed"),
     )
 
