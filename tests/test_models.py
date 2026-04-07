@@ -1,7 +1,6 @@
 import asyncio
 from typing import Any, Optional
 from unittest.mock import MagicMock, sentinel
-from uuid import UUID
 
 import pytest
 import swapper
@@ -36,7 +35,7 @@ def test_registration_id_size():
 
 @pytest.mark.django_db
 def test_fields_on_the_device_can_be_redefined_by_swapped_model(fcm_device: FCMDevice):
-    assert isinstance(fcm_device.id, UUID if settings.IS_SWAP else int)
+    assert isinstance(fcm_device.id, str if settings.IS_SWAP else int)
 
 
 @pytest.mark.django_db
