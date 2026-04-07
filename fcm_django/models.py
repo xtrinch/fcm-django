@@ -566,22 +566,24 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
         if not registration_ids:
             return self.get_default_topic_response()
-        responses: list[messaging.SendResponse] = []
+        topic_results: list[dict[str, str]] = [{} for _ in registration_ids]
         for i in range(0, len(registration_ids), MAX_DEVICES_PER_SUBSCRIBE_REQUEST):
             batch_ids = registration_ids[i : i + MAX_DEVICES_PER_SUBSCRIBE_REQUEST]
-            responses.extend(
-                (
-                    messaging.subscribe_to_topic
-                    if should_subscribe
-                    else messaging.unsubscribe_from_topic
-                )(batch_ids, topic, app=app, **more_subscribe_kwargs)
-            )
+            batch_response = (
+                messaging.subscribe_to_topic
+                if should_subscribe
+                else messaging.unsubscribe_from_topic
+            )(batch_ids, topic, app=app, **more_subscribe_kwargs)
+            for error in batch_response.errors:
+                topic_results[i + error.index] = {"error": error.reason}
+
+        response = messaging.TopicManagementResponse({"results": topic_results})
 
         return FirebaseResponseDict(
-            response=messaging.BatchResponse(responses),
+            response=response,
             registration_ids_sent=registration_ids,
             deactivated_registration_ids=self.deactivate_devices_with_error_results(
-                registration_ids, responses
+                registration_ids, response.errors
             ),
         )
 
