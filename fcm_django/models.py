@@ -66,7 +66,9 @@ fcm_error_list = [
     messaging.SenderIdMismatchError,
 ]
 
-fcm_error_list_str = [x.code for x in fcm_error_list]
+# `code` is set per instance by FirebaseError.__init__, so reading it off the class
+# yields the property object rather than the error code string.
+fcm_error_list_str = [x("").code for x in fcm_error_list]
 
 
 def _validate_exception_for_deactivation(exc: Union[FirebaseError]) -> bool:
