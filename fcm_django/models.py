@@ -440,14 +440,19 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         failed_exceptions = self._get_failed_exception_codes(results)
         if not deactivation_candidates:
             return []
-        deactivated_ids = self.filter(
-            registration_id__in=deactivation_candidates
-        ).deactivate(
+        devices = self.filter(active=True, registration_id__in=deactivation_candidates)
+        # Capture the selection before deactivation invalidates active filters.
+        device_ids = (
+            list(devices.values_list("pk", flat=True))
+            if SETTINGS["DELETE_INACTIVE_DEVICES"]
+            else []
+        )
+        deactivated_ids = devices.deactivate(
             reason="firebase_error",
             source="send_message",
             metadata={"failed_exceptions": failed_exceptions},
         )
-        self._delete_inactive_devices_if_requested(deactivated_ids)
+        self._delete_inactive_devices_if_requested(device_ids)
         return deactivated_ids
 
     async def adeactivate_devices_with_error_results(
@@ -461,23 +466,31 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         failed_exceptions = self._get_failed_exception_codes(results)
         if not deactivation_candidates:
             return []
-        deactivated_ids = await self.filter(
-            registration_id__in=deactivation_candidates
-        ).adeactivate(
+        devices = self.filter(active=True, registration_id__in=deactivation_candidates)
+        device_ids = (
+            [device_id async for device_id in devices.values_list("pk", flat=True)]
+            if SETTINGS["DELETE_INACTIVE_DEVICES"]
+            else []
+        )
+        deactivated_ids = await devices.adeactivate(
             reason="firebase_error",
             source="send_message",
             metadata={"failed_exceptions": failed_exceptions},
         )
-        await self._adelete_inactive_devices_if_requested(deactivated_ids)
+        await self._adelete_inactive_devices_if_requested(device_ids)
         return deactivated_ids
 
-    def _delete_inactive_devices_if_requested(self, registration_ids: list[str]):
-        if SETTINGS["DELETE_INACTIVE_DEVICES"]:
-            self.filter(registration_id__in=registration_ids).delete()
+    def _delete_inactive_devices_if_requested(self, device_ids: list[Any]):
+        if device_ids and SETTINGS["DELETE_INACTIVE_DEVICES"]:
+            self.model._base_manager.db_manager(self._db, hints=self._hints).filter(
+                pk__in=device_ids
+            ).delete()
 
-    async def _adelete_inactive_devices_if_requested(self, registration_ids: list[str]):
-        if SETTINGS["DELETE_INACTIVE_DEVICES"]:
-            await self.filter(registration_id__in=registration_ids).adelete()
+    async def _adelete_inactive_devices_if_requested(self, device_ids: list[Any]):
+        if device_ids and SETTINGS["DELETE_INACTIVE_DEVICES"]:
+            await self.model._base_manager.db_manager(
+                self._db, hints=self._hints
+            ).filter(pk__in=device_ids).adelete()
 
     @staticmethod
     def _get_failed_exception_codes(

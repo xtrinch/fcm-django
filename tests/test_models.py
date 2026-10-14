@@ -10,7 +10,12 @@ from django.contrib.auth import get_user_model
 from django.test import override_settings
 from django.utils import timezone
 from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
-from firebase_admin.messaging import Message, SendResponse
+from firebase_admin.messaging import (
+    BatchResponse,
+    Message,
+    SendResponse,
+    UnregisteredError,
+)
 
 from fcm_django.models import DeviceType
 from fcm_django.signals import device_deactivated
@@ -692,6 +697,139 @@ def test_queryset_send_message_delete_inactive_devices_follows_override_settings
 
     with override_settings(FCM_DJANGO_SETTINGS={"DELETE_INACTIVE_DEVICES": True}):
         FCMDevice.objects.filter(pk=fcm_device.pk).send_message(message)
+
+    assert not FCMDevice.objects.filter(pk=fcm_device.pk).exists()
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize("async_send", [False, True], ids=["sync", "async"])
+@pytest.mark.parametrize("active_filter", [False, True], ids=["pk", "pk-active"])
+@pytest.mark.parametrize("delete_enabled", [False, True], ids=["retain", "delete"])
+def test_queryset_pruning_preserves_selection(
+    async_send,
+    active_filter,
+    delete_enabled,
+    message,
+    mock_firebase_send_each,
+    mock_firebase_send_each_async,
+    mocker,
+):
+    rejected = FCMDevice.objects.create(
+        registration_id="rejected-token", type=DeviceType.WEB
+    )
+    successful = FCMDevice.objects.create(
+        registration_id="good-token", type=DeviceType.WEB
+    )
+    outside = FCMDevice.objects.create(
+        registration_id="outside-token", type=DeviceType.WEB
+    )
+    inactive = FCMDevice.objects.create(
+        registration_id="inactive-token", type=DeviceType.WEB, active=False
+    )
+    queryset = FCMDevice.objects.filter(
+        pk__in=[rejected.pk, successful.pk, inactive.pk]
+    ).using("default")
+    if active_filter:
+        queryset = queryset.filter(active=True)
+
+    def firebase_response(messages, **kwargs):
+        assert {item.token for item in messages} == {
+            rejected.registration_id,
+            successful.registration_id,
+            outside.registration_id,
+        }
+        return BatchResponse(
+            [
+                (
+                    SendResponse({"name": "mock-message-id"}, None)
+                    if item.token == successful.registration_id
+                    else SendResponse(None, UnregisteredError("Token unregistered"))
+                )
+                for item in messages
+            ]
+        )
+
+    mock_firebase_send_each.side_effect = firebase_response
+    mock_firebase_send_each_async.side_effect = firebase_response
+
+    def observe_deactivation(**kwargs):
+        # The signal must still be emitted after deactivation, before deletion.
+        rejected.refresh_from_db()
+        assert rejected.active is False
+
+    receiver = mocker.Mock(side_effect=observe_deactivation)
+    device_deactivated.connect(receiver)
+    try:
+        with override_settings(
+            FCM_DJANGO_SETTINGS={
+                "DELETE_INACTIVE_DEVICES": delete_enabled,
+                "EMIT_DEVICE_DEACTIVATED_SIGNAL": True,
+            }
+        ):
+            kwargs = {"additional_registration_ids": [outside.registration_id]}
+            if async_send:
+                result = asyncio.run(queryset.asend_message(message, **kwargs))
+                mock_firebase_send_each_async.assert_awaited_once()
+                mock_firebase_send_each.assert_not_called()
+            else:
+                result = queryset.send_message(message, **kwargs)
+                mock_firebase_send_each.assert_called_once()
+                mock_firebase_send_each_async.assert_not_called()
+    finally:
+        device_deactivated.disconnect(receiver)
+
+    assert result.deactivated_registration_ids == [rejected.registration_id]
+    assert result.response.failure_count == 2
+    receiver.assert_called_once()
+    assert receiver.call_args.kwargs["sender"] is FCMDevice
+    assert receiver.call_args.kwargs["device_ids"] == [rejected.pk]
+    assert receiver.call_args.kwargs["registration_ids"] == [rejected.registration_id]
+    assert FCMDevice.objects.filter(pk=rejected.pk).exists() is not delete_enabled
+    if not delete_enabled:
+        rejected.refresh_from_db()
+        assert rejected.active is False
+    for preserved in [successful, outside]:
+        preserved.refresh_from_db()
+        assert preserved.active is True
+    inactive.refresh_from_db()
+    assert inactive.active is False
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize("async_send", [False, True], ids=["sync", "async"])
+def test_queryset_pruning_uses_write_routing(
+    async_send,
+    fcm_device,
+    message,
+    mock_firebase_send_each,
+    mock_firebase_send_each_async,
+    mocker,
+):
+    failed_response = SendResponse(None, UnregisteredError("Token unregistered"))
+    mock_firebase_send_each.return_value = BatchResponse([failed_response])
+    mock_firebase_send_each_async.return_value = BatchResponse([failed_response])
+    read_router = mocker.patch("django.db.router.db_for_read", return_value="default")
+
+    def switch_read_database(**kwargs):
+        # Cleanup is a write and must not resolve the source queryset's read alias.
+        read_router.return_value = "unavailable-read-replica"
+
+    device_deactivated.connect(switch_read_database)
+    try:
+        with override_settings(
+            FCM_DJANGO_SETTINGS={
+                "DELETE_INACTIVE_DEVICES": True,
+                "EMIT_DEVICE_DEACTIVATED_SIGNAL": True,
+            }
+        ):
+            queryset = FCMDevice.objects.filter(pk=fcm_device.pk, active=True)
+            if async_send:
+                asyncio.run(queryset.asend_message(message))
+            else:
+                queryset.send_message(message)
+    finally:
+        device_deactivated.disconnect(switch_read_database)
+        mocker.stop(read_router)
 
     assert not FCMDevice.objects.filter(pk=fcm_device.pk).exists()
 
