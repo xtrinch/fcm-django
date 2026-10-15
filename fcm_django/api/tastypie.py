@@ -1,3 +1,6 @@
+# swapper.load_model is typed as Optional, but the model is always installed here.
+# pyright: reportOptionalMemberAccess=false
+
 import swapper
 from tastypie.authentication import BasicAuthentication
 from tastypie.authorization import Authorization
