@@ -6,7 +6,7 @@ import swapper
 from asgiref.sync import sync_to_async
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from firebase_admin import messaging
+from firebase_admin import exceptions, messaging
 from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
 
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
@@ -66,7 +66,12 @@ fcm_error_list = [
     messaging.SenderIdMismatchError,
 ]
 
-fcm_error_list_str = [x.code for x in fcm_error_list]
+# String codes matching fcm_error_list, used for topic management results which
+# report per-token failures as codes rather than exceptions.
+fcm_error_list_str = [
+    exceptions.NOT_FOUND,  # messaging.UnregisteredError
+    exceptions.PERMISSION_DENIED,  # messaging.SenderIdMismatchError
+]
 
 
 def _validate_exception_for_deactivation(exc: Union[FirebaseError]) -> bool:

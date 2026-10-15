@@ -9,8 +9,9 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import override_settings
 from django.utils import timezone
+from firebase_admin import exceptions
 from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
-from firebase_admin.messaging import Message, SendResponse
+from firebase_admin.messaging import Message, SendResponse, TopicManagementResponse
 
 from fcm_django.models import DeviceType
 from fcm_django.signals import device_deactivated
@@ -141,6 +142,32 @@ def test_queryset_handle_topic_subscription_aggregates_topic_errors(mocker):
     assert response.failure_count == 2
     assert response.failed_registration_ids == ["token-2", "token-3"]
     assert [error.index for error in response.response.errors] == [1, 2]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("error_code", "deactivated"),
+    [
+        (exceptions.NOT_FOUND, ["token-1"]),
+        (exceptions.PERMISSION_DENIED, ["token-1"]),
+        (exceptions.INVALID_ARGUMENT, []),
+    ],
+)
+def test_topic_subscription_only_deactivates_unregistered_devices(
+    mocker, error_code, deactivated
+):
+    """The IID topic API reports per-token failures as codes, not as exceptions."""
+    device = FCMDevice.objects.create(registration_id="token-1", type=DeviceType.WEB)
+    mocker.patch(
+        "fcm_django.models.messaging.subscribe_to_topic",
+        return_value=TopicManagementResponse({"results": [{"error": error_code}]}),
+    )
+
+    response = FCMDevice.objects.handle_topic_subscription(True, topic="topic-name")
+
+    assert response.deactivated_registration_ids == deactivated
+    device.refresh_from_db()
+    assert device.active == (device.registration_id not in deactivated)
 
 
 @pytest.mark.django_db
