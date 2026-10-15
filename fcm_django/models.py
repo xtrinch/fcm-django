@@ -497,11 +497,11 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         return deactivated_ids
 
     def _devices_for_deletion(self, device_ids: list[Any]):
-        # Fresh queryset without the caller's filters, keeping its database and hints.
-        manager = self.model._base_manager.db_manager(
-            self._db, hints=self._hints  # pyright: ignore[reportAttributeAccessIssue]
-        )
-        return manager.filter(pk__in=device_ids)
+        # Fresh queryset without the caller's filters, on the caller's write database.
+        # select_for_update() is lazy; it only marks the clone as a write so .db
+        # resolves an explicit .using() alias or the router's write database.
+        write_db = self.select_for_update().db
+        return self.model._base_manager.using(write_db).filter(pk__in=device_ids)
 
     def _delete_inactive_devices_if_requested(self, device_ids: list[Any]):
         if device_ids and SETTINGS["DELETE_INACTIVE_DEVICES"]:
