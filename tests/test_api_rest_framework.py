@@ -2,6 +2,7 @@ import base64
 
 import pytest
 import swapper
+from django.db import connection
 from django.test import override_settings
 
 from fcm_django.api.rest_framework import FCMDeviceSerializer
@@ -129,11 +130,26 @@ def test_drf_endpoint_emits_signal_for_one_device_per_user(client, user, mocker)
     assert kwargs["metadata"] == {"user_id": user.id}
 
 
+def _registration_id_has_unique_constraint():
+    with connection.cursor() as cursor:
+        constraints = connection.introspection.get_constraints(
+            cursor, FCMDevice._meta.db_table
+        )
+    return any(
+        c["unique"] and c["columns"] == ["registration_id"]
+        for c in constraints.values()
+    )
+
+
 @pytest.fixture
 def concurrent_insert(monkeypatch):
     """Insert a device with the same registration_id once the create request has
     passed validation, simulating a concurrent request winning the
     check-then-insert race."""
+    if not _registration_id_has_unique_constraint():
+        # e.g. MySQL/MariaDB, where migrations skip the unique constraint, so
+        # the database cannot detect the race.
+        pytest.skip("registration_id has no unique constraint on this database")
     original_is_valid = FCMDeviceSerializer.is_valid
     inserted = []
 
