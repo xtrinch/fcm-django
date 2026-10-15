@@ -40,7 +40,7 @@ class FCMSettings(LazyObject, Mapping[str, Any]):
                 resolved["APP_VERBOSE_NAME"] = DEFAULT_SETTINGS["APP_VERBOSE_NAME"]
             self.__dict__["_resolved"] = resolved
             self.__dict__["_settings_source"] = settings_source
-        return self._resolved
+        return self._resolved  # pyright: ignore[reportReturnType]
 
     def _setup(self) -> None:
         self._wrapped = self._resolve()

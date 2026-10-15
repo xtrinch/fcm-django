@@ -1,5 +1,6 @@
 import re
 import struct
+from typing import Any
 
 from django import forms
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
@@ -75,7 +76,7 @@ class HexIntegerField(models.BigIntegerField):
     value we deal with in python is always in hex.
     """
 
-    validators = [
+    validators = [  # pyright: ignore[reportAssignmentType]
         MinValueValidator(UNSIGNED_64BIT_INT_MIN_VALUE),
         MaxValueValidator(UNSIGNED_64BIT_INT_MAX_VALUE),
     ]
@@ -116,7 +117,7 @@ class HexIntegerField(models.BigIntegerField):
         return _unsigned_integer_to_hex_string(value)
 
     def formfield(self, **kwargs):
-        defaults = {"form_class": HexadecimalField}
+        defaults: dict[str, Any] = {"form_class": HexadecimalField}
         defaults.update(kwargs)
         # yes, that super call is right
         return super(models.IntegerField, self).formfield(**defaults)

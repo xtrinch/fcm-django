@@ -1,3 +1,8 @@
+# Django/DRF mixins and swapper-loaded models are not typed precisely enough
+# for pyright; relax the noisiest rules for this integration module.
+# pyright: reportAttributeAccessIssue=false, reportInvalidTypeForm=false
+# pyright: reportOptionalMemberAccess=false, reportArgumentType=false
+
 from typing import Union
 
 import swapper

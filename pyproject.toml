@@ -48,6 +48,17 @@ packages = ["fcm_django", "fcm_django.api", "fcm_django.migrations"]
 [tool.setuptools.dynamic]
 version = { attr = "fcm_django.__version__" }
 
+[tool.pyright]
+include = ["fcm_django"]
+exclude = ["fcm_django/migrations"]
+pythonVersion = "3.10"
+typeCheckingMode = "basic"
+# Infer precise element types for literals like fcm_error_list, so mistakes such as
+# comparing strings against non-string values are caught.
+strictListInference = true
+reportUnnecessaryContains = "error"
+reportUnnecessaryComparison = "error"
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 DJANGO_SETTINGS_MODULE = "tests.settings.default"
