@@ -1,9 +1,11 @@
 -r requirements.txt
 -r requirements_test.txt
--r requirements_typecheck.txt
 black==26.3.1
 build>=1.4.2
+django-stubs==6.0.9
+djangorestframework-stubs==3.18.0
 isort==5.12.0
 pre-commit>=2.0.0
+pyright==1.1.414
 pytest-watcher>=0.3.1
 tox>=4.5.2
