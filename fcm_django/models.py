@@ -402,7 +402,9 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         source: str,
         metadata: Optional[dict[str, Any]] = None,
     ) -> list[str]:
-        device_rows = self._deactivate(reason=reason, source=source, metadata=metadata)
+        device_rows = self._deactivate_returning_rows(
+            reason=reason, source=source, metadata=metadata
+        )
         return [device_row.registration_id for device_row in device_rows]
 
     async def adeactivate(
@@ -412,12 +414,12 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         source: str,
         metadata: Optional[dict[str, Any]] = None,
     ) -> list[str]:
-        device_rows = await self._adeactivate(
+        device_rows = await self._adeactivate_returning_rows(
             reason=reason, source=source, metadata=metadata
         )
         return [device_row.registration_id for device_row in device_rows]
 
-    def _deactivate(
+    def _deactivate_returning_rows(
         self,
         *,
         reason: str,
@@ -441,7 +443,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         )
         return device_rows
 
-    async def _adeactivate(
+    async def _adeactivate_returning_rows(
         self,
         *,
         reason: str,
@@ -480,7 +482,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             return []
         device_rows = self.filter(
             registration_id__in=deactivation_candidates
-        )._deactivate(
+        )._deactivate_returning_rows(
             reason="firebase_error",
             source="send_message",
             metadata={"failed_exceptions": failed_exceptions},
@@ -501,7 +503,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
             return []
         device_rows = await self.filter(
             registration_id__in=deactivation_candidates
-        )._adeactivate(
+        )._adeactivate_returning_rows(
             reason="firebase_error",
             source="send_message",
             metadata={"failed_exceptions": failed_exceptions},
