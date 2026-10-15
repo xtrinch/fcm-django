@@ -1,8 +1,7 @@
 from collections.abc import Sequence
 from copy import copy
-from typing import Any, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Optional, Union, cast
 
-import firebase_admin
 import swapper
 from asgiref.sync import sync_to_async
 from django.db import models
@@ -13,6 +12,9 @@ from firebase_admin.exceptions import FirebaseError, InvalidArgumentError
 from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
 from fcm_django.signals import device_deactivated
 from fcm_django.types import DeviceDeactivationData, FirebaseResponseDict
+
+if TYPE_CHECKING:
+    import firebase_admin
 
 # Set by Firebase. Adjust when they adjust; developers can override too if we don't
 # upgrade package in time via a monkeypatch.
@@ -209,7 +211,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         message: messaging.Message,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Optional[Sequence[str]] = None,
-        app: Optional[firebase_admin.App] = None,
+        app: Optional["firebase_admin.App"] = None,
         **more_send_message_kwargs,
     ) -> FirebaseResponseDict:
         """
@@ -263,7 +265,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         message: messaging.Message,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Optional[Sequence[str]] = None,
-        app: Optional[firebase_admin.App] = None,
+        app: Optional["firebase_admin.App"] = None,
         **more_send_message_kwargs,
     ) -> FirebaseResponseDict:
         registration_ids = await self.aget_registration_ids(
@@ -299,7 +301,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         data_fields: Optional[dict[str, Any]] = None,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Optional[Sequence[str]] = None,
-        app: Optional[firebase_admin.App] = None,
+        app: Optional["firebase_admin.App"] = None,
         **more_send_message_kwargs,
     ) -> FirebaseResponseDict:
         """
@@ -359,7 +361,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         data_fields: Optional[dict[str, Any]] = None,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Optional[Sequence[str]] = None,
-        app: Optional[firebase_admin.App] = None,
+        app: Optional["firebase_admin.App"] = None,
         **more_send_message_kwargs,
     ) -> FirebaseResponseDict:
         registration_ids = await self.aget_registration_ids(
@@ -545,7 +547,7 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         topic: str,
         skip_registration_id_lookup: bool = False,
         additional_registration_ids: Optional[Sequence[str]] = None,
-        app: Optional[firebase_admin.App] = None,
+        app: Optional["firebase_admin.App"] = None,
         **more_subscribe_kwargs,
     ) -> FirebaseResponseDict:
         """
@@ -634,7 +636,7 @@ class AbstractFCMDevice(Device):
     def send_message(
         self,
         message: messaging.Message,
-        app: Optional[firebase_admin.App] = None,
+        app: Optional["firebase_admin.App"] = None,
         **more_send_message_kwargs,
     ) -> messaging.SendResponse:
         """
@@ -672,7 +674,7 @@ class AbstractFCMDevice(Device):
         self,
         should_subscribe: bool,
         topic: str,
-        app: Optional[firebase_admin.App] = None,
+        app: Optional["firebase_admin.App"] = None,
         **more_subscribe_kwargs,
     ) -> FirebaseResponseDict:
         """
@@ -717,7 +719,7 @@ class AbstractFCMDevice(Device):
     def send_topic_message(
         message: messaging.Message,
         topic_name: str,
-        app: Optional[firebase_admin.App] = None,
+        app: Optional["firebase_admin.App"] = None,
         **more_send_message_kwargs,
     ) -> messaging.SendResponse:
         app = SETTINGS["DEFAULT_FIREBASE_APP"] if app is None else app
