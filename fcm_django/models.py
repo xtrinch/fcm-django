@@ -13,6 +13,10 @@ from fcm_django.settings import FCM_DJANGO_SETTINGS as SETTINGS
 from fcm_django.signals import device_deactivated
 from fcm_django.types import DeviceDeactivationData, FirebaseResponseDict
 
+# Only imported for type checking, which is why `app` parameters use the string
+# annotation "firebase_admin.App". Importing the top-level firebase_admin package
+# here would add an eager import we want to avoid (see #279), so don't change the
+# annotations to bare `firebase_admin.App` or move this import out of the guard.
 if TYPE_CHECKING:
     import firebase_admin
 
