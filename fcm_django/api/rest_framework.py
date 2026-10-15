@@ -3,6 +3,7 @@
 # pyright: reportAttributeAccessIssue=false, reportOptionalMemberAccess=false
 
 import swapper
+from django.db import IntegrityError, transaction
 from django.db.models import Q
 from rest_framework import permissions, status
 from rest_framework.mixins import CreateModelMixin
@@ -137,11 +138,34 @@ class DeviceViewSetMixin:
             self.perform_update(serializer)
             return Response(serializer.data)
         else:
-            self.perform_create(serializer)
+            try:
+                # Savepoint so a concurrent insert of the same registration_id
+                # (check-then-insert race) doesn't break the outer transaction.
+                with transaction.atomic():
+                    self.perform_create(serializer)
+            except IntegrityError as exc:
+                return self._handle_create_conflict(request, exc)
             headers = self.get_success_headers(serializer.data)
             return Response(
                 serializer.data, status=status.HTTP_201_CREATED, headers=headers
             )
+
+    def _handle_create_conflict(self, request, exc):
+        registration_id = request.data.get("registration_id")
+        instance = (
+            self.queryset.model.objects.filter(registration_id=registration_id).first()
+            if registration_id
+            else None
+        )
+        if instance is None:
+            raise exc
+        if not SETTINGS.get("UPDATE_ON_DUPLICATE_REG_ID"):
+            raise ValidationError({"registration_id": "This field must be unique."})
+
+        serializer = self.get_serializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         if self.request.user.is_authenticated:
