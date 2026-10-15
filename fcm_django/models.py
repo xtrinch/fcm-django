@@ -496,17 +496,20 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         await self._adelete_inactive_devices_if_requested(device_ids)
         return deactivated_ids
 
+    def _devices_for_deletion(self, device_ids: list[Any]):
+        # Fresh queryset without the caller's filters, keeping its database and hints.
+        manager = self.model._base_manager.db_manager(
+            self._db, hints=self._hints  # pyright: ignore[reportAttributeAccessIssue]
+        )
+        return manager.filter(pk__in=device_ids)
+
     def _delete_inactive_devices_if_requested(self, device_ids: list[Any]):
         if device_ids and SETTINGS["DELETE_INACTIVE_DEVICES"]:
-            self.model._base_manager.db_manager(self._db, hints=self._hints).filter(
-                pk__in=device_ids
-            ).delete()
+            self._devices_for_deletion(device_ids).delete()
 
     async def _adelete_inactive_devices_if_requested(self, device_ids: list[Any]):
         if device_ids and SETTINGS["DELETE_INACTIVE_DEVICES"]:
-            await self.model._base_manager.db_manager(
-                self._db, hints=self._hints
-            ).filter(pk__in=device_ids).adelete()
+            await self._devices_for_deletion(device_ids).adelete()
 
     @staticmethod
     def _get_failed_exception_codes(
