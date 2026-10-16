@@ -2,8 +2,10 @@ import base64
 
 import pytest
 import swapper
+from django.db import connection
 from django.test import override_settings
 
+from fcm_django.api.rest_framework import FCMDeviceSerializer
 from fcm_django.models import DeviceType
 from fcm_django.signals import device_deactivated
 
@@ -126,3 +128,78 @@ def test_drf_endpoint_emits_signal_for_one_device_per_user(client, user, mocker)
     assert kwargs["reason"] == "one_device_per_user"
     assert kwargs["source"] == "perform_create"
     assert kwargs["metadata"] == {"user_id": user.id}
+
+
+def _registration_id_has_unique_constraint():
+    with connection.cursor() as cursor:
+        constraints = connection.introspection.get_constraints(
+            cursor, FCMDevice._meta.db_table
+        )
+    return any(
+        c["unique"] and c["columns"] == ["registration_id"]
+        for c in constraints.values()
+    )
+
+
+@pytest.fixture
+def concurrent_insert(monkeypatch):
+    """Insert a device with the same registration_id once the create request has
+    passed validation, simulating a concurrent request winning the
+    check-then-insert race."""
+    if not _registration_id_has_unique_constraint():
+        # e.g. MySQL/MariaDB, where migrations skip the unique constraint, so
+        # the database cannot detect the race.
+        pytest.skip("registration_id has no unique constraint on this database")
+    original_is_valid = FCMDeviceSerializer.is_valid
+    inserted = []
+
+    def is_valid(self, *args, **kwargs):
+        result = original_is_valid(self, *args, **kwargs)
+        if self.instance is None and not inserted:
+            inserted.append(
+                FCMDevice.objects.create(
+                    registration_id=self.validated_data["registration_id"],
+                    type=DeviceType.WEB,
+                )
+            )
+        return result
+
+    monkeypatch.setattr(FCMDeviceSerializer, "is_valid", is_valid)
+
+
+@pytest.mark.django_db
+def test_drf_endpoint_add_device_concurrent_duplicate_updates_existing(
+    client, registration_id, concurrent_insert
+):
+    response = client.post(
+        "/drf/devices/",
+        {
+            "registration_id": registration_id,
+            "type": "android",
+        },
+    )
+
+    assert response.status_code == 200
+    assert FCMDevice.objects.filter(registration_id=registration_id).count() == 1
+    assert (
+        FCMDevice.objects.get(registration_id=registration_id).type
+        == DeviceType.ANDROID
+    )
+
+
+@pytest.mark.django_db
+def test_drf_endpoint_add_device_concurrent_duplicate_without_update_returns_400(
+    client, registration_id, concurrent_insert
+):
+    with override_settings(FCM_DJANGO_SETTINGS={"UPDATE_ON_DUPLICATE_REG_ID": False}):
+        response = client.post(
+            "/drf/devices/",
+            {
+                "registration_id": registration_id,
+                "type": "android",
+            },
+        )
+
+    assert response.status_code == 400
+    assert "registration_id" in response.json()
+    assert FCMDevice.objects.filter(registration_id=registration_id).count() == 1
