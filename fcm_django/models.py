@@ -487,13 +487,23 @@ class FCMDeviceQuerySet(models.query.QuerySet):
         await self._adelete_inactive_devices_if_requested(deactivated_ids)
         return deactivated_ids
 
+    def _devices_for_deletion(self, registration_ids: list[str]):
+        # Fresh queryset without the caller's filters (e.g. active=True, which no
+        # longer matches after deactivation), on the caller's write database.
+        # select_for_update() is lazy; it only marks the clone as a write so .db
+        # resolves an explicit .using() alias or the router's write database.
+        write_db = self.select_for_update().db
+        return self.model._base_manager.using(write_db).filter(
+            registration_id__in=registration_ids
+        )
+
     def _delete_inactive_devices_if_requested(self, registration_ids: list[str]):
-        if SETTINGS["DELETE_INACTIVE_DEVICES"]:
-            self.filter(registration_id__in=registration_ids).delete()
+        if registration_ids and SETTINGS["DELETE_INACTIVE_DEVICES"]:
+            self._devices_for_deletion(registration_ids).delete()
 
     async def _adelete_inactive_devices_if_requested(self, registration_ids: list[str]):
-        if SETTINGS["DELETE_INACTIVE_DEVICES"]:
-            await self.filter(registration_id__in=registration_ids).adelete()
+        if registration_ids and SETTINGS["DELETE_INACTIVE_DEVICES"]:
+            await self._devices_for_deletion(registration_ids).adelete()
 
     @staticmethod
     def _get_failed_exception_codes(
