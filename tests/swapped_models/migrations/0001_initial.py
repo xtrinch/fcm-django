@@ -2,15 +2,12 @@
 # This migration required to check functionality with swapped model.
 # So if there are any changes in the Swapped Model then you have to regenerate this migration.
 
-import uuid
 
 import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
 
-
-def generate_custom_device_id():
-    return uuid.uuid4().hex
+import tests.swapped_models.models
 
 
 class Migration(migrations.Migration):
@@ -69,7 +66,7 @@ class Migration(migrations.Migration):
                 (
                     "id",
                     models.CharField(
-                        default=generate_custom_device_id,
+                        default=tests.swapped_models.models.generate_custom_device_id,
                         editable=False,
                         max_length=32,
                         primary_key=True,

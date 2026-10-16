@@ -705,7 +705,9 @@ class AbstractFCMDevice(Device):
 
     @property
     def subscribed_topics(self):
-        return self.topic_subscriptions.values_list("topic", flat=True)
+        return FCMDeviceTopic.objects.filter(device_id=self.pk).values_list(
+            "topic", flat=True
+        )
 
     def send_message(
         self,
