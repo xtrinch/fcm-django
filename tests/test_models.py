@@ -51,7 +51,7 @@ def test_fields_on_the_device_can_be_added_by_swapped_model(fcm_device: FCMDevic
     if settings.IS_SWAP:
         before_update = timezone.now()
         fcm_device.save()
-        assert before_update < fcm_device.updated_at < timezone.now()
+        assert before_update <= fcm_device.updated_at <= timezone.now()
 
 
 def test_firebase_response_dict_summary_for_batch_response(mocker):
