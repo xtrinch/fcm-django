@@ -1,6 +1,6 @@
 -r requirements.txt
 -r requirements_test.txt
-black==26.3.1
+black==26.10.1
 build>=1.4.2
 django-stubs==6.0.9
 djangorestframework-stubs==3.18.0
